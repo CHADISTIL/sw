@@ -1,0 +1,1485 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>لوحة النشر — jawrab</title>
+<script src="https://accounts.google.com/gsi/client"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+/* ═══════════════════════════════════════
+   VARIABLES & RESET
+═══════════════════════════════════════ */
+:root {
+  --bg:        #080b14;
+  --surface:   #0e1220;
+  --card:      #131826;
+  --border:    rgba(255,255,255,0.07);
+  --border2:   rgba(255,255,255,0.12);
+  --accent:    #ff375f;
+  --accent2:   #ff6b35;
+  --accent3:   #3b82f6;
+  --green:     #22c55e;
+  --yellow:    #f59e0b;
+  --purple:    #a855f7;
+  --text:      #e2e8f0;
+  --text2:     #94a3b8;
+  --text3:     #475569;
+  --radius:    14px;
+  --radius-sm: 8px;
+  --shadow:    0 8px 32px rgba(0,0,0,0.5);
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif;}
+body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+
+/* ═══════════════════════════════════════
+   GRID BACKGROUND
+═══════════════════════════════════════ */
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;
+  background-image:
+    linear-gradient(rgba(255,55,95,0.03) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(255,55,95,0.03) 1px,transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;
+}
+
+/* ═══════════════════════════════════════
+   TOP BAR
+═══════════════════════════════════════ */
+.topbar{
+  position:sticky;top:0;z-index:100;
+  background:rgba(8,11,20,0.92);
+  backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  padding:0 24px;
+  height:60px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.topbar-logo{
+  font-size:1.3em;font-weight:900;
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;
+  letter-spacing:-0.5px;
+}
+.topbar-right{display:flex;align-items:center;gap:12px;}
+.auth-status{
+  display:flex;align-items:center;gap:8px;
+  font-size:0.8em;color:var(--text2);
+}
+.auth-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:#ef4444;transition:background 0.3s;
+}
+.auth-dot.ok{background:var(--green);}
+.btn-login{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;color:#fff;border-radius:20px;
+  padding:7px 18px;font-size:0.82em;font-weight:700;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  transition:opacity 0.2s,transform 0.15s;
+}
+.btn-login:active{transform:scale(0.96);}
+
+/* ═══════════════════════════════════════
+   MAIN LAYOUT
+═══════════════════════════════════════ */
+.main{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:28px 20px 60px;}
+
+/* ═══════════════════════════════════════
+   TYPE SELECTOR
+═══════════════════════════════════════ */
+.type-grid{
+  display:grid;grid-template-columns:repeat(5,1fr);gap:10px;
+  margin-bottom:28px;
+}
+.type-card{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  padding:16px 8px;
+  text-align:center;cursor:pointer;
+  transition:all 0.2s;
+  position:relative;overflow:hidden;
+}
+.type-card::before{
+  content:'';position:absolute;inset:0;
+  background:var(--t-color,var(--accent));
+  opacity:0;transition:opacity 0.2s;
+}
+.type-card:hover::before{opacity:0.06;}
+.type-card.active{
+  border-color:var(--t-color,var(--accent));
+  box-shadow:0 0 0 1px var(--t-color,var(--accent)),0 4px 20px rgba(0,0,0,0.3);
+}
+.type-card.active::before{opacity:0.1;}
+.type-icon{
+  font-size:1.6em;margin-bottom:6px;display:block;
+  filter:grayscale(1);transition:filter 0.2s;
+}
+.type-card.active .type-icon,.type-card:hover .type-icon{filter:none;}
+.type-label{font-size:0.75em;font-weight:700;color:var(--text2);}
+.type-card.active .type-label{color:var(--t-color,var(--accent));}
+
+/* ═══════════════════════════════════════
+   FORM CARD
+═══════════════════════════════════════ */
+.form-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.form-header{
+  padding:18px 22px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.form-header-icon{
+  width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1em;flex-shrink:0;
+}
+.form-header-title{font-size:1em;font-weight:700;color:var(--text);}
+.form-header-sub{font-size:0.75em;color:var(--text2);margin-top:2px;}
+.form-body{padding:22px;}
+
+/* ═══════════════════════════════════════
+   SECTIONS
+═══════════════════════════════════════ */
+.section{margin-bottom:24px;}
+.section-title{
+  font-size:0.72em;font-weight:700;
+  color:var(--text3);text-transform:uppercase;letter-spacing:1.5px;
+  margin-bottom:12px;display:flex;align-items:center;gap:6px;
+}
+.section-title i{color:var(--accent);font-size:0.9em;}
+
+/* ═══════════════════════════════════════
+   INPUTS
+═══════════════════════════════════════ */
+.field{margin-bottom:14px;}
+.field label{
+  display:block;font-size:0.79em;font-weight:600;
+  color:var(--text2);margin-bottom:6px;
+}
+.field label span.req{color:var(--accent);margin-right:2px;}
+input[type=text],input[type=url],input[type=number],select,textarea{
+  width:100%;background:var(--surface);
+  border:1.5px solid var(--border);
+  color:var(--text);border-radius:var(--radius-sm);
+  padding:10px 13px;font-size:0.86em;
+  font-family:'Cairo',sans-serif;
+  outline:none;transition:border-color 0.2s,box-shadow 0.2s;
+}
+input[type=text]:focus,input[type=url]:focus,
+input[type=number]:focus,select:focus,textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(255,55,95,0.12);
+}
+textarea{resize:vertical;min-height:90px;}
+select{cursor:pointer;}
+select option{background:var(--surface);}
+
+/* ═══════════════════════════════════════
+   TOGGLE PILLS
+═══════════════════════════════════════ */
+.pills{display:flex;gap:6px;flex-wrap:wrap;}
+.pill{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:20px;padding:5px 14px;
+  font-size:0.77em;font-weight:600;color:var(--text2);
+  cursor:pointer;transition:all 0.15s;font-family:'Cairo',sans-serif;
+}
+.pill.active{
+  background:rgba(255,55,95,0.15);
+  border-color:var(--accent);color:var(--accent);
+}
+.pill:active{transform:scale(0.95);}
+
+/* ═══════════════════════════════════════
+   QUALITY ROWS
+═══════════════════════════════════════ */
+.qual-list{display:flex;flex-direction:column;gap:8px;}
+.qual-row{
+  display:grid;grid-template-columns:90px 1fr 38px;gap:8px;align-items:center;
+}
+.qual-row .qual-badge{
+  background:rgba(59,130,246,0.15);
+  border:1px solid rgba(59,130,246,0.3);
+  color:var(--accent3);border-radius:6px;
+  padding:4px 0;text-align:center;
+  font-size:0.78em;font-weight:700;
+}
+.qual-add-btn{
+  background:var(--surface);border:1.5px dashed var(--border2);
+  color:var(--text2);border-radius:var(--radius-sm);
+  padding:9px;width:100%;font-size:0.82em;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.qual-add-btn:hover{border-color:var(--accent);color:var(--accent);}
+.qual-del-btn{
+  background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);
+  color:#ef4444;border-radius:6px;padding:0;
+  width:34px;height:34px;cursor:pointer;font-size:0.85em;
+  display:flex;align-items:center;justify-content:center;
+  transition:background 0.15s;
+}
+.qual-del-btn:hover{background:rgba(239,68,68,0.2);}
+
+/* ═══════════════════════════════════════
+   SUBTITLE UPLOAD
+═══════════════════════════════════════ */
+.sub-upload{
+  border:2px dashed var(--border2);border-radius:var(--radius-sm);
+  padding:20px;text-align:center;cursor:pointer;
+  transition:all 0.2s;position:relative;
+}
+.sub-upload:hover,.sub-upload.drag{
+  border-color:var(--accent);
+  background:rgba(255,55,95,0.04);
+}
+.sub-upload input{
+  position:absolute;inset:0;opacity:0;cursor:pointer;
+  width:100%;height:100%;
+}
+.sub-upload-icon{font-size:2em;margin-bottom:8px;display:block;color:var(--text3);}
+.sub-upload-text{font-size:0.8em;color:var(--text2);}
+.sub-upload-text b{color:var(--accent);}
+.sub-file-info{
+  display:none;align-items:center;gap:10px;
+  background:rgba(34,197,94,0.08);
+  border:1px solid rgba(34,197,94,0.2);
+  border-radius:var(--radius-sm);padding:10px 14px;
+  font-size:0.82em;color:var(--green);
+}
+.sub-file-info i{font-size:1.2em;}
+.sub-file-clear{
+  margin-right:auto;background:none;border:none;
+  color:#ef4444;cursor:pointer;font-size:0.9em;
+  opacity:0.7;transition:opacity 0.2s;
+}
+.sub-file-clear:hover{opacity:1;}
+
+/* ═══════════════════════════════════════
+   IMAGE PREVIEW
+═══════════════════════════════════════ */
+.img-preview-wrap{
+  position:relative;border-radius:var(--radius-sm);overflow:hidden;
+  aspect-ratio:16/9;background:var(--surface);
+  border:1.5px solid var(--border);display:none;
+  margin-top:10px;
+}
+.img-preview-wrap img{width:100%;height:100%;object-fit:cover;}
+.img-preview-del{
+  position:absolute;top:8px;left:8px;
+  background:rgba(0,0,0,0.7);border:none;
+  color:#fff;border-radius:50%;width:30px;height:30px;
+  font-size:0.85em;cursor:pointer;display:flex;
+  align-items:center;justify-content:center;
+}
+
+/* ═══════════════════════════════════════
+   TMDB SEARCH
+═══════════════════════════════════════ */
+.tmdb-search-wrap{position:relative;}
+.tmdb-results{
+  position:absolute;top:calc(100% + 6px);right:0;left:0;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--radius-sm);z-index:50;
+  max-height:240px;overflow-y:auto;display:none;
+  box-shadow:0 12px 40px rgba(0,0,0,0.6);
+}
+.tmdb-item{
+  display:flex;align-items:center;gap:12px;
+  padding:10px 14px;cursor:pointer;transition:background 0.15s;
+  border-bottom:1px solid var(--border);
+}
+.tmdb-item:last-child{border-bottom:none;}
+.tmdb-item:hover{background:rgba(255,255,255,0.04);}
+.tmdb-item img{
+  width:38px;height:56px;object-fit:cover;
+  border-radius:4px;flex-shrink:0;background:var(--surface);
+}
+.tmdb-item-info .title{font-size:0.85em;font-weight:600;color:var(--text);}
+.tmdb-item-info .meta{font-size:0.72em;color:var(--text2);margin-top:2px;}
+.tmdb-badge{
+  font-size:0.68em;padding:2px 7px;border-radius:4px;
+  font-weight:700;margin-right:5px;
+}
+.tmdb-badge.movie{background:rgba(255,55,95,0.2);color:var(--accent);}
+.tmdb-badge.tv{background:rgba(168,85,247,0.2);color:var(--purple);}
+.tmdb-spinner{
+  text-align:center;padding:16px;color:var(--text2);font-size:0.82em;
+}
+
+/* ═══════════════════════════════════════
+   TMDB CARD (selected)
+═══════════════════════════════════════ */
+.tmdb-card{
+  display:none;
+  background:linear-gradient(135deg,rgba(255,55,95,0.08),rgba(59,130,246,0.05));
+  border:1px solid rgba(255,55,95,0.2);
+  border-radius:var(--radius-sm);padding:14px;
+  margin-top:10px;position:relative;
+}
+.tmdb-card-inner{display:flex;gap:14px;align-items:flex-start;}
+.tmdb-card-poster{
+  width:60px;height:90px;object-fit:cover;
+  border-radius:6px;flex-shrink:0;
+}
+.tmdb-card-info .ct{font-size:0.88em;font-weight:700;color:var(--text);}
+.tmdb-card-info .cm{font-size:0.73em;color:var(--text2);margin-top:4px;line-height:1.6;}
+.tmdb-card-clear{
+  position:absolute;top:10px;left:10px;
+  background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.3);
+  color:#ef4444;border-radius:6px;padding:4px 9px;
+  font-size:0.72em;cursor:pointer;font-family:'Cairo',sans-serif;
+}
+
+/* ═══════════════════════════════════════
+   YOUTUBE PREVIEW
+═══════════════════════════════════════ */
+.yt-preview{
+  display:none;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius-sm);overflow:hidden;margin-top:10px;
+}
+.yt-preview img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;}
+.yt-preview-info{padding:10px 14px;display:flex;align-items:center;gap:10px;}
+.yt-preview-logo{color:#ff0000;font-size:1.4em;}
+.yt-preview-text{font-size:0.8em;color:var(--text2);}
+.yt-preview-text b{color:var(--text);display:block;}
+
+/* ═══════════════════════════════════════
+   SUBMIT ROW
+═══════════════════════════════════════ */
+.submit-row{
+  display:flex;gap:10px;align-items:center;
+  padding-top:6px;flex-wrap:wrap;
+}
+.btn-submit{
+  background:linear-gradient(135deg,var(--accent),var(--accent2));
+  border:none;color:#fff;border-radius:var(--radius-sm);
+  padding:13px 28px;font-size:0.92em;font-weight:700;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  transition:opacity 0.2s,transform 0.15s;
+  display:flex;align-items:center;gap:8px;
+  flex:1;min-width:160px;justify-content:center;
+}
+.btn-submit:active{transform:scale(0.98);opacity:0.9;}
+.btn-submit:disabled{opacity:0.4;cursor:not-allowed;}
+.btn-draft{
+  background:var(--surface);border:1.5px solid var(--border2);
+  color:var(--text2);border-radius:var(--radius-sm);
+  padding:13px 20px;font-size:0.88em;font-weight:600;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  transition:all 0.2s;display:flex;align-items:center;gap:7px;
+}
+.btn-draft:hover{border-color:var(--text2);color:var(--text);}
+
+/* ═══════════════════════════════════════
+   TOAST
+═══════════════════════════════════════ */
+.toast-wrap{
+  position:fixed;bottom:28px;right:50%;transform:translateX(50%);
+  z-index:9999;display:flex;flex-direction:column;gap:8px;
+  pointer-events:none;align-items:center;
+}
+.toast{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:30px;padding:11px 22px;
+  font-size:0.84em;font-weight:600;color:var(--text);
+  box-shadow:0 8px 32px rgba(0,0,0,0.5);
+  display:flex;align-items:center;gap:8px;
+  animation:toastIn 0.35s cubic-bezier(0.34,1.56,0.64,1);
+  pointer-events:auto;
+}
+.toast.ok i{color:var(--green);}
+.toast.err i{color:var(--accent);}
+.toast.info i{color:var(--accent3);}
+.toast.warn i{color:var(--yellow);}
+.toast.out{animation:toastOut 0.25s ease-in forwards;}
+@keyframes toastIn{from{opacity:0;transform:translateY(16px) scale(0.9);}to{opacity:1;transform:none;}}
+@keyframes toastOut{to{opacity:0;transform:translateY(10px) scale(0.95);}}
+
+/* ═══════════════════════════════════════
+   SPINNER
+═══════════════════════════════════════ */
+.spin{
+  width:16px;height:16px;border-radius:50%;
+  border:2px solid rgba(255,255,255,0.3);
+  border-top-color:#fff;
+  animation:spin 0.7s linear infinite;display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ═══════════════════════════════════════
+   PROGRESS
+═══════════════════════════════════════ */
+.publish-progress{
+  display:none;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--radius);padding:22px;
+  margin-top:20px;text-align:center;
+}
+.progress-bar-wrap{
+  height:6px;background:var(--border);border-radius:3px;
+  margin:14px 0;overflow:hidden;
+}
+.progress-bar{
+  height:100%;border-radius:3px;width:0%;
+  background:linear-gradient(90deg,var(--accent),var(--accent2));
+  transition:width 0.4s ease;
+}
+.progress-steps{
+  display:flex;justify-content:space-between;
+  font-size:0.72em;color:var(--text3);
+}
+.progress-step.active{color:var(--accent);}
+.progress-step.done{color:var(--green);}
+
+/* ═══════════════════════════════════════
+   POSTS LIST
+═══════════════════════════════════════ */
+.posts-section{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);margin-top:24px;overflow:hidden;
+}
+.posts-header{
+  padding:16px 22px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.posts-header-title{font-size:0.9em;font-weight:700;display:flex;align-items:center;gap:8px;}
+.btn-load-posts{
+  background:var(--surface);border:1.5px solid var(--border2);
+  color:var(--text2);border-radius:20px;
+  padding:6px 14px;font-size:0.78em;font-weight:600;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  transition:all 0.2s;display:flex;align-items:center;gap:6px;
+}
+.btn-load-posts:hover{border-color:var(--accent3);color:var(--accent3);}
+.posts-list{max-height:360px;overflow-y:auto;}
+.post-item{
+  display:flex;align-items:center;gap:12px;
+  padding:13px 22px;border-bottom:1px solid var(--border);
+  transition:background 0.15s;
+}
+.post-item:last-child{border-bottom:none;}
+.post-item:hover{background:rgba(255,255,255,0.02);}
+.post-item-icon{
+  width:34px;height:34px;border-radius:8px;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:0.9em;flex-shrink:0;color:var(--text2);
+}
+.post-item-title{
+  flex:1;font-size:0.83em;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+.post-item-date{font-size:0.7em;color:var(--text3);flex-shrink:0;}
+.post-item-actions{display:flex;gap:6px;flex-shrink:0;}
+.post-edit-btn,.post-del-btn{
+  border:none;border-radius:6px;
+  width:30px;height:30px;cursor:pointer;
+  font-size:0.8em;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.15s;
+}
+.post-edit-btn{background:rgba(59,130,246,0.15);color:var(--accent3);}
+.post-edit-btn:hover{background:rgba(59,130,246,0.3);}
+.post-del-btn{background:rgba(239,68,68,0.12);color:#ef4444;}
+.post-del-btn:hover{background:rgba(239,68,68,0.25);}
+.posts-empty{padding:32px;text-align:center;color:var(--text3);font-size:0.85em;}
+
+/* ═══════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════ */
+@media(max-width:640px){
+  .type-grid{grid-template-columns:repeat(3,1fr);}
+  .topbar{padding:0 16px;}
+  .main{padding:20px 14px 60px;}
+  .form-body{padding:16px;}
+  .qual-row{grid-template-columns:75px 1fr 34px;}
+}
+@media(max-width:400px){
+  .type-grid{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-logo">⚡ jawrab admin</div>
+  <div class="topbar-right">
+    <div class="auth-status">
+      <div class="auth-dot" id="authDot"></div>
+      <span id="authLabel">غير متصل</span>
+      <span id="sessionTimer" style="font-size:0.72em;color:var(--text3);display:none;margin-right:4px;"></span>
+    </div>
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">
+      <i class="fab fa-google"></i> تسجيل الدخول
+    </button>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- TYPE SELECTOR -->
+  <div class="type-grid" id="typeGrid">
+    <div class="type-card active" data-type="movie" style="--t-color:#ff375f" onclick="setType('movie',this)">
+      <span class="type-icon">🎬</span>
+      <div class="type-label">فيلم</div>
+    </div>
+    <div class="type-card" data-type="drama" style="--t-color:#a855f7" onclick="setType('drama',this)">
+      <span class="type-icon">📺</span>
+      <div class="type-label">دراما</div>
+    </div>
+    <div class="type-card" data-type="anime" style="--t-color:#06b6d4" onclick="setType('anime',this)">
+      <span class="type-icon">🎌</span>
+      <div class="type-label">أنمي</div>
+    </div>
+    <div class="type-card" data-type="youtube" style="--t-color:#ef4444" onclick="setType('youtube',this)">
+      <span class="type-icon">▶️</span>
+      <div class="type-label">يوتيوب</div>
+    </div>
+    <div class="type-card" data-type="video" style="--t-color:#22c55e" onclick="setType('video',this)">
+      <span class="type-icon">🎥</span>
+      <div class="type-label">فيديو</div>
+    </div>
+  </div>
+
+  <!-- FORM CARD -->
+  <div class="form-card" id="formCard">
+    <div class="form-header" id="formHeader">
+      <div class="form-header-icon" id="formHeaderIcon" style="background:rgba(255,55,95,0.15);color:#ff375f;">
+        <i class="fas fa-film"></i>
+      </div>
+      <div>
+        <div class="form-header-title" id="formHeaderTitle">نشر فيلم</div>
+        <div class="form-header-sub" id="formHeaderSub">البيانات ستُدمج مع TMDB تلقائياً</div>
+      </div>
+    </div>
+    <div class="form-body">
+
+      <!-- ══ TMDB SEARCH (movie/drama/anime) ══ -->
+      <div class="section" id="sectionTmdb">
+        <div class="section-title"><i class="fas fa-search"></i> البحث في TMDB (اختياري)</div>
+        <div class="field tmdb-search-wrap">
+          <label>ابحث لجلب البيانات تلقائياً</label>
+          <div style="position:relative;">
+            <input type="text" id="tmdbQuery" placeholder="اسم الفيلم أو المسلسل..." autocomplete="off">
+            <div style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text3);font-size:0.8em;" id="tmdbSearchIcon">
+              <i class="fas fa-search"></i>
+            </div>
+          </div>
+          <div class="tmdb-results" id="tmdbResults"></div>
+        </div>
+        <div class="tmdb-card" id="tmdbCard">
+          <div class="tmdb-card-inner">
+            <img class="tmdb-card-poster" id="tmdbCardPoster" src="" alt="">
+            <div class="tmdb-card-info">
+              <div class="ct" id="tmdbCardTitle"></div>
+              <div class="cm" id="tmdbCardMeta"></div>
+            </div>
+          </div>
+          <button class="tmdb-card-clear" onclick="clearTmdb()">✕ مسح</button>
+        </div>
+      </div>
+
+      <!-- ══ BASIC INFO ══ -->
+      <div class="section">
+        <div class="section-title"><i class="fas fa-info-circle"></i> المعلومات الأساسية</div>
+        <div class="field">
+          <label><span class="req">*</span> العنوان</label>
+          <input type="text" id="fTitle" placeholder="العنوان الرئيسي">
+        </div>
+        <div class="field" id="fieldSubtitle">
+          <label>العنوان الفرعي / رقم الحلقة</label>
+          <input type="text" id="fSubtitle" placeholder="مثال: الحلقة 5 — الموسم 2">
+        </div>
+        <div class="field">
+          <label>التصنيفات <span style="color:var(--text3);font-weight:400;">(مفصولة بفاصلة)</span></label>
+          <input type="text" id="fLabels" placeholder="فيلم, أكشن, 2024, مترجم">
+        </div>
+        <div class="field">
+          <label>وصف المحتوى</label>
+          <textarea id="fDesc" placeholder="قصة الفيلم / الحلقة..."></textarea>
+        </div>
+      </div>
+
+      <!-- ══ THUMBNAIL ══ -->
+      <div class="section">
+        <div class="section-title"><i class="fas fa-image"></i> الصورة المصغّرة</div>
+        <div class="field">
+          <label>رابط الصورة (URL)</label>
+          <input type="url" id="fThumb" placeholder="https://..." oninput="previewThumb(this.value)">
+        </div>
+        <div class="img-preview-wrap" id="thumbPreview">
+          <img id="thumbPreviewImg" src="" alt="">
+          <button class="img-preview-del" onclick="clearThumb()"><i class="fas fa-times"></i></button>
+        </div>
+      </div>
+
+      <!-- ══ YOUTUBE ══ -->
+      <div class="section" id="sectionYT" style="display:none;">
+        <div class="section-title"><i class="fab fa-youtube"></i> فيديو يوتيوب</div>
+        <div class="field">
+          <label><span class="req">*</span> رابط يوتيوب أو معرف الفيديو</label>
+          <input type="text" id="fYtUrl" placeholder="https://youtu.be/xxxx أو معرف المقطع" oninput="parseYT(this.value)">
+        </div>
+        <div class="yt-preview" id="ytPreview">
+          <img id="ytThumb" src="" alt="">
+          <div class="yt-preview-info">
+            <i class="fab fa-youtube yt-preview-logo"></i>
+            <div class="yt-preview-text">
+              <b id="ytIdDisplay"></b>
+              معرف الفيديو
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ VIDEO URLS ══ -->
+      <div class="section" id="sectionVideo">
+        <div class="section-title"><i class="fas fa-link"></i> روابط الفيديو والجودات</div>
+        <div class="qual-list" id="qualList"></div>
+        <button class="qual-add-btn" id="addQualBtn" onclick="addQuality()">
+          <i class="fas fa-plus"></i> إضافة جودة
+        </button>
+        <div class="field" style="margin-top:14px;" id="fieldLive">
+          <label>رابط بث مباشر (M3U8 / HLS)</label>
+          <input type="url" id="fLive" placeholder="https://...m3u8">
+        </div>
+      </div>
+
+      <!-- ══ SUBTITLE ══ -->
+      <div class="section">
+        <div class="section-title"><i class="fas fa-closed-captioning"></i> ملف الترجمة (VTT)</div>
+        <div class="sub-upload" id="subUploadZone">
+          <input type="file" id="subFileInput" accept=".vtt,.srt" onchange="handleSubFile(this)">
+          <span class="sub-upload-icon">📄</span>
+          <div class="sub-upload-text">اسحب ملف <b>.vtt</b> أو <b>.srt</b> هنا، أو انقر للاختيار</div>
+        </div>
+        <div class="sub-file-info" id="subFileInfo">
+          <i class="fas fa-check-circle"></i>
+          <span id="subFileName"></span>
+          <button class="sub-file-clear" onclick="clearSub()"><i class="fas fa-times"></i></button>
+        </div>
+        <div class="field" style="margin-top:10px;">
+          <label>أو الصق محتوى الملف مباشرة</label>
+          <textarea id="fSubContent" placeholder="WEBVTT&#10;&#10;00:00:01.000 --> 00:00:04.000&#10;نص الترجمة هنا..." style="font-family:monospace;font-size:0.78em;min-height:100px;direction:ltr;text-align:left;"></textarea>
+        </div>
+        <div class="field">
+          <label>لغة الترجمة</label>
+          <div class="pills" id="subLangPills">
+            <div class="pill active" data-val="ar" onclick="setPill(this,'subLangPills')">عربي</div>
+            <div class="pill" data-val="en" onclick="setPill(this,'subLangPills')">إنجليزي</div>
+            <div class="pill" data-val="fr" onclick="setPill(this,'subLangPills')">فرنسي</div>
+            <div class="pill" data-val="tr" onclick="setPill(this,'subLangPills')">تركي</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══ META OPTIONS ══ -->
+      <div class="section" id="sectionMeta">
+        <div class="section-title"><i class="fas fa-cog"></i> خيارات إضافية</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div class="field">
+            <label>سنة الإنتاج</label>
+            <input type="number" id="fYear" placeholder="2024" min="1900" max="2030">
+          </div>
+          <div class="field">
+            <label>التقييم (من 10)</label>
+            <input type="number" id="fRating" placeholder="8.5" min="0" max="10" step="0.1">
+          </div>
+        </div>
+        <div class="field">
+          <label>حالة النشر</label>
+          <div class="pills" id="statusPills">
+            <div class="pill active" data-val="LIVE" onclick="setPill(this,'statusPills')">
+              <i class="fas fa-globe" style="font-size:0.85em;margin-left:4px;"></i>نشر مباشر
+            </div>
+            <div class="pill" data-val="DRAFT" onclick="setPill(this,'statusPills')">
+              <i class="fas fa-pen" style="font-size:0.85em;margin-left:4px;"></i>مسودة
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SUBMIT ROW -->
+      <div class="submit-row">
+        <button class="btn-submit" id="btnSubmit" onclick="publish()">
+          <i class="fas fa-paper-plane"></i> نشر المحتوى
+        </button>
+        <button class="btn-draft" onclick="resetForm()">
+          <i class="fas fa-times"></i> إعادة تعيين
+        </button>
+      </div>
+
+      <!-- PROGRESS -->
+      <div class="publish-progress" id="publishProgress">
+        <div style="font-size:0.85em;color:var(--text2);" id="progressLabel">جاري المعالجة...</div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div class="progress-steps">
+          <span class="progress-step" id="step1">بناء المحتوى</span>
+          <span class="progress-step" id="step2">رفع البيانات</span>
+          <span class="progress-step" id="step3">اكتمل</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- POSTS LIST -->
+  <div class="posts-section">
+    <div class="posts-header">
+      <div class="posts-header-title">
+        <i class="fas fa-list" style="color:var(--accent3);"></i>
+        المقالات المنشورة
+      </div>
+      <button class="btn-load-posts" onclick="loadPosts()">
+        <i class="fas fa-sync-alt"></i> تحديث
+      </button>
+    </div>
+    <div class="posts-list" id="postsList">
+      <div class="posts-empty">انقر «تحديث» لعرض المقالات</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-wrap" id="toastWrap"></div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════ */
+const CLIENT_ID  = "1095244236392-eqhgorr4t587vvr4vblmvlkqbh8kae9i.apps.googleusercontent.com";
+const BLOG_ID    = "6155177137677743195";
+const TMDB_KEY   = "1427d0e123035564137327f27f47c86c";
+const TMDB_BASE  = "https://api.themoviedb.org/3";
+const TMDB_IMG   = "https://image.tmdb.org/t/p/w500";
+const TMDB_ORIG  = "https://image.tmdb.org/t/p/original";
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════
+   AUTH — جلسة مطوّلة مع تجديد تلقائي
+   ● نحفظ access_token + وقت انتهائه في localStorage
+   ● نجدد التوكن تلقائياً 5 دقائق قبل انتهائه
+   ● عند فتح الصفحة نتحقق من صلاحية التوكن المحفوظ
+═══════════════════════════════════════════════ */
+const TOKEN_KEY    = 'jwb_gtoken';
+const EXPIRY_KEY   = 'jwb_gexpiry';
+const RENEW_MARGIN = 5 * 60 * 1000; // 5 دقائق قبل الانتهاء
+
+let gToken      = '';
+let renewTimer  = null;
+let gsiClient   = null;
+
+// ── حفظ التوكن ──
+function saveToken(token, expiresIn){
+  const expiry = Date.now() + (expiresIn - 60) * 1000; // نطرح 60 ثانية هامش أمان
+  gToken = token;
+  try{
+    localStorage.setItem(TOKEN_KEY,  token);
+    localStorage.setItem(EXPIRY_KEY, String(expiry));
+  } catch(e){}
+  scheduleRenew(expiry);
+  setAuthUI(true);
+  startSessionTimer();
+  toast('تم تسجيل الدخول — الجلسة محفوظة ✅','ok');
+  loadPosts();
+}
+
+// ── استعادة التوكن عند فتح الصفحة ──
+function restoreToken(){
+  try{
+    const token  = localStorage.getItem(TOKEN_KEY);
+    const expiry = parseInt(localStorage.getItem(EXPIRY_KEY)||'0');
+    if(token && expiry && Date.now() < expiry){
+      gToken = token;
+      setAuthUI(true);
+      scheduleRenew(expiry);
+      startSessionTimer();
+      loadPosts();
+      return true;
+    }
+  } catch(e){}
+  return false;
+}
+
+// ── جدولة التجديد التلقائي ──
+function scheduleRenew(expiryMs){
+  if(renewTimer) clearTimeout(renewTimer);
+  const delay = expiryMs - Date.now() - RENEW_MARGIN;
+  if(delay > 0){
+    renewTimer = setTimeout(silentRenew, delay);
+    console.log(`[Auth] التجديد التلقائي خلال ${Math.round(delay/60000)} دقيقة`);
+  } else {
+    // انتهى التوكن — جدد فوراً
+    silentRenew();
+  }
+}
+
+// ── تجديد صامت بدون نافذة ──
+function silentRenew(){
+  if(!gsiClient) buildGsiClient();
+  try{
+    gsiClient.requestAccessToken({prompt:''}); // prompt='' = صامت بدون popup
+  } catch(e){
+    console.warn('[Auth] فشل التجديد الصامت، ستحتاج إعادة تسجيل الدخول');
+    clearToken();
+  }
+}
+
+// ── بناء Google client ──
+function buildGsiClient(){
+  gsiClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/blogger',
+    callback: res => {
+      if(res.access_token){
+        const exp = res.expires_in || 3600;
+        saveToken(res.access_token, exp);
+      } else if(res.error && res.error !== 'interaction_required'){
+        console.warn('[Auth] خطأ في التوكن:', res.error);
+        clearToken();
+      }
+    }
+  });
+}
+
+// ── تسجيل الدخول اليدوي ──
+function doLogin(){
+  if(!gsiClient) buildGsiClient();
+  gsiClient.requestAccessToken({prompt:'consent'});
+}
+
+// ── مسح التوكن (تسجيل خروج) ──
+function clearToken(){
+  gToken = '';
+  if(renewTimer){ clearTimeout(renewTimer); renewTimer=null; }
+  try{
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(EXPIRY_KEY);
+  } catch(e){}
+  setAuthUI(false);
+}
+
+// ── عداد الجلسة المتبقية ──
+function startSessionTimer(){
+  const timerEl = document.getElementById('sessionTimer');
+  if(!timerEl) return;
+  function tick(){
+    try{
+      const expiry = parseInt(localStorage.getItem(EXPIRY_KEY)||'0');
+      if(!expiry||!gToken){ timerEl.style.display='none'; return; }
+      const left = expiry - Date.now();
+      if(left <= 0){ timerEl.style.display='none'; return; }
+      const mins  = Math.floor(left/60000);
+      const hours = Math.floor(mins/60);
+      const rmins = mins%60;
+      timerEl.textContent = hours>0 ? `(${hours}س ${rmins}د)` : `(${mins}د)`;
+      timerEl.style.display='inline';
+      timerEl.style.color   = left < 10*60*1000 ? 'var(--yellow)' : 'var(--text3)';
+    } catch(e){}
+  }
+  tick();
+  setInterval(tick, 30000); // تحديث كل 30 ثانية
+}
+
+// ── واجهة الحالة ──
+function setAuthUI(loggedIn){
+  document.getElementById('authDot').classList.toggle('ok', loggedIn);
+  document.getElementById('authLabel').textContent = loggedIn ? 'متصل' : 'غير متصل';
+  if(loggedIn){
+    document.getElementById('loginBtn').innerHTML  = '<i class="fas fa-user-check"></i> متصل';
+    document.getElementById('loginBtn').style.background = 'linear-gradient(135deg,#22c55e,#16a34a)';
+    document.getElementById('loginBtn').onclick = ()=>{ if(confirm('تسجيل الخروج؟')){ clearToken(); toast('تم تسجيل الخروج','info'); } };
+  } else {
+    document.getElementById('loginBtn').innerHTML  = '<i class="fab fa-google"></i> تسجيل الدخول';
+    document.getElementById('loginBtn').style.background = '';
+    document.getElementById('loginBtn').onclick = doLogin;
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   STATE
+═══════════════════════════════════════════════ */
+let editMode   = false;
+let editId     = null;
+let curType    = "movie";
+let tmdbData   = null;
+let subContent = "";
+let qualities  = [];
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+function toast(msg, type='info'){
+  const icons = {ok:'fa-check-circle',err:'fa-times-circle',info:'fa-info-circle',warn:'fa-exclamation-triangle'};
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<i class="fas ${icons[type]||icons.info}"></i> ${msg}`;
+  wrap.appendChild(el);
+  setTimeout(()=>{
+    el.classList.add('out');
+    setTimeout(()=>el.remove(),300);
+  },3200);
+}
+
+/* ═══════════════════════════════════════════════
+   TYPE SWITCHER
+═══════════════════════════════════════════════ */
+const typeConfig = {
+  movie:   { icon:'fas fa-film',        color:'#ff375f', bg:'rgba(255,55,95,0.15)',   title:'نشر فيلم',     sub:'البيانات ستُدمج مع TMDB تلقائياً', tmdb:true,  yt:false, video:true  },
+  drama:   { icon:'fas fa-tv',          color:'#a855f7', bg:'rgba(168,85,247,0.15)', title:'نشر دراما',    sub:'مسلسل — يمكن تحديد الحلقة',        tmdb:true,  yt:false, video:true  },
+  anime:   { icon:'fas fa-star',        color:'#06b6d4', bg:'rgba(6,182,212,0.15)',  title:'نشر أنمي',     sub:'أنمي — دبلجة أو ترجمة',             tmdb:true,  yt:false, video:true  },
+  youtube: { icon:'fab fa-youtube',     color:'#ef4444', bg:'rgba(239,68,68,0.15)',  title:'نشر يوتيوب',   sub:'رابط يوتيوب فقط',                    tmdb:false, yt:true,  video:false },
+  video:   { icon:'fas fa-video',       color:'#22c55e', bg:'rgba(34,197,94,0.15)',  title:'نشر فيديو',    sub:'فيديو MP4 أو M3U8 مباشر',            tmdb:false, yt:false, video:true  },
+};
+
+function setType(type, el){
+  curType = type;
+  document.querySelectorAll('.type-card').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  const cfg = typeConfig[type];
+  // header
+  document.getElementById('formHeaderIcon').style.background = cfg.bg;
+  document.getElementById('formHeaderIcon').style.color = cfg.color;
+  document.getElementById('formHeaderIcon').innerHTML = `<i class="${cfg.icon}"></i>`;
+  document.getElementById('formHeaderTitle').textContent = cfg.title;
+  document.getElementById('formHeaderSub').textContent   = cfg.sub;
+  // sections
+  document.getElementById('sectionTmdb').style.display  = cfg.tmdb  ? '' : 'none';
+  document.getElementById('sectionYT').style.display    = cfg.yt    ? '' : 'none';
+  document.getElementById('sectionVideo').style.display = cfg.video ? '' : 'none';
+  document.getElementById('fieldSubtitle').style.display= (type==='drama'||type==='anime') ? '' : 'none';
+  // default labels
+  const labMap = {movie:'فيلم',drama:'مسلسل,دراما',anime:'أنمي',youtube:'يوتيوب',video:'فيديو'};
+  if(!document.getElementById('fLabels').value) document.getElementById('fLabels').value = labMap[type]||'';
+}
+
+/* ═══════════════════════════════════════════════
+   PILLS
+═══════════════════════════════════════════════ */
+function setPill(el, groupId){
+  document.querySelectorAll(`#${groupId} .pill`).forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+}
+function getPillVal(groupId){
+  const a = document.querySelector(`#${groupId} .pill.active`);
+  return a ? a.dataset.val : '';
+}
+
+/* ═══════════════════════════════════════════════
+   QUALITIES
+═══════════════════════════════════════════════ */
+const qualOpts = ['4K','1080p','720p','480p','360p'];
+function addQuality(label='', url=''){
+  const idx = qualities.length;
+  qualities.push({label, url});
+  const row = document.createElement('div');
+  row.className='qual-row'; row.id=`qrow_${idx}`;
+  row.innerHTML=`
+    <select class="qual-badge" onchange="qualities[${idx}].label=this.value">
+      ${qualOpts.map(q=>`<option ${q===label?'selected':''}>${q}</option>`).join('')}
+    </select>
+    <input type="url" placeholder="https://...mp4 أو m3u8"
+      value="${url}"
+      oninput="qualities[${idx}].url=this.value"
+      style="height:34px;">
+    <button class="qual-del-btn" onclick="removeQuality(${idx})"><i class="fas fa-trash"></i></button>`;
+  document.getElementById('qualList').appendChild(row);
+  if(!label && qualOpts[idx]) row.querySelector('select').value = qualOpts[idx]||'720p';
+}
+function removeQuality(idx){
+  const el = document.getElementById(`qrow_${idx}`);
+  if(el) el.remove();
+  qualities[idx] = null;
+}
+function getQualities(){
+  return qualities.filter(q=>q&&q.url).map(q=>({label:q.label,url:q.url}));
+}
+
+/* ═══════════════════════════════════════════════
+   THUMBNAIL
+═══════════════════════════════════════════════ */
+function previewThumb(url){
+  if(!url){ clearThumb(); return; }
+  document.getElementById('thumbPreview').style.display='block';
+  document.getElementById('thumbPreviewImg').src=url;
+}
+function clearThumb(){
+  document.getElementById('thumbPreview').style.display='none';
+  document.getElementById('thumbPreviewImg').src='';
+  document.getElementById('fThumb').value='';
+}
+
+/* ═══════════════════════════════════════════════
+   YOUTUBE PARSE
+═══════════════════════════════════════════════ */
+function parseYT(val){
+  const m = val.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  const id = m ? m[1] : (val.length===11 ? val : '');
+  const prev = document.getElementById('ytPreview');
+  if(id){
+    prev.style.display='block';
+    document.getElementById('ytThumb').src=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    document.getElementById('ytIdDisplay').textContent=id;
+    if(!document.getElementById('fThumb').value){
+      document.getElementById('fThumb').value=`https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+      previewThumb(document.getElementById('fThumb').value);
+    }
+  } else {
+    prev.style.display='none';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   SUBTITLE FILE
+═══════════════════════════════════════════════ */
+function handleSubFile(inp){
+  const file=inp.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    subContent=e.target.result;
+    // convert SRT → VTT if needed
+    if(file.name.endsWith('.srt')) subContent=srtToVtt(subContent);
+    document.getElementById('fSubContent').value=subContent;
+    document.getElementById('subFileName').textContent=file.name;
+    document.getElementById('subFileInfo').style.display='flex';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+function clearSub(){
+  subContent='';
+  document.getElementById('fSubContent').value='';
+  document.getElementById('subFileInfo').style.display='none';
+  document.getElementById('subFileInput').value='';
+}
+function srtToVtt(srt){
+  return 'WEBVTT\n\n'+srt
+    .replace(/\r\n/g,'\n').replace(/\r/g,'\n')
+    .replace(/(\d+:\d+:\d+),(\d+)/g,'$1.$2');
+}
+
+// drag over zone
+(()=>{
+  const zone=document.getElementById('subUploadZone');
+  zone.addEventListener('dragover',e=>{e.preventDefault();zone.classList.add('drag');});
+  zone.addEventListener('dragleave',()=>zone.classList.remove('drag'));
+  zone.addEventListener('drop',e=>{
+    e.preventDefault();zone.classList.remove('drag');
+    const f=e.dataTransfer.files[0];
+    if(f){
+      const dt=new DataTransfer();dt.items.add(f);
+      document.getElementById('subFileInput').files=dt.files;
+      handleSubFile(document.getElementById('subFileInput'));
+    }
+  });
+})();
+
+/* ═══════════════════════════════════════════════
+   TMDB SEARCH
+═══════════════════════════════════════════════ */
+let tmdbTimer=null;
+document.getElementById('tmdbQuery').addEventListener('input',function(){
+  clearTimeout(tmdbTimer);
+  const q=this.value.trim();
+  if(q.length<2){ hideTmdbResults(); return; }
+  tmdbTimer=setTimeout(()=>searchTmdb(q),500);
+});
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.tmdb-search-wrap')) hideTmdbResults();
+});
+
+function hideTmdbResults(){
+  document.getElementById('tmdbResults').style.display='none';
+}
+
+async function searchTmdb(q){
+  const resDiv=document.getElementById('tmdbResults');
+  resDiv.style.display='block';
+  resDiv.innerHTML='<div class="tmdb-spinner"><i class="fas fa-spinner fa-spin"></i> جاري البحث...</div>';
+  try{
+    const types = curType==='anime' ? ['tv'] : (curType==='drama' ? ['tv','movie'] : ['movie','tv']);
+    let results=[];
+    for(const t of types){
+      const r=await fetch(`${TMDB_BASE}/search/${t}?api_key=${TMDB_KEY}&language=ar&query=${encodeURIComponent(q)}`);
+      const d=await r.json();
+      if(d.results) results=results.concat(d.results.slice(0,4).map(x=>({...x,_type:t})));
+    }
+    results=results.slice(0,6);
+    if(!results.length){ resDiv.innerHTML='<div class="tmdb-spinner">لا نتائج</div>'; return; }
+    resDiv.innerHTML=results.map(item=>{
+      const title=item.title||item.name||'';
+      const year=(item.release_date||item.first_air_date||'').split('-')[0];
+      const poster=item.poster_path?`${TMDB_IMG}${item.poster_path}`:'https://via.placeholder.com/38x56/1c1c1c/666?text=?';
+      const badgeCls=item._type==='movie'?'movie':'tv';
+      const badgeTxt=item._type==='movie'?'فيلم':'مسلسل';
+      return `<div class="tmdb-item" onclick="selectTmdb(${item.id},'${item._type}')">
+        <img src="${poster}" alt="">
+        <div class="tmdb-item-info">
+          <div class="title">${title}</div>
+          <div class="meta">
+            <span class="tmdb-badge ${badgeCls}">${badgeTxt}</span>
+            ${year}
+            ${item.vote_average?'· ⭐ '+Math.round(item.vote_average*10)/10:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){
+    resDiv.innerHTML='<div class="tmdb-spinner" style="color:#ef4444;">خطأ في الاتصال</div>';
+  }
+}
+
+async function selectTmdb(id,type){
+  hideTmdbResults();
+  document.getElementById('tmdbQuery').value='';
+  document.getElementById('tmdbSearchIcon').innerHTML='<div class="spin" style="width:14px;height:14px;border-color:rgba(255,55,95,0.3);border-top-color:var(--accent);"></div>';
+  try{
+    const ep=type==='movie'?`movie/${id}`:`tv/${id}`;
+    const r=await fetch(`${TMDB_BASE}/${ep}?api_key=${TMDB_KEY}&language=ar&append_to_response=credits`);
+    const d=await r.json();
+    tmdbData=d; tmdbData._type=type;
+    // fill fields
+    const title=d.title||d.name||'';
+    const year=(d.release_date||d.first_air_date||'').split('-')[0];
+    const rating=d.vote_average?Math.round(d.vote_average*10)/10:0;
+    const poster=d.poster_path?`${TMDB_IMG}${d.poster_path}`:'';
+    const backdrop=d.backdrop_path?`${TMDB_ORIG}${d.backdrop_path}`:'';
+    const genres=(d.genres||[]).map(g=>g.name).join('، ');
+    if(!document.getElementById('fTitle').value) document.getElementById('fTitle').value=title;
+    if(!document.getElementById('fDesc').value&&d.overview) document.getElementById('fDesc').value=d.overview;
+    if(!document.getElementById('fYear').value&&year) document.getElementById('fYear').value=year;
+    if(!document.getElementById('fRating').value&&rating) document.getElementById('fRating').value=rating;
+    const curLabels=document.getElementById('fLabels').value;
+    if(genres) document.getElementById('fLabels').value=curLabels?(curLabels+', '+genres):genres;
+    // thumbnail from backdrop or poster
+    const thumbUrl=backdrop||poster;
+    if(thumbUrl&&!document.getElementById('fThumb').value){
+      document.getElementById('fThumb').value=thumbUrl;
+      previewThumb(thumbUrl);
+    }
+    // show tmdb card
+    document.getElementById('tmdbCardPoster').src=poster||'';
+    document.getElementById('tmdbCardTitle').textContent=title+(year?` (${year})`:'');
+    document.getElementById('tmdbCardMeta').innerHTML=
+      `⭐ ${rating} &nbsp;|&nbsp; ${genres}<br>`+
+      (d.overview?`<span style="font-size:0.9em;">${d.overview.slice(0,120)}${d.overview.length>120?'...':''}</span>`:'');
+    document.getElementById('tmdbCard').style.display='block';
+    toast('تم جلب بيانات TMDB ✅','ok');
+  } catch(err){
+    toast('خطأ في جلب بيانات TMDB','err');
+  }
+  document.getElementById('tmdbSearchIcon').innerHTML='<i class="fas fa-search"></i>';
+}
+
+function clearTmdb(){
+  tmdbData=null;
+  document.getElementById('tmdbCard').style.display='none';
+}
+
+/* ═══════════════════════════════════════════════
+   BUILD BLOGGER CONTENT
+═══════════════════════════════════════════════ */
+function buildContent(){
+  const title    = document.getElementById('fTitle').value.trim();
+  const subtitle = document.getElementById('fSubtitle').value.trim();
+  const desc     = document.getElementById('fDesc').value.trim();
+  const thumb    = document.getElementById('fThumb').value.trim();
+  const year     = document.getElementById('fYear').value.trim();
+  const rating   = document.getElementById('fRating').value.trim();
+  const ytVal    = document.getElementById('fYtUrl').value.trim();
+  const subTxt   = document.getElementById('fSubContent').value.trim();
+  const subLang  = getPillVal('subLangPills');
+  const live     = document.getElementById('fLive').value.trim();
+  const quals    = getQualities();
+
+  // detect YouTube ID
+  const ytMatch  = ytVal.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  const ytId     = ytMatch ? ytMatch[1] : (ytVal.length===11?ytVal:'');
+
+  // build JSON data object embedded in post
+  const data = {
+    type: curType,
+    title,
+    subtitle: subtitle||null,
+    description: desc||null,
+    thumbnailUrl: thumb||null,
+    published: new Date().toISOString(),
+    year: year||null,
+    rating: rating||null,
+    isYouTube: curType==='youtube'||!!ytId,
+    ytVideoId: ytId||null,
+    videoUrl: quals.length>0 ? quals[0].url : (live||null),
+    qualities: quals.length>0 ? quals : null,
+    liveUrl: live||null,
+    subtitleUrl: null,
+    subtitleContent: subTxt||null,
+    subtitleLang: subTxt?subLang:null,
+    categories: document.getElementById('fLabels').value.split(',').map(s=>s.trim()).filter(Boolean),
+    tmdbId: tmdbData?.id||null,
+    tmdbType: tmdbData?._type||null,
+    poster: tmdbData?.poster_path?`${TMDB_IMG}${tmdbData.poster_path}`:null,
+    backdrop: tmdbData?.backdrop_path?`${TMDB_ORIG}${tmdbData.backdrop_path}`:null,
+    genres: tmdbData?.genres?.map(g=>g.name)||null,
+    cast: tmdbData?.credits?.cast?.slice(0,6).map(a=>a.name)||null,
+    director: tmdbData?.credits?.crew?.find(c=>c.job==='Director')?.name||null,
+    isOngoing: (curType==='drama'||curType==='anime')&&(tmdbData?.status==='Returning Series'||false),
+    isLive: !!live,
+  };
+
+  // HTML post body
+  let html = `<!-- JAWRAB_DATA:${JSON.stringify(data)} -->\n`;
+  if(thumb) html += `<img src="${thumb}" style="width:100%;max-width:100%;border-radius:10px;" alt="${title}">\n`;
+  if(desc)  html += `<p>${desc.replace(/\n/g,'<br>')}</p>\n`;
+  if(quals.length>0){
+    html += `<ul>`;
+    quals.forEach(q=>{ html+=`<li><a href="${q.url}">${q.label}</a></li>`; });
+    html += `</ul>\n`;
+  }
+  if(ytId)  html += `<p>▶ <a href="https://youtu.be/${ytId}">مشاهدة على يوتيوب</a></p>\n`;
+  return html;
+}
+
+/* ═══════════════════════════════════════════════
+   PUBLISH
+═══════════════════════════════════════════════ */
+async function publish(){
+  if(!gToken){ toast('سجل الدخول أولاً ❌','err'); return; }
+  const title=document.getElementById('fTitle').value.trim();
+  if(!title){ toast('أدخل العنوان أولاً ❌','err'); document.getElementById('fTitle').focus(); return; }
+
+  const statusVal=getPillVal('statusPills');
+  const labels=document.getElementById('fLabels').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+  // progress UI
+  showProgress(0,'بناء المحتوى...',1);
+  const content=buildContent();
+  showProgress(40,'رفع البيانات...',2);
+
+  const postData={ kind:"blogger#post", title, content };
+  if(labels.length) postData.labels=labels;
+
+  const isLive=statusVal==='LIVE';
+  let url='', method='';
+  if(editMode&&editId){
+    url=`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${editId}?isDraft=${!isLive}&publish=${isLive}`;
+    method='PUT';
+  } else {
+    url=`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/?isDraft=${!isLive}`;
+    method='POST';
+  }
+
+  try{
+    const res=await fetch(url,{
+      method,
+      headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},
+      body:JSON.stringify(postData)
+    });
+    if(res.ok){
+      showProgress(100,'اكتمل ✅',3);
+      toast(editMode?'تم التعديل بنجاح ✏️':'تم النشر بنجاح ✅','ok');
+      setTimeout(()=>{
+        resetForm();
+        hideProgress();
+        if(isLive) loadPosts();
+      },1800);
+      editMode=false; editId=null;
+    } else {
+      const err=await res.json();
+      hideProgress();
+      toast(`خطأ: ${err.error?.message||'غير معروف'}`,'err');
+    }
+  } catch(e){
+    hideProgress();
+    toast('فشل الاتصال بالخادم ❌','err');
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   PROGRESS HELPERS
+═══════════════════════════════════════════════ */
+function showProgress(pct,label,step){
+  document.getElementById('publishProgress').style.display='block';
+  document.getElementById('progressBar').style.width=pct+'%';
+  document.getElementById('progressLabel').textContent=label;
+  document.querySelectorAll('.progress-step').forEach((el,i)=>{
+    el.classList.remove('active','done');
+    if(i+1<step) el.classList.add('done');
+    if(i+1===step) el.classList.add('active');
+  });
+  document.getElementById('btnSubmit').disabled=true;
+}
+function hideProgress(){
+  document.getElementById('publishProgress').style.display='none';
+  document.getElementById('btnSubmit').disabled=false;
+}
+
+/* ═══════════════════════════════════════════════
+   RESET
+═══════════════════════════════════════════════ */
+function resetForm(){
+  document.getElementById('fTitle').value='';
+  document.getElementById('fSubtitle').value='';
+  document.getElementById('fLabels').value='';
+  document.getElementById('fDesc').value='';
+  document.getElementById('fThumb').value='';
+  document.getElementById('fYtUrl').value='';
+  document.getElementById('fYear').value='';
+  document.getElementById('fRating').value='';
+  document.getElementById('fLive').value='';
+  document.getElementById('fSubContent').value='';
+  clearThumb(); clearSub(); clearTmdb();
+  document.getElementById('ytPreview').style.display='none';
+  document.getElementById('qualList').innerHTML='';
+  qualities=[];
+  document.getElementById('tmdbQuery').value='';
+  editMode=false; editId=null;
+  tmdbData=null;
+  hideProgress();
+  document.getElementById('btnSubmit').innerHTML='<i class="fas fa-paper-plane"></i> نشر المحتوى';
+}
+
+/* ═══════════════════════════════════════════════
+   LOAD POSTS
+═══════════════════════════════════════════════ */
+async function loadPosts(){
+  if(!gToken){ toast('سجل الدخول أولاً','warn'); return; }
+  document.getElementById('postsList').innerHTML='<div class="posts-empty"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+  try{
+    const r=await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?maxResults=20&fetchBodies=false`,{
+      headers:{'Authorization':'Bearer '+gToken}
+    });
+    const d=await r.json();
+    if(!d.items||!d.items.length){
+      document.getElementById('postsList').innerHTML='<div class="posts-empty">لا توجد مقالات بعد</div>';
+      return;
+    }
+    const typeIcons={movie:'🎬',drama:'📺',anime:'🎌',youtube:'▶️',video:'🎥'};
+    document.getElementById('postsList').innerHTML=d.items.map(p=>{
+      const date=new Date(p.published).toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});
+      // guess type from labels
+      let icon='📄';
+      if(p.labels){
+        for(const [t,ic] of Object.entries(typeIcons)){
+          if(p.labels.some(l=>l.includes(t)||t.includes(l.toLowerCase()))){ icon=ic; break; }
+        }
+      }
+      return `<div class="post-item">
+        <div class="post-item-icon">${icon}</div>
+        <div class="post-item-title" title="${p.title}">${p.title}</div>
+        <div class="post-item-date">${date}</div>
+        <div class="post-item-actions">
+          <button class="post-edit-btn" onclick="startEdit('${p.id}',${JSON.stringify(p.title).replace(/"/g,'&quot;')})" title="تعديل"><i class="fas fa-pen"></i></button>
+          <button class="post-del-btn" onclick="deletePost('${p.id}')" title="حذف"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e){
+    document.getElementById('postsList').innerHTML='<div class="posts-empty" style="color:#ef4444;">خطأ في التحميل</div>';
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   EDIT
+═══════════════════════════════════════════════ */
+async function startEdit(id, title){
+  if(!gToken) return;
+  toast('جاري جلب المقال...','info');
+  try{
+    const r=await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,{
+      headers:{'Authorization':'Bearer '+gToken}
+    });
+    const d=await r.json();
+    editMode=true; editId=id;
+    document.getElementById('fTitle').value=d.title||'';
+    // try to parse embedded JSON
+    const m=d.content?.match(/<!--\s*JAWRAB_DATA:(.*?)-->/s);
+    if(m){
+      try{
+        const data=JSON.parse(m[1]);
+        if(data.description) document.getElementById('fDesc').value=data.description;
+        if(data.thumbnailUrl){ document.getElementById('fThumb').value=data.thumbnailUrl; previewThumb(data.thumbnailUrl); }
+        if(data.year) document.getElementById('fYear').value=data.year;
+        if(data.rating) document.getElementById('fRating').value=data.rating;
+        if(data.subtitleContent) document.getElementById('fSubContent').value=data.subtitleContent;
+        if(data.ytVideoId){ document.getElementById('fYtUrl').value=data.ytVideoId; parseYT(data.ytVideoId); }
+        if(data.liveUrl) document.getElementById('fLive').value=data.liveUrl;
+        if(data.type) setType(data.type, document.querySelector(`[data-type="${data.type}"]`)||document.querySelector('[data-type="movie"]'));
+        // qualities
+        document.getElementById('qualList').innerHTML=''; qualities=[];
+        (data.qualities||[]).forEach(q=>addQuality(q.label,q.url));
+      } catch(e){}
+    }
+    if(d.labels) document.getElementById('fLabels').value=d.labels.join(', ');
+    document.getElementById('btnSubmit').innerHTML='<i class="fas fa-pen"></i> حفظ التعديلات';
+    window.scrollTo({top:0,behavior:'smooth'});
+    toast('وضع التعديل نشط ✏️','warn');
+  } catch(e){
+    toast('خطأ في جلب المقال','err');
+  }
+}
+
+/* ═══════════════════════════════════════════════
+   DELETE
+═══════════════════════════════════════════════ */
+async function deletePost(id){
+  if(!confirm('حذف هذا المقال نهائياً؟')) return;
+  try{
+    const r=await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,{
+      method:'DELETE',
+      headers:{'Authorization':'Bearer '+gToken}
+    });
+    if(r.ok){ toast('تم الحذف ✅','ok'); loadPosts(); }
+    else toast('فشل الحذف ❌','err');
+  } catch(e){ toast('خطأ في الاتصال','err'); }
+}
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded',()=>{
+  // default: movie type with one quality row
+  setType('movie', document.querySelector('[data-type="movie"]'));
+  addQuality('1080p','');
+
+  // نبني الـ client مبكراً ثم نحاول استعادة الجلسة
+  // Google GSI قد لا يكون جاهزاً فوراً — ننتظر تحميله
+  waitForGSI().then(()=>{
+    buildGsiClient();
+    if(!restoreToken()){
+      console.log('[Auth] لا توجد جلسة محفوظة');
+    }
+  });
+});
+
+// ننتظر تحميل مكتبة GSI (تحمّل async)
+function waitForGSI(tries=0){
+  return new Promise(resolve=>{
+    if(typeof google!=='undefined'&&google.accounts){
+      resolve(); return;
+    }
+    if(tries>30){ resolve(); return; } // استسلام بعد 3 ثوانٍ
+    setTimeout(()=>waitForGSI(tries+1).then(resolve), 100);
+  });
+}
+</script>
+</body>
+</html>

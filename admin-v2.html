@@ -1,0 +1,1506 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#0d1117">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>jawrab — لوحة النشر</title>
+<script src="https://accounts.google.com/gsi/client" async></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<style>
+:root{
+  --bg:#0d1117;--surface:#161b22;--card:#1c2130;
+  --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.13);
+  --accent:#e8223a;--accent2:#c41730;
+  --green:#22c55e;--yellow:#f59e0b;--blue:#3b82f6;--purple:#a855f7;
+  --text:#e6edf3;--text2:#8b949e;--text3:#484f58;
+  --r:12px;--r2:8px;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Cairo',sans-serif;}
+body{background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+/* scrollbar */
+::-webkit-scrollbar{width:4px;height:4px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+
+/* ── TOPBAR ── */
+.tb{
+  position:sticky;top:0;z-index:200;height:54px;
+  background:rgba(13,17,23,0.94);backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;gap:12px;
+}
+.tb-logo{
+  display:flex;align-items:center;gap:9px;
+  font-size:1.1em;font-weight:900;color:var(--text);
+  text-decoration:none;
+}
+.tb-logo img{width:30px;height:30px;border-radius:7px;object-fit:cover;}
+.tb-logo span{background:linear-gradient(135deg,var(--accent),#ff6b35);
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.tb-right{display:flex;align-items:center;gap:8px;}
+.auth-pill{
+  display:flex;align-items:center;gap:7px;
+  background:var(--surface);border:1px solid var(--border2);
+  border-radius:20px;padding:5px 12px;font-size:0.78em;color:var(--text2);
+}
+.auth-dot{width:7px;height:7px;border-radius:50%;background:#4b5563;transition:background .3s;}
+.auth-dot.ok{background:var(--green);}
+#sessionTimer{font-size:0.7em;color:var(--text3);}
+.btn-login{
+  border:none;border-radius:20px;padding:7px 16px;
+  font-size:0.8em;font-weight:700;cursor:pointer;
+  font-family:'Cairo',sans-serif;transition:opacity .2s,transform .15s;
+  background:linear-gradient(135deg,var(--accent),#ff4444);color:#fff;
+  display:flex;align-items:center;gap:6px;
+}
+.btn-login:active{transform:scale(.95);}
+
+/* ── MAIN ── */
+.main{max-width:920px;margin:0 auto;padding:22px 16px 80px;}
+
+/* ── TYPE TABS ── */
+.type-tabs{
+  display:flex;gap:6px;margin-bottom:20px;
+  overflow-x:auto;scrollbar-width:none;padding-bottom:2px;
+}
+.type-tabs::-webkit-scrollbar{display:none;}
+.ttab{
+  display:flex;align-items:center;gap:7px;flex-shrink:0;
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:20px;padding:8px 16px;font-size:0.82em;font-weight:700;
+  color:var(--text2);cursor:pointer;transition:all .18s;
+  font-family:'Cairo',sans-serif;
+}
+.ttab i{font-size:0.95em;}
+.ttab:hover{border-color:var(--border2);color:var(--text);}
+.ttab.active{border-color:var(--t-clr,var(--accent));color:var(--t-clr,var(--accent));
+  background:color-mix(in srgb,var(--t-clr,var(--accent)) 10%,transparent);}
+
+/* ── CARD ── */
+.card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-bottom:16px;
+}
+.card-head{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.card-head-icon{
+  width:36px;height:36px;border-radius:9px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1em;flex-shrink:0;
+}
+.card-head-title{font-size:.9em;font-weight:700;}
+.card-head-sub{font-size:.72em;color:var(--text2);margin-top:2px;}
+.card-body{padding:18px;}
+
+/* ── SECTIONS ── */
+.sec{margin-bottom:20px;}
+.sec:last-child{margin-bottom:0;}
+.sec-title{
+  font-size:.68em;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:1.5px;
+  margin-bottom:10px;display:flex;align-items:center;gap:5px;
+}
+.sec-title i{color:var(--accent);font-size:.9em;}
+
+/* ── FIELDS ── */
+.field{margin-bottom:12px;}
+.field:last-child{margin-bottom:0;}
+.field label{display:block;font-size:.78em;font-weight:600;color:var(--text2);margin-bottom:5px;}
+.field label .req{color:var(--accent);}
+.inp,.sel,.ta{
+  width:100%;background:var(--surface);border:1.5px solid var(--border);
+  color:var(--text);border-radius:var(--r2);
+  padding:9px 12px;font-size:.85em;font-family:'Cairo',sans-serif;
+  outline:none;transition:border-color .2s,box-shadow .2s;
+}
+.inp:focus,.sel:focus,.ta:focus{
+  border-color:var(--accent);box-shadow:0 0 0 3px rgba(232,34,58,.1);
+}
+.ta{resize:vertical;min-height:80px;}
+.sel{cursor:pointer;}
+.sel option{background:var(--surface);}
+.inp-wrap{position:relative;}
+.inp-wrap .inp{padding-left:36px;}
+.inp-wrap .inp-icon{
+  position:absolute;left:11px;top:50%;transform:translateY(-50%);
+  color:var(--text3);font-size:.85em;pointer-events:none;
+}
+.inp-wrap .inp-action{
+  position:absolute;left:8px;top:50%;transform:translateY(-50%);
+  background:var(--surface);border:1px solid var(--border2);
+  color:var(--text2);border-radius:6px;padding:3px 9px;
+  font-size:.72em;cursor:pointer;font-family:'Cairo',sans-serif;
+  transition:all .15s;
+}
+.inp-wrap .inp-action:hover{border-color:var(--accent);color:var(--accent);}
+
+/* grid 2 col */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+@media(max-width:480px){.grid2{grid-template-columns:1fr;}}
+
+/* ── PILLS ── */
+.pills{display:flex;gap:5px;flex-wrap:wrap;}
+.pill{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:16px;padding:4px 12px;font-size:.75em;font-weight:600;
+  color:var(--text2);cursor:pointer;transition:all .15s;font-family:'Cairo',sans-serif;
+}
+.pill.on{background:rgba(232,34,58,.15);border-color:var(--accent);color:var(--accent);}
+.pill:active{transform:scale(.95);}
+
+/* ── QUALITIES ── */
+.qual-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;}
+.qual-row{display:grid;grid-template-columns:86px 1fr auto auto;gap:7px;align-items:center;}
+.qual-badge{
+  background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);
+  color:var(--blue);border-radius:6px;padding:4px 0;
+  text-align:center;font-size:.78em;font-weight:700;
+  font-family:'Cairo',sans-serif;outline:none;cursor:pointer;
+}
+.qual-badge option{background:var(--surface);}
+.q-test{
+  background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);
+  color:var(--green);border-radius:6px;width:32px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.8em;transition:background .15s;flex-shrink:0;
+}
+.q-test:hover{background:rgba(34,197,94,.2);}
+.q-test.testing{animation:pulse .7s infinite;}
+.q-del{
+  background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);
+  color:#ef4444;border-radius:6px;width:32px;height:34px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.8em;transition:background .15s;flex-shrink:0;
+}
+.q-del:hover{background:rgba(239,68,68,.2);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.btn-add-qual{
+  width:100%;background:var(--surface);border:1.5px dashed var(--border2);
+  color:var(--text2);border-radius:var(--r2);padding:8px;
+  font-size:.8em;cursor:pointer;font-family:'Cairo',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  transition:all .2s;
+}
+.btn-add-qual:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── SUBTITLE UPLOAD ── */
+.sub-zone{
+  border:2px dashed var(--border2);border-radius:var(--r2);
+  padding:18px;text-align:center;cursor:pointer;
+  transition:all .2s;position:relative;
+}
+.sub-zone:hover,.sub-zone.drag{border-color:var(--accent);background:rgba(232,34,58,.04);}
+.sub-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.sub-zone-icon{font-size:1.6em;margin-bottom:6px;display:block;color:var(--text3);}
+.sub-zone-text{font-size:.78em;color:var(--text2);}
+.sub-zone-text b{color:var(--accent);}
+.sub-ok{
+  display:none;align-items:center;gap:9px;
+  background:rgba(34,197,94,.08);border:1px solid rgba(34,197,94,.2);
+  border-radius:var(--r2);padding:9px 12px;
+  font-size:.8em;color:var(--green);
+}
+.sub-ok i{font-size:1.1em;}
+.sub-ok-clr{
+  margin-right:auto;background:none;border:none;
+  color:#ef4444;cursor:pointer;font-size:.85em;
+}
+
+/* ── THUMB PREVIEW ── */
+.thumb-wrap{
+  display:none;position:relative;border-radius:var(--r2);overflow:hidden;
+  aspect-ratio:16/9;background:var(--surface);border:1px solid var(--border);
+  margin-top:8px;
+}
+.thumb-wrap img{width:100%;height:100%;object-fit:cover;}
+.thumb-del{
+  position:absolute;top:7px;left:7px;
+  background:rgba(0,0,0,.75);border:none;color:#fff;
+  border-radius:50%;width:28px;height:28px;
+  font-size:.82em;cursor:pointer;display:flex;align-items:center;justify-content:center;
+}
+
+/* ── TMDB ── */
+.tmdb-res{
+  position:absolute;top:calc(100% + 5px);right:0;left:0;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--r2);z-index:60;max-height:230px;
+  overflow-y:auto;display:none;box-shadow:0 12px 40px rgba(0,0,0,.6);
+}
+.tmdb-item{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;cursor:pointer;transition:background .15s;
+  border-bottom:1px solid var(--border);
+}
+.tmdb-item:last-child{border-bottom:none;}
+.tmdb-item:hover{background:rgba(255,255,255,.04);}
+.tmdb-item img{width:34px;height:50px;object-fit:cover;border-radius:4px;flex-shrink:0;background:var(--surface);}
+.tmdb-item .ti{flex:1;}
+.tmdb-item .ti-title{font-size:.83em;font-weight:600;}
+.tmdb-item .ti-meta{font-size:.7em;color:var(--text2);margin-top:2px;}
+.tmdb-spin{text-align:center;padding:14px;font-size:.8em;color:var(--text2);}
+.tmdb-chip{
+  font-size:.66em;padding:2px 6px;border-radius:4px;font-weight:700;margin-left:4px;
+}
+.tmdb-chip.m{background:rgba(232,34,58,.18);color:var(--accent);}
+.tmdb-chip.t{background:rgba(168,85,247,.18);color:var(--purple);}
+.tmdb-selected{
+  display:none;
+  background:linear-gradient(135deg,rgba(232,34,58,.07),rgba(59,130,246,.04));
+  border:1px solid rgba(232,34,58,.18);border-radius:var(--r2);
+  padding:12px;margin-top:8px;position:relative;
+}
+.ts-inner{display:flex;gap:12px;align-items:flex-start;}
+.ts-poster{width:54px;height:80px;object-fit:cover;border-radius:5px;flex-shrink:0;}
+.ts-info .ts-title{font-size:.86em;font-weight:700;}
+.ts-info .ts-meta{font-size:.71em;color:var(--text2);margin-top:4px;line-height:1.65;}
+.ts-clr{
+  position:absolute;top:9px;left:9px;
+  background:rgba(239,68,68,.13);border:1px solid rgba(239,68,68,.25);
+  color:#ef4444;border-radius:6px;padding:3px 8px;font-size:.7em;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+}
+
+/* ── YT PREVIEW ── */
+.yt-prev{
+  display:none;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);overflow:hidden;margin-top:8px;
+}
+.yt-prev img{width:100%;aspect-ratio:16/9;object-fit:cover;display:block;}
+.yt-prev-info{
+  padding:9px 12px;display:flex;align-items:center;gap:9px;
+}
+.yt-prev-logo{color:#ff0000;font-size:1.3em;}
+.yt-prev-txt{font-size:.78em;color:var(--text2);}
+.yt-prev-txt b{color:var(--text);display:block;font-size:1.05em;}
+
+/* ── SUBMIT ── */
+.submit-row{display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;}
+.btn-pub{
+  flex:1;min-width:140px;
+  background:linear-gradient(135deg,var(--accent),#ff4444);
+  border:none;color:#fff;border-radius:var(--r2);
+  padding:12px 20px;font-size:.9em;font-weight:700;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  display:flex;align-items:center;justify-content:center;gap:7px;
+  transition:opacity .2s,transform .15s;
+}
+.btn-pub:active{transform:scale(.98);}
+.btn-pub:disabled{opacity:.35;cursor:not-allowed;}
+.btn-rst{
+  background:var(--surface);border:1.5px solid var(--border2);
+  color:var(--text2);border-radius:var(--r2);
+  padding:12px 18px;font-size:.85em;font-weight:600;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  display:flex;align-items:center;gap:6px;
+  transition:all .18s;
+}
+.btn-rst:hover{border-color:var(--text2);color:var(--text);}
+.btn-prev{
+  background:rgba(59,130,246,.12);border:1.5px solid rgba(59,130,246,.25);
+  color:var(--blue);border-radius:var(--r2);
+  padding:12px 18px;font-size:.85em;font-weight:600;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  display:flex;align-items:center;gap:6px;transition:all .18s;
+}
+.btn-prev:hover{background:rgba(59,130,246,.2);}
+
+/* ── PROGRESS ── */
+.pub-prog{
+  display:none;background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:18px;margin-top:14px;
+}
+.prog-label{font-size:.82em;color:var(--text2);margin-bottom:10px;text-align:center;}
+.prog-bar-w{height:5px;background:var(--border);border-radius:3px;overflow:hidden;}
+.prog-bar{height:100%;border-radius:3px;width:0%;
+  background:linear-gradient(90deg,var(--accent),#ff6b35);transition:width .4s ease;}
+.prog-steps{
+  display:flex;justify-content:space-between;
+  font-size:.68em;color:var(--text3);margin-top:8px;
+}
+.prog-step.act{color:var(--accent);}
+.prog-step.done{color:var(--green);}
+
+/* ── TOAST ── */
+.toast-w{
+  position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+  z-index:9999;display:flex;flex-direction:column;gap:7px;
+  align-items:center;pointer-events:none;
+}
+.toast{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:24px;padding:10px 20px;
+  font-size:.82em;font-weight:600;color:var(--text);
+  box-shadow:0 8px 28px rgba(0,0,0,.5);
+  display:flex;align-items:center;gap:7px;
+  animation:tIn .32s cubic-bezier(.34,1.56,.64,1);
+  pointer-events:auto;
+}
+.toast.ok i{color:var(--green);}
+.toast.err i{color:var(--accent);}
+.toast.info i{color:var(--blue);}
+.toast.warn i{color:var(--yellow);}
+.toast.out{animation:tOut .22s ease-in forwards;}
+@keyframes tIn{from{opacity:0;transform:translateY(14px) scale(.9)}to{opacity:1;transform:none}}
+@keyframes tOut{to{opacity:0;transform:translateY(8px) scale(.95)}}
+
+/* ── POSTS LIST ── */
+.posts-card{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-top:14px;
+}
+.posts-head{
+  padding:14px 18px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.posts-head-title{font-size:.87em;font-weight:700;display:flex;align-items:center;gap:7px;}
+.posts-head-title i{color:var(--blue);}
+.btn-refresh{
+  background:var(--surface);border:1px solid var(--border2);
+  color:var(--text2);border-radius:16px;
+  padding:5px 12px;font-size:.75em;font-weight:600;
+  cursor:pointer;font-family:'Cairo',sans-serif;
+  display:flex;align-items:center;gap:5px;transition:all .18s;
+}
+.btn-refresh:hover{border-color:var(--blue);color:var(--blue);}
+.posts-list{max-height:340px;overflow-y:auto;}
+.post-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 18px;border-bottom:1px solid var(--border);
+  transition:background .15s;
+}
+.post-item:last-child{border-bottom:none;}
+.post-item:hover{background:rgba(255,255,255,.02);}
+.pi-icon{
+  width:32px;height:32px;border-radius:7px;
+  background:var(--surface);border:1px solid var(--border);
+  display:flex;align-items:center;justify-content:center;
+  font-size:.85em;flex-shrink:0;color:var(--text2);
+}
+.pi-title{flex:1;font-size:.81em;color:var(--text);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.pi-date{font-size:.68em;color:var(--text3);flex-shrink:0;}
+.pi-acts{display:flex;gap:5px;flex-shrink:0;}
+.pi-btn{
+  border:none;border-radius:6px;width:28px;height:28px;
+  cursor:pointer;font-size:.78em;
+  display:flex;align-items:center;justify-content:center;transition:all .15s;
+}
+.pi-btn.edit{background:rgba(59,130,246,.15);color:var(--blue);}
+.pi-btn.edit:hover{background:rgba(59,130,246,.28);}
+.pi-btn.del{background:rgba(239,68,68,.12);color:#ef4444;}
+.pi-btn.del:hover{background:rgba(239,68,68,.25);}
+.posts-empty{padding:28px;text-align:center;color:var(--text3);font-size:.83em;}
+
+/* ── PREVIEW MODAL ── */
+.modal-bg{
+  display:none;position:fixed;inset:0;z-index:500;
+  background:rgba(0,0,0,.85);backdrop-filter:blur(8px);
+  align-items:center;justify-content:center;padding:16px;
+}
+.modal-bg.open{display:flex;}
+.modal{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:var(--r);overflow:hidden;
+  width:100%;max-width:780px;max-height:90vh;
+  display:flex;flex-direction:column;
+}
+.modal-head{
+  padding:13px 16px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+  flex-shrink:0;
+}
+.modal-head-title{font-size:.88em;font-weight:700;display:flex;align-items:center;gap:7px;}
+.modal-head-title i{color:var(--blue);}
+.modal-close{
+  background:rgba(255,255,255,.06);border:1px solid var(--border2);
+  color:var(--text2);border-radius:6px;width:28px;height:28px;
+  font-size:.8em;cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .15s;
+}
+.modal-close:hover{background:rgba(239,68,68,.2);color:#ef4444;border-color:rgba(239,68,68,.3);}
+.modal-body{padding:18px;overflow-y:auto;flex:1;}
+/* preview styles */
+.prev-hero{
+  aspect-ratio:16/9;border-radius:var(--r2);overflow:hidden;
+  background:var(--surface);margin-bottom:16px;position:relative;
+}
+.prev-hero img{width:100%;height:100%;object-fit:cover;display:block;}
+.prev-hero-badge{
+  position:absolute;top:10px;right:10px;
+  background:rgba(0,0,0,.75);border:1px solid rgba(255,255,255,.15);
+  border-radius:6px;padding:3px 9px;font-size:.72em;font-weight:700;color:#fff;
+}
+.prev-title{font-size:1.1em;font-weight:900;margin-bottom:4px;}
+.prev-sub{font-size:.78em;color:var(--text2);margin-bottom:10px;}
+.prev-meta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;}
+.prev-chip{
+  font-size:.72em;background:var(--surface);border:1px solid var(--border2);
+  border-radius:12px;padding:3px 10px;color:var(--text2);
+}
+.prev-desc{font-size:.83em;color:var(--text2);line-height:1.7;margin-bottom:14px;}
+.prev-quals-title{font-size:.75em;font-weight:700;color:var(--text3);
+  text-transform:uppercase;letter-spacing:1px;margin-bottom:8px;}
+.prev-quals{display:flex;gap:6px;flex-wrap:wrap;}
+.prev-qual{
+  background:rgba(59,130,246,.15);border:1px solid rgba(59,130,246,.3);
+  color:var(--blue);border-radius:8px;padding:5px 14px;font-size:.8em;font-weight:700;
+  cursor:pointer;transition:background .15s;
+}
+.prev-qual:hover{background:rgba(59,130,246,.25);}
+.prev-sub-txt{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r2);padding:10px 12px;
+  font-size:.75em;color:var(--text2);line-height:1.6;
+  max-height:100px;overflow-y:auto;margin-top:10px;
+  font-family:monospace;direction:ltr;text-align:left;
+}
+
+/* ── SPIN ── */
+.spin{
+  width:14px;height:14px;border-radius:50%;
+  border:2px solid rgba(255,255,255,.25);border-top-color:#fff;
+  animation:spin .7s linear infinite;display:inline-block;
+}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── VIDEO TEST BADGE ── */
+.vtest-ok{color:var(--green);}
+.vtest-fail{color:#ef4444;}
+.vtest-ing{color:var(--yellow);}
+
+@media(max-width:480px){
+  .qual-row{grid-template-columns:75px 1fr auto auto;}
+  .card-body{padding:14px;}
+  .tb{padding:0 14px;}
+}
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="tb">
+  <a class="tb-logo" href="#">
+    <img id="pwaIcon" src="https://i.suar.me/Bpqvg/m" alt="jawrab">
+    <span>jawrab</span>
+  </a>
+  <div class="tb-right">
+    <div class="auth-pill">
+      <div class="auth-dot" id="authDot"></div>
+      <span id="authLabel">غير متصل</span>
+      <span id="sessionTimer"></span>
+    </div>
+    <button class="btn-login" id="loginBtn">
+      <i class="fab fa-google"></i> دخول
+    </button>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- TYPE TABS -->
+<div class="type-tabs" id="typeTabs">
+  <div class="ttab active" data-t="movie"   style="--t-clr:#e8223a" onclick="setType('movie',this)">
+    <i class="fas fa-film"></i> فيلم
+  </div>
+  <div class="ttab" data-t="drama"   style="--t-clr:#a855f7" onclick="setType('drama',this)">
+    <i class="fas fa-tv"></i> دراما
+  </div>
+  <div class="ttab" data-t="anime"   style="--t-clr:#06b6d4" onclick="setType('anime',this)">
+    <i class="fas fa-wand-sparkles"></i> أنمي
+  </div>
+  <div class="ttab" data-t="youtube" style="--t-clr:#ef4444" onclick="setType('youtube',this)">
+    <i class="fab fa-youtube"></i> يوتيوب
+  </div>
+  <div class="ttab" data-t="video"   style="--t-clr:#22c55e" onclick="setType('video',this)">
+    <i class="fas fa-video"></i> فيديو
+  </div>
+  <div class="ttab" data-t="live"    style="--t-clr:#f59e0b" onclick="setType('live',this)">
+    <i class="fas fa-satellite-dish"></i> بث مباشر
+  </div>
+</div>
+
+<!-- FORM CARD -->
+<div class="card" id="formCard">
+  <div class="card-head" id="cardHead">
+    <div class="card-head-icon" id="cardIcon" style="background:rgba(232,34,58,.15);color:#e8223a;">
+      <i class="fas fa-film"></i>
+    </div>
+    <div>
+      <div class="card-head-title" id="cardTitle">نشر فيلم</div>
+      <div class="card-head-sub"  id="cardSub">بيانات تلقائية من TMDB</div>
+    </div>
+  </div>
+  <div class="card-body">
+
+    <!-- TMDB SEARCH -->
+    <div class="sec" id="secTmdb">
+      <div class="sec-title"><i class="fas fa-magnifying-glass"></i> بحث TMDB</div>
+      <div class="field" style="position:relative;">
+        <div class="inp-wrap">
+          <input class="inp" id="tmdbQ" placeholder="ابحث لجلب البيانات..." autocomplete="off">
+          <div class="inp-icon"><i class="fas fa-search"></i></div>
+        </div>
+        <div class="tmdb-res" id="tmdbRes"></div>
+      </div>
+      <div class="tmdb-selected" id="tmdbSel">
+        <div class="ts-inner">
+          <img class="ts-poster" id="tsPoster" src="" alt="">
+          <div class="ts-info">
+            <div class="ts-title" id="tsTitle"></div>
+            <div class="ts-meta"  id="tsMeta"></div>
+          </div>
+        </div>
+        <button class="ts-clr" onclick="clearTmdb()"><i class="fas fa-times"></i> مسح</button>
+      </div>
+    </div>
+
+    <!-- BASIC INFO -->
+    <div class="sec">
+      <div class="sec-title"><i class="fas fa-circle-info"></i> المعلومات الأساسية</div>
+
+      <div class="field">
+        <label><span class="req">* </span>العنوان</label>
+        <div class="inp-wrap">
+          <input class="inp" id="fTitle" placeholder="عنوان المحتوى">
+          <div class="inp-icon"><i class="fas fa-heading"></i></div>
+        </div>
+      </div>
+
+      <!-- حلقة/موسم (دراما + أنمي فقط) -->
+      <div class="field" id="fieldEp" style="display:none;">
+        <label>الحلقة / الموسم</label>
+        <input class="inp" id="fEp" placeholder="مثال: الحلقة 5 — الموسم 2">
+      </div>
+
+      <!-- تصنيفات المقال (Blogger labels) -->
+      <div class="field">
+        <label>
+          تصنيفات المقال
+          <span style="color:var(--text3);font-weight:400;"> (Blogger labels — مفصولة بفاصلة)</span>
+        </label>
+        <input class="inp" id="fLabels" placeholder="مسلسل, مترجم, 2024">
+      </div>
+
+      <!-- تصنيف المحتوى (genre/type داخل JSON) -->
+      <div class="field">
+        <label>
+          تصنيف المحتوى
+          <span style="color:var(--text3);font-weight:400;"> (أنواع — مفصولة بفاصلة)</span>
+        </label>
+        <input class="inp" id="fGenres" placeholder="أكشن, دراما, إثارة">
+      </div>
+
+      <!-- وصف (فيلم/دراما/أنمي فقط) -->
+      <div class="field" id="fieldDesc" style="display:none;">
+        <label>قصة المحتوى</label>
+        <textarea class="ta" id="fDesc" placeholder="ملخص القصة..."></textarea>
+      </div>
+
+    </div>
+
+    <!-- THUMBNAIL -->
+    <div class="sec">
+      <div class="sec-title"><i class="fas fa-image"></i> الصورة المصغرة</div>
+      <div class="field">
+        <div class="inp-wrap">
+          <input class="inp" id="fThumb" placeholder="https://..." oninput="prevThumb(this.value)">
+          <div class="inp-icon"><i class="fas fa-link"></i></div>
+        </div>
+      </div>
+      <div class="thumb-wrap" id="thumbWrap">
+        <img id="thumbImg" src="" alt="">
+        <button class="thumb-del" onclick="clearThumb()"><i class="fas fa-times"></i></button>
+      </div>
+    </div>
+
+    <!-- YOUTUBE -->
+    <div class="sec" id="secYT" style="display:none;">
+      <div class="sec-title"><i class="fab fa-youtube"></i> فيديو يوتيوب</div>
+      <div class="field">
+        <label><span class="req">* </span>رابط يوتيوب</label>
+        <div class="inp-wrap">
+          <input class="inp" id="fYtUrl" placeholder="https://youtu.be/xxxx" oninput="parseYT(this.value)">
+          <div class="inp-icon"><i class="fab fa-youtube"></i></div>
+          <button class="inp-action" onclick="fetchYtTitle()" title="جلب العنوان من يوتيوب">
+            <i class="fas fa-bolt"></i> جلب العنوان
+          </button>
+        </div>
+      </div>
+      <div class="yt-prev" id="ytPrev">
+        <img id="ytThumb" src="" alt="">
+        <div class="yt-prev-info">
+          <i class="fab fa-youtube yt-prev-logo"></i>
+          <div class="yt-prev-txt">
+            <b id="ytTitle">—</b>
+            <span id="ytId">—</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- VIDEO URLS + QUALITIES -->
+    <div class="sec" id="secVideo">
+      <div class="sec-title"><i class="fas fa-link"></i> روابط الفيديو</div>
+      <div class="qual-list" id="qualList"></div>
+      <button class="btn-add-qual" onclick="addQual()">
+        <i class="fas fa-plus"></i> إضافة جودة
+      </button>
+    </div>
+
+    <!-- LIVE URL -->
+    <div class="sec" id="secLive" style="display:none;">
+      <div class="sec-title"><i class="fas fa-satellite-dish"></i> رابط البث المباشر</div>
+      <div class="field">
+        <label><span class="req">* </span>رابط HLS / M3U8</label>
+        <div class="inp-wrap">
+          <input class="inp" id="fLive" placeholder="https://...m3u8">
+          <div class="inp-icon"><i class="fas fa-broadcast-tower"></i></div>
+        </div>
+      </div>
+      <div class="field">
+        <label>اسم القناة / البث</label>
+        <input class="inp" id="fLiveName" placeholder="اسم البث أو القناة">
+      </div>
+      <div class="field">
+        <label>شعار القناة (URL)</label>
+        <input class="inp" id="fLiveLogo" placeholder="https://...png">
+      </div>
+    </div>
+
+    <!-- SUBTITLE -->
+    <div class="sec" id="secSub">
+      <div class="sec-title"><i class="fas fa-closed-captioning"></i> ملف الترجمة (VTT / SRT)</div>
+      <div class="sub-zone" id="subZone">
+        <input type="file" id="subInput" accept=".vtt,.srt" onchange="handleSub(this)">
+        <i class="fas fa-file-lines sub-zone-icon"></i>
+        <div class="sub-zone-text">اسحب ملف <b>.vtt</b> أو <b>.srt</b> أو انقر</div>
+      </div>
+      <div class="sub-ok" id="subOk">
+        <i class="fas fa-circle-check"></i>
+        <span id="subName"></span>
+        <button class="sub-ok-clr" onclick="clearSub()"><i class="fas fa-times"></i></button>
+      </div>
+      <div class="field" style="margin-top:10px;">
+        <label>أو الصق المحتوى مباشرة</label>
+        <textarea class="ta" id="fSubTxt" placeholder="WEBVTT&#10;&#10;00:00:01.000 --> 00:00:04.000&#10;..."
+          style="font-family:monospace;font-size:.76em;direction:ltr;text-align:left;min-height:80px;"></textarea>
+      </div>
+      <div class="field">
+        <label>لغة الترجمة</label>
+        <div class="pills" id="subLangPills">
+          <div class="pill on"  data-v="ar" onclick="selPill(this,'subLangPills')">عربي</div>
+          <div class="pill"     data-v="en" onclick="selPill(this,'subLangPills')">إنجليزي</div>
+          <div class="pill"     data-v="fr" onclick="selPill(this,'subLangPills')">فرنسي</div>
+          <div class="pill"     data-v="tr" onclick="selPill(this,'subLangPills')">تركي</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- META -->
+    <div class="sec">
+      <div class="sec-title"><i class="fas fa-sliders"></i> بيانات إضافية</div>
+      <div class="grid2">
+        <div class="field">
+          <label>سنة الإنتاج</label>
+          <input class="inp" type="number" id="fYear" placeholder="2024" min="1900" max="2030">
+        </div>
+        <div class="field">
+          <label>التقييم / 10</label>
+          <input class="inp" type="number" id="fRating" placeholder="8.5" min="0" max="10" step="0.1">
+        </div>
+      </div>
+      <div class="field">
+        <label>حالة النشر</label>
+        <div class="pills" id="pubPills">
+          <div class="pill on" data-v="LIVE"  onclick="selPill(this,'pubPills')">
+            <i class="fas fa-globe" style="font-size:.85em;margin-left:3px;"></i>نشر مباشر
+          </div>
+          <div class="pill"    data-v="DRAFT" onclick="selPill(this,'pubPills')">
+            <i class="fas fa-pen" style="font-size:.85em;margin-left:3px;"></i>مسودة
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-row">
+      <button class="btn-pub" id="btnPub" onclick="publish()">
+        <i class="fas fa-paper-plane"></i> نشر المحتوى
+      </button>
+      <button class="btn-prev" onclick="openPreview()">
+        <i class="fas fa-eye"></i> معاينة
+      </button>
+      <button class="btn-rst" onclick="resetForm()">
+        <i class="fas fa-rotate-left"></i> إعادة
+      </button>
+    </div>
+
+    <!-- PROGRESS -->
+    <div class="pub-prog" id="pubProg">
+      <div class="prog-label" id="progLbl">جاري المعالجة...</div>
+      <div class="prog-bar-w"><div class="prog-bar" id="progBar"></div></div>
+      <div class="prog-steps">
+        <span class="prog-step" id="pst1">بناء البيانات</span>
+        <span class="prog-step" id="pst2">الرفع</span>
+        <span class="prog-step" id="pst3">اكتمل</span>
+      </div>
+    </div>
+
+  </div>
+</div><!-- /formCard -->
+
+<!-- POSTS LIST -->
+<div class="posts-card">
+  <div class="posts-head">
+    <div class="posts-head-title"><i class="fas fa-list-ul"></i> المقالات المنشورة</div>
+    <button class="btn-refresh" onclick="loadPosts()"><i class="fas fa-arrows-rotate"></i> تحديث</button>
+  </div>
+  <div class="posts-list" id="postsList">
+    <div class="posts-empty">انقر «تحديث» لعرض المقالات</div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- PREVIEW MODAL -->
+<div class="modal-bg" id="previewModal">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-head-title"><i class="fas fa-eye"></i> معاينة صفحة التشغيل</div>
+      <button class="modal-close" onclick="closePreview()"><i class="fas fa-times"></i></button>
+    </div>
+    <div class="modal-body" id="previewBody"></div>
+  </div>
+</div>
+
+<div class="toast-w" id="toastW"></div>
+
+<script>
+/* ════════════════════════════════════════
+   CONFIG
+════════════════════════════════════════ */
+const CLIENT_ID = "1095244236392-eqhgorr4t587vvr4vblmvlkqbh8kae9i.apps.googleusercontent.com";
+const BLOG_ID   = "6155177137677743195";
+const TMDB_KEY  = "1427d0e123035564137327f27f47c86c";
+const TMDB_BASE = "https://api.themoviedb.org/3";
+const TMDB_IMG  = "https://image.tmdb.org/t/p/w500";
+const TMDB_ORIG = "https://image.tmdb.org/t/p/original";
+const ICON_URL  = "https://i.suar.me/Bpqvg/m";
+
+/* ════════════════════════════════════════
+   STATE
+════════════════════════════════════════ */
+let gToken = '', renewTimer = null, gsiClient = null;
+const TOKEN_KEY = 'jwb_t', EXPIRY_KEY = 'jwb_e';
+let editMode = false, editId = null;
+let curType  = 'movie';
+let tmdbData = null;
+let qualities = [];
+
+/* ════════════════════════════════════════
+   AUTH
+════════════════════════════════════════ */
+function buildGsiClient(){
+  gsiClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/blogger',
+    callback: res => {
+      if(res.access_token){ saveToken(res.access_token, res.expires_in||3600); }
+      else if(res.error && res.error !== 'interaction_required'){ clearToken(); }
+    }
+  });
+}
+function doLogin(){
+  if(!gsiClient) buildGsiClient();
+  gsiClient.requestAccessToken({prompt:'consent'});
+}
+function saveToken(tok, exp){
+  const expiry = Date.now() + (exp-60)*1000;
+  gToken = tok;
+  try{ localStorage.setItem(TOKEN_KEY,tok); localStorage.setItem(EXPIRY_KEY,String(expiry)); }catch(e){}
+  scheduleRenew(expiry);
+  setAuthUI(true);
+  startTimer();
+  toast('الجلسة محفوظة','ok');
+  loadPosts();
+}
+function restoreToken(){
+  try{
+    const tok = localStorage.getItem(TOKEN_KEY);
+    const exp = parseInt(localStorage.getItem(EXPIRY_KEY)||'0');
+    if(tok && exp && Date.now() < exp){
+      gToken=tok; setAuthUI(true); scheduleRenew(exp); startTimer(); loadPosts(); return true;
+    }
+  }catch(e){}
+  return false;
+}
+function scheduleRenew(expMs){
+  if(renewTimer) clearTimeout(renewTimer);
+  const d = expMs - Date.now() - 5*60*1000;
+  if(d>0) renewTimer = setTimeout(silentRenew, d);
+  else silentRenew();
+}
+function silentRenew(){
+  if(!gsiClient) buildGsiClient();
+  try{ gsiClient.requestAccessToken({prompt:''}); }
+  catch(e){ clearToken(); }
+}
+function clearToken(){
+  gToken=''; if(renewTimer){clearTimeout(renewTimer);renewTimer=null;}
+  try{localStorage.removeItem(TOKEN_KEY);localStorage.removeItem(EXPIRY_KEY);}catch(e){}
+  setAuthUI(false);
+}
+function setAuthUI(on){
+  document.getElementById('authDot').classList.toggle('ok',on);
+  document.getElementById('authLabel').textContent = on?'متصل':'غير متصل';
+  const btn = document.getElementById('loginBtn');
+  if(on){
+    btn.innerHTML='<i class="fas fa-user-check"></i> متصل';
+    btn.style.background='linear-gradient(135deg,#22c55e,#16a34a)';
+    btn.onclick=()=>{ if(confirm('تسجيل الخروج؟')){clearToken();toast('تم الخروج','info');} };
+  } else {
+    btn.innerHTML='<i class="fab fa-google"></i> دخول';
+    btn.style.background='';
+    btn.onclick=doLogin;
+  }
+}
+function startTimer(){
+  const el=document.getElementById('sessionTimer');
+  if(!el)return;
+  function tick(){
+    try{
+      const exp=parseInt(localStorage.getItem(EXPIRY_KEY)||'0');
+      if(!exp||!gToken){el.textContent='';return;}
+      const left=exp-Date.now();
+      if(left<=0){el.textContent='';return;}
+      const m=Math.floor(left/60000), h=Math.floor(m/60);
+      el.textContent=h>0?`(${h}س ${m%60}د)`:`(${m}د)`;
+      el.style.color=left<10*60*1000?'var(--yellow)':'var(--text3)';
+    }catch(e){}
+  }
+  tick(); setInterval(tick,30000);
+}
+function waitGSI(n=0){
+  return new Promise(r=>{
+    if(typeof google!=='undefined'&&google.accounts){r();return;}
+    if(n>30){r();return;}
+    setTimeout(()=>waitGSI(n+1).then(r),100);
+  });
+}
+
+/* ════════════════════════════════════════
+   TYPE SWITCHER
+════════════════════════════════════════ */
+const TYPES = {
+  movie:  {icon:'fas fa-film',       clr:'#e8223a',bg:'rgba(232,34,58,.15)',  title:'نشر فيلم',         sub:'مع TMDB',       tmdb:true, yt:false, vid:true,  live:false, desc:true },
+  drama:  {icon:'fas fa-tv',         clr:'#a855f7',bg:'rgba(168,85,247,.15)',title:'نشر دراما/مسلسل',  sub:'مع TMDB',       tmdb:true, yt:false, vid:true,  live:false, desc:true },
+  anime:  {icon:'fas fa-wand-sparkles',clr:'#06b6d4',bg:'rgba(6,182,212,.15)',title:'نشر أنمي',          sub:'مع TMDB',       tmdb:true, yt:false, vid:true,  live:false, desc:true },
+  youtube:{icon:'fab fa-youtube',    clr:'#ef4444',bg:'rgba(239,68,68,.15)',  title:'نشر يوتيوب',       sub:'رابط يوتيوب',   tmdb:false,yt:true,  vid:false, live:false, desc:false},
+  video:  {icon:'fas fa-video',      clr:'#22c55e',bg:'rgba(34,197,94,.15)', title:'نشر فيديو',        sub:'MP4 / M3U8',    tmdb:false,yt:false, vid:true,  live:false, desc:false},
+  live:   {icon:'fas fa-satellite-dish',clr:'#f59e0b',bg:'rgba(245,158,11,.15)',title:'بث مباشر',      sub:'HLS / M3U8',    tmdb:false,yt:false, vid:false, live:true,  desc:false},
+};
+function setType(t, el){
+  curType=t;
+  document.querySelectorAll('.ttab').forEach(e=>e.classList.remove('active'));
+  el.classList.add('active');
+  const c=TYPES[t];
+  const ci=document.getElementById('cardIcon');
+  ci.style.background=c.bg; ci.style.color=c.clr;
+  ci.innerHTML=`<i class="${c.icon}"></i>`;
+  document.getElementById('cardTitle').textContent=c.title;
+  document.getElementById('cardSub').textContent=c.sub;
+  document.getElementById('secTmdb').style.display   = c.tmdb  ?'':'none';
+  document.getElementById('secYT').style.display     = c.yt    ?'':'none';
+  document.getElementById('secVideo').style.display  = c.vid   ?'':'none';
+  document.getElementById('secLive').style.display   = c.live  ?'':'none';
+  document.getElementById('fieldEp').style.display   = (t==='drama'||t==='anime')?'':'none';
+  document.getElementById('fieldDesc').style.display = c.desc  ?'':'none';
+  // default labels hint
+  const mp={movie:'فيلم',drama:'مسلسل, دراما',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث مباشر'};
+  if(!document.getElementById('fLabels').value) document.getElementById('fLabels').value=mp[t]||'';
+}
+
+/* ════════════════════════════════════════
+   PILLS
+════════════════════════════════════════ */
+function selPill(el, gid){
+  document.querySelectorAll(`#${gid} .pill`).forEach(p=>p.classList.remove('on'));
+  el.classList.add('on');
+}
+function getPill(gid){
+  const a=document.querySelector(`#${gid} .pill.on`); return a?a.dataset.v:'';
+}
+
+/* ════════════════════════════════════════
+   QUALITIES
+════════════════════════════════════════ */
+const QOPTS=['4K','1080p','720p','480p','360p'];
+function addQual(lbl='',url=''){
+  const idx=qualities.length;
+  qualities.push({lbl,url});
+  const row=document.createElement('div');
+  row.className='qual-row'; row.id=`qr${idx}`;
+  row.innerHTML=`
+    <select class="qual-badge" onchange="qualities[${idx}].lbl=this.value">
+      ${QOPTS.map(q=>`<option ${q===lbl?'selected':''}>${q}</option>`).join('')}
+    </select>
+    <input class="inp" placeholder="https://...  (يُضاف #.mp4 تلقائياً)" style="height:34px;font-size:.8em;"
+      value="${url}" oninput="qualities[${idx}].url=this.value">
+    <div class="q-test" id="qt${idx}" onclick="testQual(${idx})" title="اختبار الرابط"><i class="fas fa-play"></i></div>
+    <div class="q-del"  onclick="delQual(${idx})"><i class="fas fa-trash"></i></div>`;
+  document.getElementById('qualList').appendChild(row);
+  if(!lbl) row.querySelector('select').value=QOPTS[Math.min(idx,QOPTS.length-1)]||'720p';
+}
+function delQual(idx){
+  const el=document.getElementById(`qr${idx}`);
+  if(el)el.remove(); qualities[idx]=null;
+}
+async function testQual(idx){
+  const q=qualities[idx]; if(!q||!q.url)return;
+  const url=formatUrl(q.url);
+  const btn=document.getElementById(`qt${idx}`);
+  btn.classList.add('testing');
+  btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+  try{
+    const r=await fetch(url,{method:'HEAD',mode:'no-cors'});
+    btn.classList.remove('testing');
+    btn.innerHTML='<i class="fas fa-check vtest-ok"></i>';
+    toast(`${q.lbl} — الرابط يعمل`,'ok');
+  }catch(e){
+    btn.classList.remove('testing');
+    btn.innerHTML='<i class="fas fa-times vtest-fail"></i>';
+    toast(`${q.lbl} — تعذّر الوصول`,'warn');
+  }
+  setTimeout(()=>{btn.innerHTML='<i class="fas fa-play"></i>';},3000);
+}
+function formatUrl(url){
+  // أضف #.mp4 إذا لم يكن موجوداً وكان mp4
+  url=url.trim();
+  if(url.match(/\.mp4/i) && !url.includes('#.mp4')) url+='#.mp4';
+  return url;
+}
+function getQualities(){
+  return qualities.filter(q=>q&&q.url.trim()).map(q=>({lbl:q.lbl,url:formatUrl(q.url.trim())}));
+}
+
+/* ════════════════════════════════════════
+   THUMBNAIL
+════════════════════════════════════════ */
+function prevThumb(u){
+  if(!u){clearThumb();return;}
+  document.getElementById('thumbWrap').style.display='block';
+  document.getElementById('thumbImg').src=u;
+}
+function clearThumb(){
+  document.getElementById('thumbWrap').style.display='none';
+  document.getElementById('thumbImg').src='';
+  document.getElementById('fThumb').value='';
+}
+
+/* ════════════════════════════════════════
+   YOUTUBE
+════════════════════════════════════════ */
+function getYtId(val){
+  const m=val.match(/(?:v=|youtu\.be\/|embed\/)([A-Za-z0-9_-]{11})/);
+  return m?m[1]:(val.length===11?val:'');
+}
+function parseYT(val){
+  const id=getYtId(val);
+  const prev=document.getElementById('ytPrev');
+  if(id){
+    prev.style.display='block';
+    document.getElementById('ytThumb').src=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+    document.getElementById('ytId').textContent=id;
+    if(!document.getElementById('fThumb').value){
+      document.getElementById('fThumb').value=`https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+      prevThumb(document.getElementById('fThumb').value);
+    }
+  } else { prev.style.display='none'; }
+}
+async function fetchYtTitle(){
+  const val=document.getElementById('fYtUrl').value.trim();
+  const id=getYtId(val); if(!id){toast('أدخل رابط يوتيوب أولاً','warn');return;}
+  // نستخدم oEmbed API — لا يحتاج key
+  try{
+    const r=await fetch(`https://www.youtube.com/oembed?url=https://youtu.be/${id}&format=json`);
+    const d=await r.json();
+    if(d.title){
+      document.getElementById('fTitle').value=d.title;
+      document.getElementById('ytTitle').textContent=d.title;
+      toast('تم جلب العنوان من يوتيوب','ok');
+    }
+  }catch(e){ toast('تعذّر جلب العنوان','warn'); }
+}
+
+/* ════════════════════════════════════════
+   SUBTITLE
+════════════════════════════════════════ */
+function handleSub(inp){
+  const f=inp.files[0]; if(!f)return;
+  const r=new FileReader();
+  r.onload=e=>{
+    let txt=e.target.result;
+    if(f.name.endsWith('.srt')) txt=srtToVtt(txt);
+    document.getElementById('fSubTxt').value=txt;
+    document.getElementById('subName').textContent=f.name;
+    document.getElementById('subOk').style.display='flex';
+    toast('تم تحميل الترجمة','ok');
+  };
+  r.readAsText(f,'UTF-8');
+}
+function clearSub(){
+  document.getElementById('fSubTxt').value='';
+  document.getElementById('subOk').style.display='none';
+  document.getElementById('subInput').value='';
+}
+function srtToVtt(s){
+  return 'WEBVTT\n\n'+s.replace(/\r\n/g,'\n').replace(/\r/g,'\n').replace(/(\d+:\d+:\d+),(\d+)/g,'$1.$2');
+}
+(()=>{
+  const z=document.getElementById('subZone');
+  z.addEventListener('dragover',e=>{e.preventDefault();z.classList.add('drag');});
+  z.addEventListener('dragleave',()=>z.classList.remove('drag'));
+  z.addEventListener('drop',e=>{
+    e.preventDefault();z.classList.remove('drag');
+    const f=e.dataTransfer.files[0];
+    if(f){const dt=new DataTransfer();dt.items.add(f);document.getElementById('subInput').files=dt.files;handleSub(document.getElementById('subInput'));}
+  });
+})();
+
+/* ════════════════════════════════════════
+   TMDB
+════════════════════════════════════════ */
+let tmdbTimer=null;
+document.getElementById('tmdbQ').addEventListener('input',function(){
+  clearTimeout(tmdbTimer);
+  const q=this.value.trim();
+  if(q.length<2){hideTmdb();return;}
+  tmdbTimer=setTimeout(()=>searchTmdb(q),500);
+});
+document.addEventListener('click',e=>{ if(!e.target.closest('#secTmdb')) hideTmdb(); });
+function hideTmdb(){ document.getElementById('tmdbRes').style.display='none'; }
+
+async function searchTmdb(q){
+  const res=document.getElementById('tmdbRes');
+  res.style.display='block';
+  res.innerHTML='<div class="tmdb-spin"><i class="fas fa-spinner fa-spin"></i></div>';
+  try{
+    const ts=curType==='anime'?['tv']:(curType==='drama'?['tv','movie']:['movie','tv']);
+    let items=[];
+    for(const t of ts){
+      const r=await fetch(`${TMDB_BASE}/search/${t}?api_key=${TMDB_KEY}&language=ar&query=${encodeURIComponent(q)}`);
+      const d=await r.json();
+      if(d.results) items=items.concat(d.results.slice(0,4).map(x=>({...x,_t:t})));
+    }
+    items=items.slice(0,6);
+    if(!items.length){res.innerHTML='<div class="tmdb-spin">لا نتائج</div>';return;}
+    res.innerHTML=items.map(it=>{
+      const tit=it.title||it.name||'';
+      const yr=(it.release_date||it.first_air_date||'').split('-')[0];
+      const img=it.poster_path?`${TMDB_IMG}${it.poster_path}`:'';
+      return `<div class="tmdb-item" onclick="selectTmdb(${it.id},'${it._t}')">
+        <img src="${img}" onerror="this.style.display='none'" alt="">
+        <div class="ti">
+          <div class="ti-title">${tit}</div>
+          <div class="ti-meta">
+            <span class="tmdb-chip ${it._t==='movie'?'m':'t'}">${it._t==='movie'?'فيلم':'مسلسل'}</span>
+            ${yr} ${it.vote_average?'· ⭐ '+Math.round(it.vote_average*10)/10:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){res.innerHTML='<div class="tmdb-spin" style="color:#ef4444;">خطأ</div>';}
+}
+async function selectTmdb(id,t){
+  hideTmdb(); document.getElementById('tmdbQ').value='';
+  const ico=document.querySelector('#secTmdb .inp-icon');
+  if(ico)ico.innerHTML='<div class="spin"></div>';
+  try{
+    const r=await fetch(`${TMDB_BASE}/${t==='movie'?'movie':'tv'}/${id}?api_key=${TMDB_KEY}&language=ar&append_to_response=credits`);
+    const d=await r.json(); tmdbData=d; tmdbData._t=t;
+    const title=d.title||d.name||'';
+    const yr=(d.release_date||d.first_air_date||'').split('-')[0];
+    const rating=d.vote_average?Math.round(d.vote_average*10)/10:0;
+    const poster=d.poster_path?`${TMDB_IMG}${d.poster_path}`:'';
+    const backdrop=d.backdrop_path?`${TMDB_ORIG}${d.backdrop_path}`:'';
+    const genres=(d.genres||[]).map(g=>g.name).join(', ');
+    if(!document.getElementById('fTitle').value) document.getElementById('fTitle').value=title;
+    if(!document.getElementById('fDesc').value&&d.overview) document.getElementById('fDesc').value=d.overview;
+    if(!document.getElementById('fYear').value&&yr) document.getElementById('fYear').value=yr;
+    if(!document.getElementById('fRating').value&&rating) document.getElementById('fRating').value=rating;
+    if(!document.getElementById('fGenres').value&&genres) document.getElementById('fGenres').value=genres;
+    const curLbl=document.getElementById('fLabels').value;
+    if(genres&&!curLbl.includes(genres)) document.getElementById('fLabels').value=curLbl?(curLbl+', '+genres):genres;
+    const thumb=backdrop||poster;
+    if(thumb&&!document.getElementById('fThumb').value){ document.getElementById('fThumb').value=thumb; prevThumb(thumb); }
+    document.getElementById('tsPoster').src=poster;
+    document.getElementById('tsTitle').textContent=title+(yr?` (${yr})`:'');
+    document.getElementById('tsMeta').innerHTML=`⭐ ${rating} &nbsp;|&nbsp; ${genres}<br><span style="font-size:.9em;">${(d.overview||'').slice(0,120)}${(d.overview||'').length>120?'...':''}</span>`;
+    document.getElementById('tmdbSel').style.display='block';
+    toast('تم جلب بيانات TMDB','ok');
+  }catch(e){ toast('خطأ TMDB','err'); }
+  if(ico)ico.innerHTML='<i class="fas fa-search"></i>';
+}
+function clearTmdb(){ tmdbData=null; document.getElementById('tmdbSel').style.display='none'; }
+
+/* ════════════════════════════════════════
+   BUILD CONTENT (صيغة jawrab)
+════════════════════════════════════════ */
+function buildContent(){
+  const title   = document.getElementById('fTitle').value.trim();
+  const ep      = document.getElementById('fEp').value.trim();
+  const desc    = document.getElementById('fDesc').value.trim();
+  const thumb   = document.getElementById('fThumb').value.trim();
+  const year    = document.getElementById('fYear').value.trim();
+  const rating  = document.getElementById('fRating').value.trim();
+  const genres  = document.getElementById('fGenres').value.trim();
+  const ytVal   = document.getElementById('fYtUrl').value.trim();
+  const subTxt  = document.getElementById('fSubTxt').value.trim();
+  const subLang = getPill('subLangPills');
+  const liveUrl = document.getElementById('fLive').value.trim();
+  const liveNm  = document.getElementById('fLiveName').value.trim();
+  const liveLg  = document.getElementById('fLiveLogo').value.trim();
+  const quals   = getQualities();
+  const ytId    = getYtId(ytVal);
+  const labels  = document.getElementById('fLabels').value.split(',').map(s=>s.trim()).filter(Boolean);
+  const genreArr= genres.split(',').map(s=>s.trim()).filter(Boolean);
+
+  // ── بناء صيغة jawrab ──
+  let lines=[];
+
+  // نوع المحتوى
+  lines.push(`--${curType}--`);
+
+  // جودات الفيديو
+  if(quals.length>0){
+    quals.forEach(q=>{ lines.push(`#${q.lbl}|`); lines.push(q.url); });
+  }
+
+  // يوتيوب
+  if(ytId) lines.push(`#youtube|${ytId}`);
+
+  // بث مباشر
+  if(liveUrl){
+    lines.push(`#live|`);
+    lines.push(liveUrl);
+    if(liveNm) lines.push(`#livename|${liveNm}`);
+    if(liveLg) lines.push(`#livelogo|${liveLg}`);
+  }
+
+  // ترجمة
+  if(subTxt){
+    lines.push('--subtitle--');
+    lines.push(subTxt);
+    lines.push('--subtitle--');
+    if(subLang) lines.push(`#sublang|${subLang}`);
+  }
+
+  lines.push(`--end--`);
+
+  // JSON للتطبيق (مخفي في comment)
+  const json={
+    type:curType, title, subtitle:ep||null, description:desc||null,
+    thumbnailUrl:thumb||null, year:year||null, rating:rating||null,
+    categories:genreArr, labels,
+    isYouTube:!!ytId, ytVideoId:ytId||null,
+    videoUrl:quals[0]?.url||liveUrl||null,
+    qualities:quals.length>0?quals:null,
+    liveUrl:liveUrl||null, isLive:curType==='live',
+    subtitleContent:subTxt||null, subtitleLang:subTxt?subLang:null,
+    published:new Date().toISOString(),
+    tmdbId:tmdbData?.id||null, tmdbType:tmdbData?._t||null,
+    poster:tmdbData?.poster_path?`${TMDB_IMG}${tmdbData.poster_path}`:null,
+    backdrop:tmdbData?.backdrop_path?`${TMDB_ORIG}${tmdbData.backdrop_path}`:null,
+    genres:tmdbData?.genres?.map(g=>g.name)||genreArr,
+    cast:tmdbData?.credits?.cast?.slice(0,6).map(a=>a.name)||null,
+    director:tmdbData?.credits?.crew?.find(c=>c.job==='Director')?.name||null,
+    isOngoing:(curType==='drama'||curType==='anime')&&tmdbData?.status==='Returning Series',
+  };
+
+  let html=`<!-- JAWRAB_DATA:${JSON.stringify(json)} -->\n`;
+  html+=lines.map(l=>`<p>${l}</p>`).join('\n');
+  if(thumb) html+=`\n<img src="${thumb}" alt="${title}" style="max-width:100%">`;
+  return html;
+}
+
+/* ════════════════════════════════════════
+   PUBLISH
+════════════════════════════════════════ */
+async function publish(){
+  if(!gToken){ toast('سجل الدخول أولاً','err'); return; }
+  const title=document.getElementById('fTitle').value.trim();
+  if(!title){ toast('أدخل العنوان','err'); document.getElementById('fTitle').focus(); return; }
+
+  const isLive=getPill('pubPills')==='LIVE';
+  const labels=document.getElementById('fLabels').value.split(',').map(s=>s.trim()).filter(Boolean);
+  showProg(0,'بناء المحتوى...',1);
+  const content=buildContent();
+  showProg(40,'رفع إلى Blogger...',2);
+
+  const body={kind:'blogger#post',title,content};
+  if(labels.length) body.labels=labels;
+
+  let url='', method='';
+  if(editMode&&editId){
+    url=`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${editId}?isDraft=${!isLive}&publish=${isLive}`;
+    method='PUT';
+  } else {
+    url=`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/?isDraft=${!isLive}`;
+    method='POST';
+  }
+  try{
+    const r=await fetch(url,{method,headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(r.ok){
+      showProg(100,'اكتمل','done');
+      toast(editMode?'تم التعديل ✓':'تم النشر ✓','ok');
+      setTimeout(()=>{ resetForm(); hideProg(); if(isLive) loadPosts(); },1800);
+      editMode=false; editId=null;
+    } else {
+      const e=await r.json(); hideProg();
+      toast(`خطأ: ${e.error?.message||'غير معروف'}`,'err');
+    }
+  }catch(e){ hideProg(); toast('خطأ في الاتصال','err'); }
+}
+
+function showProg(pct,lbl,step){
+  document.getElementById('pubProg').style.display='block';
+  document.getElementById('progBar').style.width=pct+'%';
+  document.getElementById('progLbl').textContent=lbl;
+  document.querySelectorAll('.prog-step').forEach((el,i)=>{
+    el.classList.remove('act','done');
+    if(step==='done'||i+1<(typeof step==='number'?step:4)) el.classList.add('done');
+    if(i+1===step) el.classList.add('act');
+  });
+  document.getElementById('btnPub').disabled=true;
+}
+function hideProg(){ document.getElementById('pubProg').style.display='none'; document.getElementById('btnPub').disabled=false; }
+
+/* ════════════════════════════════════════
+   RESET
+════════════════════════════════════════ */
+function resetForm(){
+  ['fTitle','fEp','fLabels','fGenres','fDesc','fThumb','fYtUrl','fYear','fRating','fLive','fLiveName','fLiveLogo','fSubTxt']
+    .forEach(id=>document.getElementById(id).value='');
+  clearThumb(); clearSub(); clearTmdb();
+  document.getElementById('ytPrev').style.display='none';
+  document.getElementById('qualList').innerHTML=''; qualities=[];
+  document.getElementById('tmdbQ').value='';
+  tmdbData=null; editMode=false; editId=null;
+  hideProg();
+  document.getElementById('btnPub').innerHTML='<i class="fas fa-paper-plane"></i> نشر المحتوى';
+}
+
+/* ════════════════════════════════════════
+   PREVIEW MODAL
+════════════════════════════════════════ */
+function openPreview(){
+  const title  = document.getElementById('fTitle').value.trim()||'(بدون عنوان)';
+  const ep     = document.getElementById('fEp').value.trim();
+  const desc   = document.getElementById('fDesc').value.trim();
+  const thumb  = document.getElementById('fThumb').value.trim();
+  const year   = document.getElementById('fYear').value.trim();
+  const rating = document.getElementById('fRating').value.trim();
+  const genres = document.getElementById('fGenres').value.trim();
+  const quals  = getQualities();
+  const subTxt = document.getElementById('fSubTxt').value.trim();
+  const ytVal  = document.getElementById('fYtUrl').value.trim();
+  const ytId   = getYtId(ytVal);
+  const liveUrl= document.getElementById('fLive').value.trim();
+
+  const typeNames={movie:'فيلم',drama:'مسلسل',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث مباشر'};
+  const typeClrs ={movie:var_accent,drama:'#a855f7',anime:'#06b6d4',youtube:'#ef4444',video:'#22c55e',live:'#f59e0b'};
+  const heroSrc  = thumb||(ytId?`https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`:'');
+
+  let html=`
+  <div class="prev-hero">
+    ${heroSrc?`<img src="${heroSrc}" alt="" onerror="this.style.display='none'">`:'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:.85em;">لا توجد صورة</div>'}
+    <div class="prev-hero-badge">${typeNames[curType]||curType}</div>
+  </div>
+  <div class="prev-title">${title}</div>
+  ${ep?`<div class="prev-sub">${ep}</div>`:''}
+  <div class="prev-meta">
+    ${year?`<div class="prev-chip"><i class="fas fa-calendar" style="margin-left:4px;color:var(--text3);"></i>${year}</div>`:''}
+    ${rating?`<div class="prev-chip"><i class="fas fa-star" style="margin-left:4px;color:var(--yellow);"></i>${rating}</div>`:''}
+    ${genres.split(',').filter(Boolean).map(g=>`<div class="prev-chip">${g.trim()}</div>`).join('')}
+  </div>
+  ${desc?`<div class="prev-desc">${desc.replace(/\n/g,'<br>')}</div>`:''}`;
+
+  if(quals.length>0){
+    html+=`<div class="prev-quals-title"><i class="fas fa-play-circle" style="margin-left:4px;"></i>جودات الفيديو</div>
+    <div class="prev-quals">${quals.map(q=>`<div class="prev-qual">${q.lbl}</div>`).join('')}</div>`;
+  }
+  if(ytId){
+    html+=`<div style="margin-top:14px;">
+      <div class="prev-quals-title"><i class="fab fa-youtube" style="color:#ff0000;margin-left:4px;"></i>مقطع يوتيوب</div>
+      <div class="prev-chip" style="display:inline-block;margin-top:4px;">ID: ${ytId}</div>
+    </div>`;
+  }
+  if(liveUrl){
+    html+=`<div style="margin-top:14px;">
+      <div class="prev-quals-title"><i class="fas fa-satellite-dish" style="color:var(--yellow);margin-left:4px;"></i>بث مباشر</div>
+      <div class="prev-chip" style="display:inline-block;margin-top:4px;">${liveUrl.slice(0,60)}${liveUrl.length>60?'...':''}</div>
+    </div>`;
+  }
+  if(subTxt){
+    const lines=subTxt.split('\n').slice(0,6).join('\n');
+    html+=`<div style="margin-top:12px;">
+      <div class="prev-quals-title"><i class="fas fa-closed-captioning" style="margin-left:4px;"></i>ترجمة</div>
+      <div class="prev-sub-txt">${lines}${subTxt.split('\n').length>6?'\n...\n['+subTxt.split('\n').length+' سطر]':''}</div>
+    </div>`;
+  }
+
+  document.getElementById('previewBody').innerHTML=html;
+  document.getElementById('previewModal').classList.add('open');
+}
+const var_accent='#e8223a';
+function closePreview(){ document.getElementById('previewModal').classList.remove('open'); }
+document.getElementById('previewModal').addEventListener('click',e=>{
+  if(e.target===e.currentTarget) closePreview();
+});
+
+/* ════════════════════════════════════════
+   LOAD POSTS
+════════════════════════════════════════ */
+async function loadPosts(){
+  if(!gToken){ toast('سجل الدخول أولاً','warn'); return; }
+  document.getElementById('postsList').innerHTML='<div class="posts-empty"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+  try{
+    const r=await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?maxResults=25&fetchBodies=false`,{
+      headers:{'Authorization':'Bearer '+gToken}
+    });
+    const d=await r.json();
+    if(!d.items||!d.items.length){ document.getElementById('postsList').innerHTML='<div class="posts-empty">لا توجد مقالات</div>'; return; }
+    const imap={movie:'fa-film',drama:'fa-tv',anime:'fa-wand-sparkles',youtube:'fa-youtube fab',video:'fa-video',live:'fa-satellite-dish'};
+    document.getElementById('postsList').innerHTML=d.items.map(p=>{
+      const date=new Date(p.published).toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});
+      let ico='fa-file-lines';
+      if(p.labels){ for(const[t,i] of Object.entries({movie:'فيلم',drama:'مسلسل',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث'})){
+        if(p.labels.some(l=>l.includes(t)||l.includes(Object.values({movie:'فيلم',drama:'مسلسل',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث'})[Object.keys({movie:'فيلم',drama:'مسلسل',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث'}).indexOf(t)])))){ico=imap[t]||ico;break;}
+      }}
+      return `<div class="post-item">
+        <div class="pi-icon"><i class="fas ${ico}"></i></div>
+        <div class="pi-title" title="${p.title}">${p.title}</div>
+        <div class="pi-date">${date}</div>
+        <div class="pi-acts">
+          <button class="pi-btn edit" onclick="startEdit('${p.id}','${p.url||''}')" title="تعديل"><i class="fas fa-pen"></i></button>
+          <button class="pi-btn del"  onclick="delPost('${p.id}')" title="حذف"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>`;
+    }).join('');
+  }catch(e){ document.getElementById('postsList').innerHTML='<div class="posts-empty" style="color:#ef4444;">خطأ في التحميل</div>'; }
+}
+
+/* ════════════════════════════════════════
+   EDIT
+════════════════════════════════════════ */
+async function startEdit(id){
+  if(!gToken)return;
+  toast('جاري جلب المقال...','info');
+  try{
+    const r=await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,{headers:{'Authorization':'Bearer '+gToken}});
+    const d=await r.json();
+    editMode=true; editId=id;
+    document.getElementById('fTitle').value=d.title||'';
+    const m=d.content?.match(/<!--\s*JAWRAB_DATA:(.*?)-->/s);
+    if(m){
+      try{
+        const data=JSON.parse(m[1]);
+        if(data.description) document.getElementById('fDesc').value=data.description;
+        if(data.thumbnailUrl){document.getElementById('fThumb').value=data.thumbnailUrl;prevThumb(data.thumbnailUrl);}
+        if(data.year) document.getElementById('fYear').value=data.year;
+        if(data.rating) document.getElementById('fRating').value=data.rating;
+        if(data.subtitleContent) document.getElementById('fSubTxt').value=data.subtitleContent;
+        if(data.ytVideoId){document.getElementById('fYtUrl').value=data.ytVideoId;parseYT(data.ytVideoId);}
+        if(data.liveUrl) document.getElementById('fLive').value=data.liveUrl;
+        if(data.subtitle) document.getElementById('fEp').value=data.subtitle;
+        if(data.categories) document.getElementById('fGenres').value=data.categories.join(', ');
+        const t=data.type||'movie';
+        const tab=document.querySelector(`[data-t="${t}"]`);
+        if(tab) setType(t,tab);
+        document.getElementById('qualList').innerHTML=''; qualities=[];
+        (data.qualities||[]).forEach(q=>addQual(q.lbl,q.url));
+      }catch(e){}
+    }
+    if(d.labels) document.getElementById('fLabels').value=d.labels.join(', ');
+    document.getElementById('btnPub').innerHTML='<i class="fas fa-pen"></i> حفظ التعديلات';
+    window.scrollTo({top:0,behavior:'smooth'});
+    toast('وضع التعديل','warn');
+  }catch(e){ toast('خطأ في جلب المقال','err'); }
+}
+
+/* ════════════════════════════════════════
+   DELETE
+════════════════════════════════════════ */
+async function delPost(id){
+  if(!confirm('حذف هذا المقال نهائياً؟'))return;
+  try{
+    const r=await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+gToken}});
+    if(r.ok){toast('تم الحذف','ok');loadPosts();}
+    else toast('فشل الحذف','err');
+  }catch(e){toast('خطأ','err');}
+}
+
+/* ════════════════════════════════════════
+   TOAST
+════════════════════════════════════════ */
+function toast(msg,type='info'){
+  const ic={ok:'fa-circle-check',err:'fa-circle-xmark',info:'fa-circle-info',warn:'fa-triangle-exclamation'};
+  const w=document.getElementById('toastW');
+  const el=document.createElement('div');
+  el.className=`toast ${type}`;
+  el.innerHTML=`<i class="fas ${ic[type]||ic.info}"></i> ${msg}`;
+  w.appendChild(el);
+  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),280); },3000);
+}
+
+/* ════════════════════════════════════════
+   PWA
+════════════════════════════════════════ */
+(()=>{
+  const manifest={
+    name:'jawrab Admin', short_name:'jawrab',
+    start_url:'.', display:'standalone',
+    background_color:'#0d1117', theme_color:'#0d1117',
+    icons:[
+      {src:ICON_URL, sizes:'512x512', type:'image/jpeg', purpose:'any maskable'},
+      {src:ICON_URL, sizes:'192x192', type:'image/jpeg'}
+    ]
+  };
+  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const url=URL.createObjectURL(blob);
+  const lnk=document.createElement('link');
+  lnk.rel='manifest'; lnk.href=url; document.head.appendChild(lnk);
+
+  // Apple touch icon
+  const atl=document.createElement('link');
+  atl.rel='apple-touch-icon'; atl.href=ICON_URL; document.head.appendChild(atl);
+
+  if('serviceWorker' in navigator){
+    const sw=`self.addEventListener('install',e=>self.skipWaiting());
+    self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
+    self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>new Response('Offline'))));`;
+    const swBlob=new Blob([sw],{type:'text/javascript'});
+    navigator.serviceWorker.register(URL.createObjectURL(swBlob));
+  }
+})();
+
+/* ════════════════════════════════════════
+   INIT
+════════════════════════════════════════ */
+window.addEventListener('DOMContentLoaded',()=>{
+  setType('movie', document.querySelector('[data-t="movie"]'));
+  addQual('1080p','');
+  waitGSI().then(()=>{ buildGsiClient(); restoreToken(); });
+});
+</script>
+</body>
+</html>

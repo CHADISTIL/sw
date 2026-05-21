@@ -1,83 +1,100 @@
 <!DOCTYPE html>
 <html lang="ar">
 <head>
-<meta charset="UTF-8">
-<title>Blogger Pro Single PWA</title>
+    <meta charset="UTF-8">
+    <title>Blogger Pro Single PWA</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://accounts.google.com/gsi/client"></script>
 
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #0f0f0f;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
 
-<script src="https://accounts.google.com/gsi/client"></script>
+        .container { 
+            max-width: 900px; 
+            margin: auto; 
+        }
 
-<style>
-body{
-    font-family: Arial;
-    background:#0f0f0f;
-    color:#fff;
-    margin:0;
-    padding:20px;
-}
+        input, textarea, select {
+            width: 100%;
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 8px;
+            border: none;
+            background: #222;
+            color: #fff;
+            box-sizing: border-box;
+        }
 
-.container{ max-width:900px; margin:auto; }
+        textarea { 
+            min-height: 200px; 
+        }
 
-input, textarea, select{
-    width:100%;
-    margin:8px 0;
-    padding:10px;
-    border-radius:8px;
-    border:none;
-    background:#222;
-    color:#fff;
-}
+        button {
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px 0;
+            font-weight: bold;
+        }
 
-textarea{ min-height:200px; }
+        .btn { background: #4CAF50; color: #fff; }
+        .btn2 { background: #2196F3; color: #fff; }
 
-button{
-    padding:10px 15px;
-    border:none;
-    border-radius:8px;
-    cursor:pointer;
-    margin:5px 0;
-}
-
-.btn{ background:#4CAF50; color:#fff; }
-.btn2{ background:#2196F3; color:#fff; }
-
-.postItem{
-    background:#1c1c1c;
-    padding:10px;
-    margin:10px 0;
-    border-radius:10px;
-}
-</style>
+        .postItem {
+            background: #1c1c1c;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+            border: 1px solid #333;
+        }
+        
+        .postItem button {
+            margin-right: 5px;
+            background: #444;
+            color: #fff;
+        }
+        
+        #statusText {
+            font-weight: bold;
+            color: #ffca28;
+            margin: 10px 0;
+        }
+    </style>
 </head>
 
 <body>
 
 <div class="container">
 
-<h2>📌 Blogger Pro PWA (Single File)</h2>
+    <h2>📌 Blogger Pro PWA (Single File)</h2>
 
-<button class="btn2" onclick="login()">تسجيل الدخول</button>
+    <button class="btn2" onclick="login()">تسجيل الدخول</button>
+    <span id="statusText">لم يتم تسجيل الدخول ❌</span>
 
-<hr>
+    <hr style="border-color: #333;">
 
-<input id="title" placeholder="عنوان المقال">
-<input id="labels" placeholder="تصنيفات">
-<input type="file" id="imageInput">
+    <input id="title" placeholder="عنوان المقال">
+    <input id="labels" placeholder="تصنيفات (افصل بينها بفاصلة ,)">
+    <input type="file" id="imageInput" accept="image/*">
 
-<textarea id="content" placeholder="المحتوى"></textarea>
+    <textarea id="content" placeholder="المحتوى"></textarea>
 
-<select id="status">
-<option value="DRAFT">مسودة</option>
-<option value="LIVE">نشر مباشر</option>
-</select>
+    <select id="status">
+        <option value="DRAFT">مسودة</option>
+        <option value="LIVE">نشر مباشر</option>
+    </select>
 
-<button class="btn" onclick="publish()">نشر / تعديل</button>
-<button class="btn2" onclick="loadPosts()">عرض المقالات</button>
+    <button class="btn" onclick="publish()">نشر / تعديل</button>
+    <button class="btn2" onclick="loadPosts()">عرض المقالات</button>
 
-<p id="statusText"></p>
-
-<div id="posts"></div>
+    <div id="posts"></div>
 
 </div>
 
@@ -95,14 +112,18 @@ function login(){
         client_id: CLIENT_ID,
         scope: "https://www.googleapis.com/auth/blogger",
         callback: (res) => {
-            token = res.access_token;
-            document.getElementById("statusText").innerText = "تم تسجيل الدخول ✅";
+            if (res.access_token) {
+                token = res.access_token;
+                document.getElementById("statusText").innerText = "تم تسجيل الدخول ✅";
+            } else {
+                document.getElementById("statusText").innerText = "فشل الحصول على رمز الدخول ❌";
+            }
         }
     });
     client.requestAccessToken();
 }
 
-/* ===== Image ===== */
+/* ===== Image to Base64 ===== */
 function imageToBase64(file){
     return new Promise((resolve)=>{
         let r = new FileReader();
@@ -113,7 +134,6 @@ function imageToBase64(file){
 
 /* ===== Publish / Update ===== */
 async function publish(){
-
     if(!token){
         alert("سجل الدخول أولاً");
         return;
@@ -121,21 +141,32 @@ async function publish(){
 
     let title = document.getElementById("title").value;
     let content = document.getElementById("content").value;
-    let labels = document.getElementById("labels").value.split(",");
     let status = document.getElementById("status").value;
+    
+    // تنظيف المدخلات لمنع إرسال قيم فارغة تسبب أخطاء للـ API
+    let labelsInput = document.getElementById("labels").value;
+    let labels = labelsInput ? labelsInput.split(",").map(l => l.trim()).filter(l => l !== "") : [];
 
+    document.getElementById("statusText").innerText = "جاري المعالجة... ⏳";
+
+    // معالجة الصورة لو تم اختيارها
     let img = document.getElementById("imageInput").files[0];
     if(img){
+        // تنبيه: الصور الكبيرة جداً ستسبب فشل الطلب (خطأ 400) من جوجل بسبب حجم الـ Base64
         let base64 = await imageToBase64(img);
-        content = `<img src="${base64}" style="max-width:100%"><br>` + content;
+        content = `<img src="${base64}" style="max-width:100%"><br><br>` + content;
     }
 
     let post = {
-        kind:"blogger#post",
-        title,
-        content,
-        labels
+        kind: "blogger#post",
+        title: title || "بدون عنوان",
+        content: content || "محتوى فارغ"
     };
+
+    // إضافة التصنيفات فقط إذا كانت تحتوي على نصوص فعلياً
+    if(labels.length > 0) {
+        post.labels = labels;
+    }
 
     let url = "";
     let method = "";
@@ -148,87 +179,115 @@ async function publish(){
         method = "POST";
     }
 
+    // تحديد ما إذا كان المقال سينشر كمسودة أم نشر فوري مباشر
     url += `?isDraft=${status !== "LIVE"}`;
 
-    let res = await fetch(url,{
-        method,
-        headers:{
-            "Authorization":"Bearer "+token,
-            "Content-Type":"application/json"
-        },
-        body:JSON.stringify(post)
-    });
+    try {
+        let res = await fetch(url,{
+            method,
+            headers:{
+                "Authorization":"Bearer " + token,
+                "Content-Type":"application/json"
+            },
+            body: JSON.stringify(post)
+        });
 
-    if(res.ok){
-        document.getElementById("statusText").innerText =
-        editMode ? "تم التعديل ✏️" : "تم النشر ✅";
+        if(res.ok){
+            document.getElementById("statusText").innerText = editMode ? "تم التعديل بنجاح ✏️" : "تم النشر بنجاح ✅";
 
-        editMode = false;
-        editPostId = null;
+            // تفريغ الحقول بعد النشر الناجح
+            document.getElementById("title").value = "";
+            document.getElementById("content").value = "";
+            document.getElementById("labels").value = "";
+            document.getElementById("imageInput").value = "";
 
-        loadPosts();
-    } else {
-        document.getElementById("statusText").innerText = "خطأ ❌";
+            editMode = false;
+            editPostId = null;
+
+            loadPosts(); // تحديث القائمة
+        } else {
+            let errorData = await res.json();
+            console.error("Blogger API Error:", errorData);
+            document.getElementById("statusText").innerText = `خطأ من جوجل: ${errorData.error.message} ❌`;
+        }
+    } catch (err) {
+        console.error("Fetch Error:", err);
+        document.getElementById("statusText").innerText = "فشل الاتصال بالإنترنت أو الخادم ❌";
     }
 }
 
 /* ===== Load Posts ===== */
 async function loadPosts(){
+    if(!token){
+        alert("سجل الدخول أولاً لعرض المقالات");
+        return;
+    }
+    
+    document.getElementById("posts").innerHTML = "<p>جاري تحميل المقالات... ⏳</p>";
+    
+    try {
+        let res = await fetch(
+            `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`,
+            { headers:{"Authorization":"Bearer " + token} }
+        );
 
-    let res = await fetch(
-        `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`,
-        { headers:{"Authorization":"Bearer "+token} }
-    );
+        let data = await res.json();
 
-    let data = await res.json();
+        let html = "";
+        if(data.items && data.items.length > 0) {
+            data.items.forEach(p=>{
+                html += `
+                <div class="postItem">
+                    <b>${p.title}</b><br><br>
+                    <button onclick="editPost('${p.id}','${encodeURIComponent(p.title)}','${encodeURIComponent(p.content)}')">تعديل</button>
+                    <button style="background:#f44336;" onclick="deletePost('${p.id}')">حذف</button>
+                </div>`;
+            });
+        } else {
+            html = "<p>لا توجد مقالات في هذه المدونة حالياً.</p>";
+        }
 
-    let html = "";
-
-    data.items?.forEach(p=>{
-        html += `
-        <div class="postItem">
-            <b>${p.title}</b><br>
-
-            <button onclick="editPost('${p.id}','${encodeURIComponent(p.title)}','${encodeURIComponent(p.content)}')">
-                تعديل
-            </button>
-
-            <button onclick="deletePost('${p.id}')">
-                حذف
-            </button>
-        </div>`;
-    });
-
-    document.getElementById("posts").innerHTML = html;
+        document.getElementById("posts").innerHTML = html;
+    } catch(err) {
+        console.error("Error loading posts:", err);
+        document.getElementById("posts").innerHTML = "<p>حدث خطأ أثناء جلب المقالات ❌</p>";
+    }
 }
 
-/* ===== Edit ===== */
-function editPost(id,title,content){
+/* ===== Edit Mode ===== */
+function editPost(id, title, content){
     editMode = true;
     editPostId = id;
 
     document.getElementById("title").value = decodeURIComponent(title);
     document.getElementById("content").value = decodeURIComponent(content);
 
-    document.getElementById("statusText").innerText = "وضع التعديل ✏️";
+    document.getElementById("statusText").innerText = "أنت الآن في وضع التعديل ✏️";
+    window.scrollTo({ top: 0, behavior: 'smooth' }); // صعود لأعلى الصفحة للتعديل
 }
 
-/* ===== Delete ===== */
+/* ===== Delete Post ===== */
 async function deletePost(id){
+    if(!confirm("هل أنت متأكد من حذف هذا المقال نهائياً؟")) return;
 
-    if(!confirm("حذف المقال؟")) return;
-
-    await fetch(
-        `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,
-        {
-            method:"DELETE",
-            headers:{
-                "Authorization":"Bearer "+token
+    try {
+        let res = await fetch(
+            `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,
+            {
+                method:"DELETE",
+                headers:{ "Authorization":"Bearer " + token }
             }
+        );
+        
+        if(res.ok) {
+            alert("تم حذف المقال بنجاح");
+            loadPosts();
+        } else {
+            alert("فشل حذف المقال");
         }
-    );
-
-    loadPosts();
+    } catch (err) {
+        console.error(err);
+    }
 }
 
 /* ===== PWA (Inline Manifest + SW) ===== */
@@ -250,23 +309,14 @@ link.rel = "manifest";
 link.href = url;
 document.head.appendChild(link);
 
-/* Service Worker داخل نفس الملف */
 if('serviceWorker' in navigator){
-
-const swCode = `
-self.addEventListener('install',e=>{
-self.skipWaiting();
-});
-
-self.addEventListener('fetch',e=>{
-e.respondWith(fetch(e.request).catch(()=>new Response("Offline")));
-});
-`;
-
-const swBlob = new Blob([swCode],{type:"text/javascript"});
-const swURL = URL.createObjectURL(swBlob);
-
-navigator.serviceWorker.register(swURL);
+    const swCode = `
+    self.addEventListener('install',e=>{ self.skipWaiting(); });
+    self.addEventListener('fetch',e=>{ e.respondWith(fetch(e.request).catch(()=>new Response("Offline"))); });
+    `;
+    const swBlob = new Blob([swCode],{type:"text/javascript"});
+    const swURL = URL.createObjectURL(swBlob);
+    navigator.serviceWorker.register(swURL);
 }
 </script>
 

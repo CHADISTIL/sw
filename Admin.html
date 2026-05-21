@@ -1,73 +1,122 @@
 <!DOCTYPE html>
-<html lang="ar">
+<html lang="ar" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <title>Blogger Pro Single PWA</title>
+    <title>jawrab - Blogger Video Publisher</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://accounts.google.com/gsi/client"></script>
 
     <style>
         body {
-            font-family: Arial, sans-serif;
-            background: #0f0f0f;
-            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #0b0c10;
+            color: #c5c6c7;
             margin: 0;
             padding: 20px;
         }
-        .container { max-width: 900px; margin: auto; }
+        .container { max-width: 900px; margin: auto; background: #1f2833; padding: 30px; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        h2 { color: #66fcf1; text-align: center; margin-top: 0; font-size: 28px; border-bottom: 2px solid #45f3ff; padding-bottom: 10px; }
+        label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; color: #45f3ff; }
         input, textarea, select {
-            width: 100%;
-            margin: 8px 0;
-            padding: 10px;
-            border-radius: 8px;
-            border: none;
-            background: #222;
-            color: #fff;
-            box-sizing: border-box;
+            width: 100%; margin: 5px 0 15px 0; padding: 12px; border-radius: 8px; border: 1px solid #45f3ff; background: #0b0c10; color: #fff; box-sizing: border-box; font-size: 15px;
         }
-        textarea { min-height: 200px; }
+        input:focus, textarea:focus, select:focus { outline: none; border-color: #66fcf1; box-shadow: 0 0 8px #66fcf1; }
+        .row { display: flex; gap: 15px; }
+        .row .col { flex: 1; }
         button {
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin: 5px 0;
-            font-weight: bold;
+            padding: 12px 20px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 16px; transition: 0.3s; margin: 5px 0;
         }
-        .btn { background: #4CAF50; color: #fff; }
-        .btn2 { background: #2196F3; color: #fff; }
-        .postItem {
-            background: #1c1c1c;
-            padding: 15px;
-            margin: 10px 0;
-            border-radius: 10px;
-            border: 1px solid #333;
-        }
-        .postItem button { margin-right: 5px; background: #444; color: #fff; }
-        #statusText { font-weight: bold; color: #ffca28; margin: 10px 0; }
+        .btn-main { background: #66fcf1; color: #0b0c10; width: 100%; }
+        .btn-main:hover { background: #45f3ff; box-shadow: 0 0 10px #45f3ff; }
+        .btn-sec { background: #1f2833; color: #66fcf1; border: 1px solid #66fcf1; }
+        .btn-sec:hover { background: #66fcf1; color: #0b0c10; }
+        .btn-danger { background: #d9534f; color: #fff; }
+        .btn-danger:hover { background: #c9302c; }
+        .postItem { background: #0b0c10; padding: 15px; margin: 15px 0; border-radius: 10px; border: 1px solid #1f2833; display: flex; justify-content: space-between; align-items: center; }
+        #statusText { font-weight: bold; color: #ffca28; text-align: center; display: block; margin: 15px 0; font-size: 16px; }
+        .section-type { background: #151b24; padding: 15px; border-radius: 10px; border-left: 4px solid #66fcf1; margin-bottom: 20px; }
+        #previewContainer { background: #0b0c10; padding: 20px; border-radius: 10px; border: 1px dashed #66fcf1; margin-top: 20px; display: none; }
+        pre { white-space: pre-wrap; word-wrap: break-word; color: #a9eed1; background: #151b24; padding: 10px; border-radius: 5px; font-family: monospace; }
     </style>
 </head>
 
 <body>
 
 <div class="container">
-    <h2>📌 Blogger Pro PWA (Single File)</h2>
-    <button class="btn2" onclick="login()">تسجيل الدخول</button>
-    <span id="statusText">لم يتم تسجيل الدخول ❌</span>
-    <hr style="border-color: #333;">
+    <h2>🎬 منصة نشر الفيديو والأفلام - jawrab</h2>
+    
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <button class="btn-sec" onclick="login()">تسجيل الدخول بكود جديد 🔑</button>
+        <span id="statusText">جاري التحقق من الجلسة... ⏳</span>
+    </div>
 
-    <input id="title" placeholder="عنوان المقال">
-    <input id="labels" placeholder="تصنيفات (افصل بينها بفاصلة ,)">
-    <input type="file" id="imageInput" accept="image/*">
-    <textarea id="content" placeholder="المحتوى"></textarea>
+    <hr style="border-color: #333; margin: 20px 0;">
 
-    <select id="postStatus">
-        <option value="DRAFT">مسودة</option>
-        <option value="LIVE">نشر مباشر</option>
+    <label>نوع المحتوى</label>
+    <select id="contentType" onchange="toggleSections()">
+        <option value="MOVIE">🎥 نشر فيلم احترافي</option>
+        <option value="YOUTUBE">📺 فيديو يوتيوب</option>
+        <option value="NORMAL_VIDEO">📼 فيديو عادي / متعدد الجودات</option>
     </select>
 
-    <button class="btn" onclick="publish()">نشر / تعديل</button>
-    <button class="btn2" onclick="loadPosts()">عرض المقالات</button>
+    <label>عنوان المقال / الفيلم</label>
+    <input id="title" placeholder="مثال: فيلم Interstellar 2014 مترجم بجودة عالية">
+
+    <label>التصنيفات</label>
+    <input id="labels" placeholder="افصل بين التصنيفات بفاصلة (مثال: أفلام, أكشن, 2026)">
+
+    <div id="movieSection" class="section-type">
+        <label>رابط الفيلم المباشر (سيتم إضافة #.mp4 تلقائياً)</label>
+        <input id="movieLink" placeholder="https://example.com/movie/video">
+        
+        <label>رفع ملف الترجمة (صيغة .srt فقط)</label>
+        <input type="file" id="subtitleFile" accept=".srt">
+    </div>
+
+    <div id="youtubeSection" class="section-type" style="display:none;">
+        <label>رابط فيديو اليوتيوب</label>
+        <input id="youtubeLink" placeholder="https://www.youtube.com/watch?v=xxxxxx">
+    </div>
+
+    <div id="videoSection" class="section-type" style="display:none;">
+        <div class="row">
+            <div class="col">
+                <label>رابط الفيديو المباشر (سيتم إضافة #.mp4 تلقائياً)</label>
+                <input id="normalVideoLink" placeholder="https://example.com/video">
+            </div>
+            <div class="col">
+                <label>رابط صورة الفيديو (سيتم إضافة #.png تلقائياً)</label>
+                <input id="videoThumb" placeholder="https://example.com/image">
+            </div>
+        </div>
+        
+        <label>روابط الجودات المتعددة (اختياري - اتبع النمط المطلوب إذا وُجدت جودات متعددة)</label>
+        <textarea id="qualitiesInput" style="min-height: 60px;" placeholder="مثال: #1080|رابط_الجودة_الأولى#720|رابط_الجودة_الثانية"></textarea>
+    </div>
+
+    <label>الوصف / محتوى النص الإضافي للمقال</label>
+    <textarea id="content" placeholder="اكتب قصة الفيلم أو وصف الفيديو هنا..."></textarea>
+
+    <div class="row">
+        <div class="col">
+            <label>حالة النشر</label>
+            <select id="postStatus">
+                <option value="DRAFT">مسودة</option>
+                <option value="LIVE">نشر مباشر للجمهور</option>
+            </select>
+        </div>
+    </div>
+
+    <button class="btn-sec" style="width:100%; margin-bottom: 10px;" onclick="previewCode()">👁️ معاينة الكود النهائي قبل النشر</button>
+    
+    <div id="previewContainer">
+        <h3 style="color: #66fcf1; margin-top: 0;">شكل الكود الذي سيُرسل إلى بلوجر:</h3>
+        <pre id="previewText"></pre>
+    </div>
+
+    <button class="btn-main" onclick="publish()">🚀 نشر / تعديل المقال المقال الحالية</button>
+    <button class="btn-sec" onclick="loadPosts()">🔄 عرض وإدارة المقالات الحالية</button>
+
     <div id="posts"></div>
 </div>
 
@@ -78,8 +127,32 @@ const BLOG_ID = "6155177137677743195";
 let token = "";
 let editMode = false;
 let editPostId = null;
+let subtitleContent = "";
 
-/* ===== Google Login ===== */
+// نظام الجلسة اللانهائية: التحقق من وجود توكن محفوظ مسبقاً فور فتح الصفحة
+window.onload = function() {
+    let savedToken = localStorage.getItem("jawrab_token");
+    if(savedToken) {
+        token = savedToken;
+        document.getElementById("statusText").innerText = "تم استعادة الجلسة تلقائياً من المتصفح ✅";
+    } else {
+        document.getElementById("statusText").innerText = "لم يتم تسجيل الدخول، يرجى تسجيل الدخول أولاً ❌";
+    }
+    
+    // رصد قراءة ملف الترجمة تلقائياً عند اختياره
+    document.getElementById("subtitleFile").addEventListener("change", function(e) {
+        let file = e.target.files[0];
+        if (!file) return;
+        let reader = new FileReader();
+        reader.onload = function(evt) {
+            subtitleContent = evt.target.result;
+            alert("تم استخراج نص الترجمة بنجاح وسيتم تضمينه برمجياً!");
+        };
+        reader.readAsText(file);
+    });
+};
+
+/* ===== تسجيل الدخول وحفظ التوكن في المتصفح للأبد ===== */
 function login(){
     const client = google.accounts.oauth2.initTokenClient({
         client_id: CLIENT_ID,
@@ -87,7 +160,8 @@ function login(){
         callback: (res) => {
             if (res.access_token) {
                 token = res.access_token;
-                document.getElementById("statusText").innerText = "تم تسجيل الدخول ✅";
+                localStorage.setItem("jawrab_token", token); // حفظ في المتصفح لجلسة لانهائية
+                document.getElementById("statusText").innerText = "تم تسجيل الدخول وحفظ الجلسة بنجاح ✅";
             } else {
                 document.getElementById("statusText").innerText = "فشل الحصول على رمز الدخول ❌";
             }
@@ -96,43 +170,90 @@ function login(){
     client.requestAccessToken();
 }
 
-/* ===== Image to Base64 ===== */
-function imageToBase64(file){
-    return new Promise((resolve)=>{
-        let r = new FileReader();
-        r.onload = ()=> resolve(r.result);
-        r.readAsDataURL(file);
-    });
+/* ===== التحكم بظهور الحقول حسب الاختيار ===== */
+function toggleSections() {
+    let type = document.getElementById("contentType").value;
+    document.getElementById("movieSection").style.display = (type === "MOVIE") ? "block" : "none";
+    document.getElementById("youtubeSection").style.display = (type === "YOUTUBE") ? "block" : "none";
+    document.getElementById("videoSection").style.display = (type === "NORMAL_VIDEO") ? "block" : "none";
 }
 
-/* ===== Publish / Update ===== */
+/* ===== بناء كود المحتوى بناء على الشروط الاحترافية المطلوبة ===== */
+function buildFinalContent() {
+    let type = document.getElementById("contentType").value;
+    let extraContent = document.getElementById("content").value.trim();
+    let finalHTML = "";
+
+    if (type === "MOVIE") {
+        let movieLink = document.getElementById("movieLink").value.trim();
+        // أول كود في المقال يكون الرمز المخفي --movie--
+        finalHTML += "--movie--\n";
+        
+        if(movieLink) {
+            finalHTML += `<div class="jawrab-movie-player" data-src="${movieLink}#.mp4"></div>\n`;
+        }
+        if(subtitleContent) {
+            finalHTML += `--subtitle--\n${subtitleContent}\n--subtitle--\n`;
+        }
+        
+    } else if (type === "YOUTUBE") {
+        let youtubeLink = document.getElementById("youtubeLink").value.trim();
+        if(youtubeLink) {
+            finalHTML += `<div class="jawrab-youtube-player" data-url="${youtubeLink}"></div>\n`;
+        }
+        
+    } else if (type === "NORMAL_VIDEO") {
+        let normalVideoLink = document.getElementById("normalVideoLink").value.trim();
+        let videoThumb = document.getElementById("videoThumb").value.trim();
+        let qualities = document.getElementById("qualitiesInput").value.trim();
+
+        let videoAttr = normalVideoLink ? `data-video="${normalVideoLink}#.mp4"` : '';
+        let thumbAttr = videoThumb ? `data-poster="${videoThumb}#.png"` : '';
+        let qualityAttr = qualities ? `data-qualities="${qualities}"` : '';
+
+        finalHTML += `<div class="jawrab-custom-video" ${videoAttr} ${thumbAttr} ${qualityAttr}></div>\n`;
+    }
+
+    // إضافة الوصف النصي للمقالة في النهاية
+    if(extraContent) {
+        finalHTML += `<div class="jawrab-description">${extraContent}</div>`;
+    }
+
+    return finalHTML;
+}
+
+/* ===== زر المعاينة قبل النشر ===== */
+function previewCode() {
+    let code = buildFinalContent();
+    document.getElementById("previewText").innerText = code;
+    document.getElementById("previewContainer").style.display = "block";
+}
+
+/* ===== نشر المقال للـ API ===== */
 async function publish(){
     if(!token){
-        alert("سجل الدخول أولاً");
+        alert("تنبيه: لم تسجل الدخول أو انتهت جلستك، يرجى الضغط على زر تسجيل الدخول أولاً");
         return;
     }
 
     let titleValue = document.getElementById("title").value.trim();
-    let contentValue = document.getElementById("content").value.trim();
     let statusValue = document.getElementById("postStatus").value;
-    
     let labelsInput = document.getElementById("labels").value;
     let labelsArray = labelsInput ? labelsInput.split(",").map(l => l.trim()).filter(l => l !== "") : [];
 
-    document.getElementById("statusText").innerText = "جاري المعالجة... ⏳";
-
-    // معالجة الصورة
-    let img = document.getElementById("imageInput").files[0];
-    if(img){
-        let base64 = await imageToBase64(img);
-        contentValue = `<img src="${base64}" style="max-width:100%"><br><br>` + contentValue;
+    if(!titleValue) {
+        alert("يرجى كتابة عنوان المقال أولاً");
+        return;
     }
 
-    // بناء كائن المقال بشكل يتوافق بدقة مع شروط Google
+    document.getElementById("statusText").innerText = "جاري رفع البيانات إلى بلوجر... ⏳";
+    
+    let finalBodyContent = buildFinalContent();
+
     let postData = {
         kind: "blogger#post",
-        title: titleValue || "مقال جديد بدون عنوان",
-        content: contentValue || "محتوى المقال فارغ"
+        title: titleValue,
+        content: finalBodyContent
     };
 
     if(labelsArray.length > 0) {
@@ -150,7 +271,6 @@ async function publish(){
         method = "POST";
     }
 
-    // إصلاح الخطأ: استخدام المتغير الصحيح statusValue بدلاً من status العام
     url += `?isDraft=${statusValue !== "LIVE"}`;
 
     try {
@@ -164,13 +284,20 @@ async function publish(){
         });
 
         if(res.ok){
-            document.getElementById("statusText").innerText = editMode ? "تم التعديل بنجاح ✏️" : "تم النشر بنجاح ✅";
+            document.getElementById("statusText").innerText = editMode ? "تم التعديل الاحترافي بنجاح ✏️" : "تم نشر الفيديو/الفيلم بنجاح 🚀";
 
-            // تفريغ الحقول
+            // تفريغ الحقول وإعادة التهيئة
             document.getElementById("title").value = "";
             document.getElementById("content").value = "";
             document.getElementById("labels").value = "";
-            document.getElementById("imageInput").value = "";
+            document.getElementById("movieLink").value = "";
+            document.getElementById("youtubeLink").value = "";
+            document.getElementById("normalVideoLink").value = "";
+            document.getElementById("videoThumb").value = "";
+            document.getElementById("qualitiesInput").value = "";
+            document.getElementById("subtitleFile").value = "";
+            subtitleContent = "";
+            document.getElementById("previewContainer").style.display = "none";
 
             editMode = false;
             editPostId = null;
@@ -178,22 +305,22 @@ async function publish(){
             loadPosts(); 
         } else {
             let errorData = await res.json();
-            console.error("Blogger API Error:", errorData);
-            document.getElementById("statusText").innerText = `خطأ من جوجل: ${errorData.error.message} ❌`;
+            console.error(errorData);
+            document.getElementById("statusText").innerText = `خطأ في النشر: ${errorData.error.message} ❌`;
         }
     } catch (err) {
-        console.error("Fetch Error:", err);
-        document.getElementById("statusText").innerText = "فشل الاتصال بالخادم ❌";
+        console.error(err);
+        document.getElementById("statusText").innerText = "خطأ في الاتصال بالشبكة ❌";
     }
 }
 
-/* ===== Load Posts ===== */
+/* ===== عرض المقالات ===== */
 async function loadPosts(){
     if(!token){
         alert("سجل الدخول أولاً");
         return;
     }
-    document.getElementById("posts").innerHTML = "<p>جاري التحميل... ⏳</p>";
+    document.getElementById("posts").innerHTML = "<p style='text-align:center;'>جاري سحب المقالات الفيديوهات... ⏳</p>";
     try {
         let res = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`, {
             headers:{"Authorization":"Bearer " + token}
@@ -204,33 +331,35 @@ async function loadPosts(){
             data.items.forEach(p=>{
                 html += `
                 <div class="postItem">
-                    <b>${p.title}</b><br><br>
-                    <button onclick="editPost('${p.id}','${encodeURIComponent(p.title)}','${encodeURIComponent(p.content)}')">تعديل</button>
-                    <button style="background:#f44336;" onclick="deletePost('${p.id}')">حذف</button>
+                    <b>${p.title}</b>
+                    <div>
+                        <button class="btn-sec" onclick="editPost('${p.id}','${encodeURIComponent(p.title)}','${encodeURIComponent(p.content)}')">تعديل</button>
+                        <button class="btn-danger" onclick="deletePost('${p.id}')">حذف</button>
+                    </div>
                 </div>`;
             });
         } else {
-            html = "<p>لا توجد مقالات.</p>";
+            html = "<p style='text-align:center;'>لا توجد فيديوهات منشورة حالياً.</p>";
         }
         document.getElementById("posts").innerHTML = html;
     } catch(err) {
-        document.getElementById("posts").innerHTML = "<p>حدث خطأ أثناء جلب المقالات ❌</p>";
+        document.getElementById("posts").innerHTML = "<p style='text-align:center;'>حدث خطأ أثناء الاتصال ❌</p>";
     }
 }
 
-/* ===== Edit Mode ===== */
+/* ===== وضع التعديل ===== */
 function editPost(id, title, content){
     editMode = true;
     editPostId = id;
     document.getElementById("title").value = decodeURIComponent(title);
     document.getElementById("content").value = decodeURIComponent(content);
-    document.getElementById("statusText").innerText = "وضع التعديل نشط ✏️";
+    document.getElementById("statusText").innerText = "أنت الآن تقوم بتعديل منشور قديم ✏️";
     window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
-/* ===== Delete Post ===== */
+/* ===== حذف المقال ===== */
 async function deletePost(id){
-    if(!confirm("حذف المقال؟")) return;
+    if(!confirm("هل تريد حذف هذا الفيديو نهائياً من النظام؟")) return;
     try {
         let res = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`, {
             method:"DELETE",
@@ -238,25 +367,6 @@ async function deletePost(id){
         });
         if(res.ok) { loadPosts(); }
     } catch (err) { console.error(err); }
-}
-
-/* ===== PWA Setup ===== */
-const manifest = {
-    name:"Blogger Pro", short_name:"Blogger", start_url:".", display:"standalone",
-    background_color:"#0f0f0f", theme_color:"#4CAF50", icons:[{src:"icon.png",sizes:"192x192",type:"image/png"}]
-};
-const blob = new Blob([JSON.stringify(manifest)],{type:"application/json"});
-const url = URL.createObjectURL(blob);
-let link = document.createElement("link"); link.rel = "manifest"; link.href = url; document.head.appendChild(link);
-
-if('serviceWorker' in navigator){
-    const swCode = `
-    self.addEventListener('install',e=>{ self.skipWaiting(); });
-    self.addEventListener('fetch',e=>{ e.respondWith(fetch(e.request).catch(()=>new Response("Offline"))); });
-    `;
-    const swBlob = new Blob([swCode],{type:"text/javascript"});
-    const swURL = URL.createObjectURL(swBlob);
-    navigator.serviceWorker.register(swURL);
 }
 </script>
 </body>

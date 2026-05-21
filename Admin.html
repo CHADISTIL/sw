@@ -14,12 +14,7 @@
             margin: 0;
             padding: 20px;
         }
-
-        .container { 
-            max-width: 900px; 
-            margin: auto; 
-        }
-
+        .container { max-width: 900px; margin: auto; }
         input, textarea, select {
             width: 100%;
             margin: 8px 0;
@@ -30,11 +25,7 @@
             color: #fff;
             box-sizing: border-box;
         }
-
-        textarea { 
-            min-height: 200px; 
-        }
-
+        textarea { min-height: 200px; }
         button {
             padding: 10px 15px;
             border: none;
@@ -43,10 +34,8 @@
             margin: 5px 0;
             font-weight: bold;
         }
-
         .btn { background: #4CAF50; color: #fff; }
         .btn2 { background: #2196F3; color: #fff; }
-
         .postItem {
             background: #1c1c1c;
             padding: 15px;
@@ -54,48 +43,32 @@
             border-radius: 10px;
             border: 1px solid #333;
         }
-        
-        .postItem button {
-            margin-right: 5px;
-            background: #444;
-            color: #fff;
-        }
-        
-        #statusText {
-            font-weight: bold;
-            color: #ffca28;
-            margin: 10px 0;
-        }
+        .postItem button { margin-right: 5px; background: #444; color: #fff; }
+        #statusText { font-weight: bold; color: #ffca28; margin: 10px 0; }
     </style>
 </head>
 
 <body>
 
 <div class="container">
-
     <h2>📌 Blogger Pro PWA (Single File)</h2>
-
     <button class="btn2" onclick="login()">تسجيل الدخول</button>
     <span id="statusText">لم يتم تسجيل الدخول ❌</span>
-
     <hr style="border-color: #333;">
 
     <input id="title" placeholder="عنوان المقال">
     <input id="labels" placeholder="تصنيفات (افصل بينها بفاصلة ,)">
     <input type="file" id="imageInput" accept="image/*">
-
     <textarea id="content" placeholder="المحتوى"></textarea>
 
-    <select id="status">
+    <select id="postStatus">
         <option value="DRAFT">مسودة</option>
         <option value="LIVE">نشر مباشر</option>
     </select>
 
     <button class="btn" onclick="publish()">نشر / تعديل</button>
     <button class="btn2" onclick="loadPosts()">عرض المقالات</button>
-
     <div id="posts"></div>
-
 </div>
 
 <script>
@@ -139,39 +112,37 @@ async function publish(){
         return;
     }
 
-    let title = document.getElementById("title").value;
-    let content = document.getElementById("content").value;
-    let status = document.getElementById("status").value;
+    let titleValue = document.getElementById("title").value.trim();
+    let contentValue = document.getElementById("content").value.trim();
+    let statusValue = document.getElementById("postStatus").value;
     
-    // تنظيف المدخلات لمنع إرسال قيم فارغة تسبب أخطاء للـ API
     let labelsInput = document.getElementById("labels").value;
-    let labels = labelsInput ? labelsInput.split(",").map(l => l.trim()).filter(l => l !== "") : [];
+    let labelsArray = labelsInput ? labelsInput.split(",").map(l => l.trim()).filter(l => l !== "") : [];
 
     document.getElementById("statusText").innerText = "جاري المعالجة... ⏳";
 
-    // معالجة الصورة لو تم اختيارها
+    // معالجة الصورة
     let img = document.getElementById("imageInput").files[0];
     if(img){
-        // تنبيه: الصور الكبيرة جداً ستسبب فشل الطلب (خطأ 400) من جوجل بسبب حجم الـ Base64
         let base64 = await imageToBase64(img);
-        content = `<img src="${base64}" style="max-width:100%"><br><br>` + content;
+        contentValue = `<img src="${base64}" style="max-width:100%"><br><br>` + contentValue;
     }
 
-    let post = {
+    // بناء كائن المقال بشكل يتوافق بدقة مع شروط Google
+    let postData = {
         kind: "blogger#post",
-        title: title || "بدون عنوان",
-        content: content || "محتوى فارغ"
+        title: titleValue || "مقال جديد بدون عنوان",
+        content: contentValue || "محتوى المقال فارغ"
     };
 
-    // إضافة التصنيفات فقط إذا كانت تحتوي على نصوص فعلياً
-    if(labels.length > 0) {
-        post.labels = labels;
+    if(labelsArray.length > 0) {
+        postData.labels = labelsArray;
     }
 
     let url = "";
     let method = "";
 
-    if(editMode){
+    if(editMode && editPostId){
         url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${editPostId}`;
         method = "PUT";
     } else {
@@ -179,8 +150,8 @@ async function publish(){
         method = "POST";
     }
 
-    // تحديد ما إذا كان المقال سينشر كمسودة أم نشر فوري مباشر
-    url += `?isDraft=${status !== "LIVE"}`;
+    // إصلاح الخطأ: استخدام المتغير الصحيح statusValue بدلاً من status العام
+    url += `?isDraft=${statusValue !== "LIVE"}`;
 
     try {
         let res = await fetch(url,{
@@ -189,13 +160,13 @@ async function publish(){
                 "Authorization":"Bearer " + token,
                 "Content-Type":"application/json"
             },
-            body: JSON.stringify(post)
+            body: JSON.stringify(postData)
         });
 
         if(res.ok){
             document.getElementById("statusText").innerText = editMode ? "تم التعديل بنجاح ✏️" : "تم النشر بنجاح ✅";
 
-            // تفريغ الحقول بعد النشر الناجح
+            // تفريغ الحقول
             document.getElementById("title").value = "";
             document.getElementById("content").value = "";
             document.getElementById("labels").value = "";
@@ -204,7 +175,7 @@ async function publish(){
             editMode = false;
             editPostId = null;
 
-            loadPosts(); // تحديث القائمة
+            loadPosts(); 
         } else {
             let errorData = await res.json();
             console.error("Blogger API Error:", errorData);
@@ -212,27 +183,22 @@ async function publish(){
         }
     } catch (err) {
         console.error("Fetch Error:", err);
-        document.getElementById("statusText").innerText = "فشل الاتصال بالإنترنت أو الخادم ❌";
+        document.getElementById("statusText").innerText = "فشل الاتصال بالخادم ❌";
     }
 }
 
 /* ===== Load Posts ===== */
 async function loadPosts(){
     if(!token){
-        alert("سجل الدخول أولاً لعرض المقالات");
+        alert("سجل الدخول أولاً");
         return;
     }
-    
-    document.getElementById("posts").innerHTML = "<p>جاري تحميل المقالات... ⏳</p>";
-    
+    document.getElementById("posts").innerHTML = "<p>جاري التحميل... ⏳</p>";
     try {
-        let res = await fetch(
-            `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`,
-            { headers:{"Authorization":"Bearer " + token} }
-        );
-
+        let res = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`, {
+            headers:{"Authorization":"Bearer " + token}
+        });
         let data = await res.json();
-
         let html = "";
         if(data.items && data.items.length > 0) {
             data.items.forEach(p=>{
@@ -244,12 +210,10 @@ async function loadPosts(){
                 </div>`;
             });
         } else {
-            html = "<p>لا توجد مقالات في هذه المدونة حالياً.</p>";
+            html = "<p>لا توجد مقالات.</p>";
         }
-
         document.getElementById("posts").innerHTML = html;
     } catch(err) {
-        console.error("Error loading posts:", err);
         document.getElementById("posts").innerHTML = "<p>حدث خطأ أثناء جلب المقالات ❌</p>";
     }
 }
@@ -258,56 +222,32 @@ async function loadPosts(){
 function editPost(id, title, content){
     editMode = true;
     editPostId = id;
-
     document.getElementById("title").value = decodeURIComponent(title);
     document.getElementById("content").value = decodeURIComponent(content);
-
-    document.getElementById("statusText").innerText = "أنت الآن في وضع التعديل ✏️";
-    window.scrollTo({ top: 0, behavior: 'smooth' }); // صعود لأعلى الصفحة للتعديل
+    document.getElementById("statusText").innerText = "وضع التعديل نشط ✏️";
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 /* ===== Delete Post ===== */
 async function deletePost(id){
-    if(!confirm("هل أنت متأكد من حذف هذا المقال نهائياً؟")) return;
-
+    if(!confirm("حذف المقال؟")) return;
     try {
-        let res = await fetch(
-            `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,
-            {
-                method:"DELETE",
-                headers:{ "Authorization":"Bearer " + token }
-            }
-        );
-        
-        if(res.ok) {
-            alert("تم حذف المقال بنجاح");
-            loadPosts();
-        } else {
-            alert("فشل حذف المقال");
-        }
-    } catch (err) {
-        console.error(err);
-    }
+        let res = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`, {
+            method:"DELETE",
+            headers:{ "Authorization":"Bearer " + token }
+        });
+        if(res.ok) { loadPosts(); }
+    } catch (err) { console.error(err); }
 }
 
-/* ===== PWA (Inline Manifest + SW) ===== */
+/* ===== PWA Setup ===== */
 const manifest = {
-    name:"Blogger Pro",
-    short_name:"Blogger",
-    start_url:".",
-    display:"standalone",
-    background_color:"#0f0f0f",
-    theme_color:"#4CAF50",
-    icons:[{src:"icon.png",sizes:"192x192",type:"image/png"}]
+    name:"Blogger Pro", short_name:"Blogger", start_url:".", display:"standalone",
+    background_color:"#0f0f0f", theme_color:"#4CAF50", icons:[{src:"icon.png",sizes:"192x192",type:"image/png"}]
 };
-
 const blob = new Blob([JSON.stringify(manifest)],{type:"application/json"});
 const url = URL.createObjectURL(blob);
-
-let link = document.createElement("link");
-link.rel = "manifest";
-link.href = url;
-document.head.appendChild(link);
+let link = document.createElement("link"); link.rel = "manifest"; link.href = url; document.head.appendChild(link);
 
 if('serviceWorker' in navigator){
     const swCode = `
@@ -319,6 +259,5 @@ if('serviceWorker' in navigator){
     navigator.serviceWorker.register(swURL);
 }
 </script>
-
 </body>
 </html>

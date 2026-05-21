@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<title>Blogger Pro Panel</title>
+
+<script src="https://accounts.google.com/gsi/client"></script>
+
+<style>
+body{
+    font-family: Arial;
+    background:#0f0f0f;
+    color:#fff;
+    margin:0;
+    padding:20px;
+}
+
+.container{
+    max-width:900px;
+    margin:auto;
+}
+
+input, textarea, select{
+    width:100%;
+    margin:8px 0;
+    padding:10px;
+    border-radius:8px;
+    border:none;
+    background:#222;
+    color:#fff;
+}
+
+textarea{
+    min-height:200px;
+}
+
+button{
+    padding:10px 15px;
+    border:none;
+    border-radius:8px;
+    cursor:pointer;
+    margin:5px 0;
+}
+
+.btn{
+    background:#4CAF50;
+    color:#fff;
+}
+
+.btn2{
+    background:#2196F3;
+    color:#fff;
+}
+
+.btn3{
+    background:#f44336;
+    color:#fff;
+}
+
+.toolbar button{
+    margin:3px;
+    background:#333;
+    color:#fff;
+}
+
+.postList{
+    background:#1c1c1c;
+    padding:10px;
+    border-radius:10px;
+    margin-top:20px;
+}
+
+.postItem{
+    padding:10px;
+    border-bottom:1px solid #333;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>لوحة تحكم Blogger Pro</h2>
+
+<button class="btn2" onclick="login()">تسجيل الدخول بجوجل</button>
+
+<hr>
+
+<input id="title" placeholder="عنوان المقال">
+
+<input id="labels" placeholder="تصنيفات (تفصل بينهما بفاصلة)">
+
+<input type="file" id="imageInput" accept="image/*">
+
+<div class="toolbar">
+<button onclick="format('bold')">B</button>
+<button onclick="format('italic')">I</button>
+<button onclick="format('insertUnorderedList')">• List</button>
+<button onclick="insertLink()">Link</button>
+</div>
+
+<textarea id="content" placeholder="اكتب المقال هنا..."></textarea>
+
+<select id="status">
+<option value="DRAFT">مسودة</option>
+<option value="LIVE">نشر مباشر</option>
+</select>
+
+<button class="btn" onclick="publish()">نشر / حفظ</button>
+<button class="btn2" onclick="loadPosts()">عرض آخر المقالات</button>
+
+<p id="statusText"></p>
+
+<div class="postList" id="posts"></div>
+
+</div>
+
+<script>
+const CLIENT_ID = "1095244236392-eqhgorr4t587vvr4vblmvlkqbh8kae9e.apps.googleusercontent.com";
+const BLOG_ID = "6155177137677743195";
+
+let token = "";
+
+/* تسجيل الدخول */
+function login(){
+    const client = google.accounts.oauth2.initTokenClient({
+        client_id: CLIENT_ID,
+        scope: "https://www.googleapis.com/auth/blogger",
+        callback: (res) => {
+            token = res.access_token;
+            document.getElementById("statusText").innerText = "تم تسجيل الدخول ✅";
+        }
+    });
+    client.requestAccessToken();
+}
+
+/* تنسيق النص */
+function format(cmd){
+    document.execCommand(cmd, false, null);
+}
+
+/* إضافة رابط */
+function insertLink(){
+    let url = prompt("أدخل الرابط:");
+    document.execCommand("createLink", false, url);
+}
+
+/* تحويل الصورة إلى Base64 */
+function imageToBase64(file){
+    return new Promise((resolve) => {
+        let reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.readAsDataURL(file);
+    });
+}
+
+/* نشر المقال */
+async function publish(){
+
+    if(!token){
+        alert("سجل الدخول أولاً");
+        return;
+    }
+
+    let title = document.getElementById("title").value;
+    let content = document.getElementById("content").value;
+    let labels = document.getElementById("labels").value.split(",");
+    let status = document.getElementById("status").value;
+
+    /* إضافة صورة إن وجدت */
+    let imgFile = document.getElementById("imageInput").files[0];
+    if(imgFile){
+        let base64 = await imageToBase64(imgFile);
+        content = `<img src="${base64}" style="max-width:100%"><br>` + content;
+    }
+
+    let post = {
+        kind: "blogger#post",
+        title: title,
+        content: content,
+        labels: labels
+    };
+
+    let url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/insert?isDraft=${status !== "LIVE"}`;
+
+    let res = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Authorization": "Bearer " + token,
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(post)
+    });
+
+    let data = await res.json();
+
+    if(res.ok){
+        document.getElementById("statusText").innerText = "تم الحفظ بنجاح ✅";
+        console.log(data);
+    } else {
+        document.getElementById("statusText").innerText = "خطأ ❌";
+        console.log(data);
+    }
+}
+
+/* جلب آخر المقالات */
+async function loadPosts(){
+
+    let res = await fetch(
+        `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`,
+        {
+            headers: { "Authorization": "Bearer " + token }
+        }
+    );
+
+    let data = await res.json();
+
+    let html = "";
+
+    data.items?.forEach(p => {
+        html += `
+        <div class="postItem">
+            <b>${p.title}</b><br>
+            <button onclick="deletePost('${p.id}')">حذف</button>
+        </div>
+        `;
+    });
+
+    document.getElementById("posts").innerHTML = html;
+}
+
+/* حذف مقال */
+async function deletePost(id){
+
+    if(!confirm("حذف المقال؟")) return;
+
+    await fetch(
+        `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,
+        {
+            method: "DELETE",
+            headers: {
+                "Authorization": "Bearer " + token
+            }
+        }
+    );
+
+    loadPosts();
+}
+</script>
+
+</body>
+</html>

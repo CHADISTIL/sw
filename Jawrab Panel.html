@@ -8,9 +8,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Jawrab Panel">
-<meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black">
-<meta name="apple-mobile-web-app-title" content="Jawrab Panel">
 <meta name="theme-color" content="#0b1a0e">
 <meta name="description" content="Jawrab Panel — لوحة الناشرين">
 <link rel="manifest" id="pwaManifest">
@@ -79,7 +76,12 @@ body::before{
   width:38px;height:38px;border-radius:12px;overflow:hidden;flex-shrink:0;
   box-shadow:0 4px 12px rgba(0,0,0,.4);
 }
-.tb-brand-logo img{width:100%;height:100%;object-fit:cover;display:block;}
+.tb-brand-logo img{
+  width:100%;height:100%;
+  object-fit:cover;
+  object-position:center;
+  display:block;
+}
 .tb-brand-text{line-height:1.25;}
 .tb-brand-name{
   font-size:1.1em;font-weight:900;font-family:'Inter',sans-serif;
@@ -94,7 +96,7 @@ body::before{
   background:rgba(20,30,22,.7);
   border:1px solid var(--border2);
   border-radius:40px;
-  padding:0 14px 0 0;
+  padding:0 0px 0 0;
   cursor:default;overflow:hidden;
   height:46px;
 }
@@ -627,12 +629,6 @@ body::before{
   background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);
   color:#f87171;border-radius:6px;width:22px;height:22px;
   font-size:.7em;cursor:pointer;display:flex;align-items:center;justify-content:center;
-}
-
-/* ══ PWA ICON — no zoom ══ */
-.tb-brand-logo img{
-  object-fit:contain !important;
-  background:#0b1a0e;
 }
 
 /* ══ RELOAD OVERLAY ══ */
@@ -1939,13 +1935,13 @@ function toast(msg,type='info'){
   const manifest={
     name:'Jawrab Panel',short_name:'Jawrab Panel',
     start_url:'.',
-    display:'fullscreen',
-    display_override:['fullscreen','standalone'],
+    display:'standalone',
+    display_override:['window-controls-overlay','standalone'],
     background_color:'#0b1a0e',theme_color:'#0b1a0e',
     orientation:'portrait',
     icons:[
-      {src:'https://i.suar.me/YQ34Q/m',sizes:'512x512',type:'image/jpeg',purpose:'any'},
-      {src:'https://i.suar.me/YQ34Q/m',sizes:'192x192',type:'image/jpeg',purpose:'any'}
+      {src:'https://i.suar.me/e9M10/l',sizes:'512x512',type:'image/jpeg',purpose:'any'},
+      {src:'https://i.suar.me/e9M10/l',sizes:'192x192',type:'image/jpeg',purpose:'any'}
     ],
     screenshots:[
       {src:'https://i.suar.me/e9M10/l',sizes:'1080x2340',type:'image/jpeg',form_factor:'narrow'}

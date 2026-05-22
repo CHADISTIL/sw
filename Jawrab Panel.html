@@ -1687,14 +1687,14 @@ function buildContent(){
         subtitleBlock = [];
       } else {
         // أغلق الـ subtitle block كاملاً في عنصر واحد
-        htmlLines.push(`<pre style="direction:ltr;text-align:left;">${subtitleBlock.join('\n')}</pre>`);
+        htmlLines.push(`--subtitle--${subtitleBlock.join('\n')}--subtitle--`);
         inSubtitle = false;
         subtitleBlock = [];
       }
     } else if(inSubtitle){
       subtitleBlock.push(line);
     } else {
-      htmlLines.push(`<p>--subtitle--${line}--subtitle--</p>`);
+      htmlLines.push(`${line}`);
     }
   }
   const content = htmlLines.join('\n');

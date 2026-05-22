@@ -4,14 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="application-name" content="Jawrab Panel">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Jawrab Panel">
-<meta name="theme-color" content="#0a0f0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Jawrab Panel">
+<meta name="theme-color" content="#0b1a0e">
 <meta name="description" content="Jawrab Panel — لوحة الناشرين">
 <link rel="manifest" id="pwaManifest">
 <link rel="icon" type="image/jpeg" href="https://i.suar.me/YQ34Q/m">
 <link rel="apple-touch-icon" href="https://i.suar.me/YQ34Q/m">
+<link rel="apple-touch-startup-image" href="https://i.suar.me/e9M10/l">
 <title>Jawrab Panel</title>
 <script src="https://accounts.google.com/gsi/client" async></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -87,16 +92,21 @@ body::before{
 .profile-pill{
   display:none;align-items:center;gap:10px;
   background:rgba(20,30,22,.7);
-  border:1px solid var(--border2);border-radius:40px;
-  padding:0 0px 0 0;cursor:default;overflow:hidden;
+  border:1px solid var(--border2);
+  border-radius:40px;
+  padding:0 14px 0 0;
+  cursor:default;overflow:hidden;
+  height:46px;
 }
 .profile-pill.visible{display:flex;}
 .profile-av{
-  width:44px;height:44px;border-radius:0;
+  width:46px;height:46px;flex-shrink:0;
   background:linear-gradient(145deg,#2b6e3c,#173321);
   display:flex;align-items:center;justify-content:center;
-  font-weight:800;font-size:1em;color:#dcfce7;flex-shrink:0;
+  font-weight:800;font-size:1em;color:#dcfce7;
   overflow:hidden;padding:0;position:relative;
+  /* تدوير الزوايا الخارجية فقط — اليمين في RTL */
+  border-radius:40px 0 0 40px;
 }
 .profile-av img{
   position:absolute;inset:0;
@@ -618,6 +628,54 @@ body::before{
   color:#f87171;border-radius:6px;width:22px;height:22px;
   font-size:.7em;cursor:pointer;display:flex;align-items:center;justify-content:center;
 }
+
+/* ══ PWA ICON — no zoom ══ */
+.tb-brand-logo img{
+  object-fit:contain !important;
+  background:#0b1a0e;
+}
+
+/* ══ RELOAD OVERLAY ══ */
+#reloadOverlay{
+  position:fixed;inset:0;z-index:9999;
+  background:rgba(8,14,10,.92);
+  backdrop-filter:blur(6px);
+  display:flex;align-items:center;justify-content:center;
+  animation:rov-in .2s ease both;
+}
+#reloadOverlay.rov-done{animation:rov-out .35s ease forwards;}
+@keyframes rov-in{from{opacity:0;}to{opacity:1;}}
+@keyframes rov-out{to{opacity:0;}}
+.rov-box{
+  display:flex;flex-direction:column;align-items:center;gap:16px;
+  text-align:center;
+}
+.rov-spinner{
+  width:52px;height:52px;position:relative;
+}
+.rov-spinner div{
+  position:absolute;width:100%;height:100%;
+  border:3px solid transparent;
+  border-top-color:#6fbf4c;
+  border-radius:50%;
+  animation:rov-spin 1s linear infinite;
+}
+.rov-spinner div:nth-child(2){
+  width:70%;height:70%;top:15%;left:15%;
+  border-top-color:#9bdf7a44;
+  animation-duration:1.4s;animation-direction:reverse;
+}
+.rov-spinner div:nth-child(3){
+  width:40%;height:40%;top:30%;left:30%;
+  border-top-color:#6fbf4c88;
+  animation-duration:.7s;
+}
+.rov-spinner div:nth-child(4){display:none;}
+@keyframes rov-spin{to{transform:rotate(360deg);}}
+.rov-title{font-size:.95em;font-weight:700;color:var(--text);}
+.rov-sub{font-size:.75em;color:var(--text3);}
+
+/* ══ PROFILE PILL — flush image ══ */
 </style>
 </head>
 <body>
@@ -1877,25 +1935,64 @@ function toast(msg,type='info'){
    PWA
 ═════════════════════════════════════════════ */
 (()=>{
+  // Manifest — الصورة الترحيبية تُعيَّن أوتوماتيكياً من Android عبر screenshot
   const manifest={
-    name:'Jawrab Panel',short_name:'Jawrab Panel',start_url:'.',display:'standalone',
-    background_color:'#0b0e0c',theme_color:'#0b0e0c',
+    name:'Jawrab Panel',short_name:'Jawrab Panel',
+    start_url:'.',
+    display:'fullscreen',
+    display_override:['fullscreen','standalone'],
+    background_color:'#0b1a0e',theme_color:'#0b1a0e',
+    orientation:'portrait',
     icons:[
-      {src:ICON_URL,sizes:'512x512',type:'image/jpeg',purpose:'any'},
-      {src:ICON_URL,sizes:'192x192',type:'image/jpeg'}
+      {src:'https://i.suar.me/YQ34Q/m',sizes:'512x512',type:'image/jpeg',purpose:'any'},
+      {src:'https://i.suar.me/YQ34Q/m',sizes:'192x192',type:'image/jpeg',purpose:'any'}
+    ],
+    screenshots:[
+      {src:'https://i.suar.me/e9M10/l',sizes:'1080x2340',type:'image/jpeg',form_factor:'narrow'}
     ]
   };
   const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
   document.getElementById('pwaManifest').href=URL.createObjectURL(blob);
+
   const atl=document.createElement('link');
-  atl.rel='apple-touch-icon'; atl.href=ICON_URL; document.head.appendChild(atl);
+  atl.rel='apple-touch-icon'; atl.href=ICON_URL;
+  document.head.appendChild(atl);
+
+  // Service Worker
   if('serviceWorker' in navigator){
-    const sw=`self.addEventListener('install',e=>self.skipWaiting());
-    self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
-    self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>new Response('Offline'))));`;
+    const sw=`
+self.addEventListener('install',e=>self.skipWaiting());
+self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
+self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>new Response('offline'))));`;
     navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'})));
   }
+
+  // ── طبقة تحميل عند العودة للتطبيق ──
+  let wasHidden = false;
+  document.addEventListener('visibilitychange', ()=>{
+    if(document.hidden){ wasHidden = true; }
+    else if(wasHidden){ wasHidden = false; showReloadOverlay(); }
+  });
 })();
+
+function showReloadOverlay(){
+  const ex = document.getElementById('reloadOverlay');
+  if(ex) return;
+  const ov = document.createElement('div');
+  ov.id = 'reloadOverlay';
+  ov.innerHTML = `
+    <div class="rov-box">
+      <div class="rov-spinner"><div></div><div></div><div></div><div></div></div>
+      <div class="rov-title">جاري تحديث البيانات...</div>
+      <div class="rov-sub">مرحباً بعودتك</div>
+    </div>`;
+  document.body.appendChild(ov);
+  // شغّل التحديث الفعلي
+  loadPosts().finally(()=>{
+    ov.classList.add('rov-done');
+    setTimeout(()=>ov.remove(), 400);
+  });
+}
 
 /* ═════════════════════════════════════════════
    INIT

@@ -64,13 +64,14 @@ body::before{
   background:rgba(11,14,12,.88);
   backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
   border-bottom:1px solid rgba(111,191,76,.18);
-  padding:0 22px;height:58px;
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:0 12px;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  gap:8px;min-width:0;overflow:hidden;
 }
-.tb-left{display:flex;align-items:center;}
+.tb-left{display:flex;align-items:center;flex-shrink:0;min-width:0;}
 .tb-brand{display:flex;align-items:center;gap:10px;text-decoration:none;
   transition:opacity .25s,max-width .3s,visibility .25s;
-  max-width:220px;overflow:hidden;white-space:nowrap;}
+  max-width:200px;overflow:hidden;white-space:nowrap;flex-shrink:0;}
 .tb-brand.hidden{opacity:0;visibility:hidden;max-width:0;pointer-events:none;}
 .tb-brand-logo{
   width:38px;height:38px;border-radius:12px;overflow:hidden;flex-shrink:0;
@@ -82,32 +83,33 @@ body::before{
   object-position:center;
   display:block;
 }
-.tb-brand-text{line-height:1.25;}
+.tb-brand-text{line-height:1.25;min-width:0;overflow:hidden;}
 .tb-brand-name{
   font-size:1.1em;font-weight:900;font-family:'Inter',sans-serif;
   background:linear-gradient(120deg,#c6f7d0,#6fbf4c);
   -webkit-background-clip:text;-webkit-text-fill-color:transparent;
 }
 .tb-brand-sub{font-size:.65em;color:var(--text3);}
-.tb-right{display:flex;align-items:center;gap:8px;}
+.tb-right{display:flex;align-items:center;gap:6px;flex-shrink:0;min-width:0;}
 /* profile pill */
 .profile-pill{
-  display:none;align-items:center;gap:10px;
+  display:none;align-items:center;gap:8px;
   background:rgba(20,30,22,.7);
   border:1px solid var(--border2);
   border-radius:40px;
-  padding:0 0px 0 0;
+  padding:0;
   cursor:default;overflow:hidden;
-  height:46px;
+  height:44px;
+  max-width:min(280px, calc(100vw - 180px));
+  flex-shrink:1;min-width:0;
 }
 .profile-pill.visible{display:flex;}
 .profile-av{
-  width:46px;height:46px;flex-shrink:0;
+  width:44px;height:44px;flex-shrink:0;
   background:linear-gradient(145deg,#2b6e3c,#173321);
   display:flex;align-items:center;justify-content:center;
   font-weight:800;font-size:1em;color:#dcfce7;
   overflow:hidden;padding:0;position:relative;
-  /* تدوير الزوايا الخارجية فقط — اليمين في RTL */
   border-radius:40px 0 0 40px;
 }
 .profile-av img{
@@ -116,9 +118,21 @@ body::before{
   object-fit:cover;object-position:center;
   display:block;margin:0;padding:0;
 }
-.profile-name{font-size:.8em;font-weight:700;}
-.profile-email{font-size:.62em;color:var(--text3);}
-.session-timer{font-size:.66em;color:var(--text3);margin-right:2px;}
+.profile-info{min-width:0;overflow:hidden;flex:1;}
+.profile-name{font-size:.78em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.profile-email{font-size:.6em;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.session-timer{display:none;}
+.btn-logout{
+  width:32px;height:32px;flex-shrink:0;margin-left:6px;
+  background:rgba(239,68,68,.08);
+  border:1px solid rgba(239,68,68,.18);
+  border-radius:50%;
+  color:#f87171;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.8em;
+  transition:all .18s;
+}
+.btn-logout:hover{background:rgba(239,68,68,.22);border-color:rgba(239,68,68,.4);color:#fff;}
 /* auth button */
 .btn-auth{
   border:1px solid var(--border2);border-radius:40px;
@@ -409,6 +423,106 @@ body::before{
   display:flex;align-items:center;gap:6px;transition:all .18s;
 }
 .btn-prev:hover{background:rgba(59,130,246,.2);}
+/* أزرار المسودات */
+.btn-draft-save{
+  background:rgba(111,191,76,.08);border:1.5px solid rgba(111,191,76,.22);
+  color:#6fbf4c;border-radius:var(--r3);
+  width:44px;height:44px;font-size:.9em;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .18s;flex-shrink:0;position:relative;
+}
+.btn-draft-save:hover{background:rgba(111,191,76,.18);}
+.btn-draft-save[data-unsaved]::after{
+  content:'';position:absolute;top:6px;right:6px;
+  width:7px;height:7px;border-radius:50%;
+  background:#f59e0b;box-shadow:0 0 6px #f59e0b;
+}
+.btn-draft-save.draft-saved{
+  background:rgba(111,191,76,.25);
+  animation:draftPop .4s ease;
+}
+@keyframes draftPop{0%{transform:scale(1)}50%{transform:scale(1.15)}100%{transform:scale(1)}}
+.btn-drafts-open{
+  background:rgba(15,21,17,.8);border:1.5px solid var(--border2);
+  color:var(--text3);border-radius:var(--r3);
+  width:44px;height:44px;font-size:.85em;
+  cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:all .18s;flex-shrink:0;
+}
+.btn-drafts-open:hover{border-color:var(--text2);color:var(--text);}
+/* Toast المسودة */
+.draft-toast{
+  position:fixed;bottom:80px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:rgba(20,35,22,.96);border:1px solid rgba(111,191,76,.3);
+  color:#a3e635;border-radius:40px;
+  padding:8px 18px;font-size:.78em;font-weight:600;
+  display:flex;align-items:center;gap:8px;
+  opacity:0;transition:all .35s;z-index:9999;white-space:nowrap;
+  box-shadow:0 4px 20px rgba(0,0,0,.4);
+}
+.draft-toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+/* درج المسودات */
+.dd-overlay{
+  display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);
+  z-index:990;backdrop-filter:blur(4px);
+}
+.drafts-drawer.open ~ .dd-overlay, .dd-overlay:has(~ .drafts-drawer.open){display:block;}
+.dd-overlay{display:none;}
+.drafts-drawer.open + * .dd-overlay{display:block;}
+.drafts-drawer{
+  position:fixed;left:0;top:0;bottom:0;width:min(320px,90vw);
+  background:rgba(13,18,14,.97);border-right:1px solid var(--border2);
+  z-index:1000;transform:translateX(-100%);
+  transition:transform .3s cubic-bezier(.4,0,.2,1);
+  display:flex;flex-direction:column;
+  box-shadow:6px 0 30px rgba(0,0,0,.5);
+}
+.drafts-drawer.open{transform:translateX(0);}
+.dd-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:16px 18px;border-bottom:1px solid var(--border);flex-shrink:0;
+}
+.dd-head-title{font-size:.9em;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px;}
+.dd-head-title i{color:#6fbf4c;}
+.dd-close{
+  width:30px;height:30px;background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);
+  border-radius:7px;color:#f87171;display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.8em;transition:all .15s;
+}
+.dd-close:hover{background:rgba(239,68,68,.25);}
+.dd-list{flex:1;overflow-y:auto;padding:10px;}
+.dd-empty{
+  text-align:center;padding:40px 20px;color:var(--text3);
+  font-size:.82em;line-height:1.8;
+}
+.dd-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--r3);
+  border:1px solid var(--border);background:var(--surface);
+  cursor:pointer;margin-bottom:7px;transition:all .15s;
+}
+.dd-item:hover{border-color:rgba(111,191,76,.3);background:rgba(111,191,76,.05);}
+.dd-item-icon{
+  width:34px;height:34px;flex-shrink:0;
+  background:rgba(111,191,76,.1);border-radius:8px;
+  display:flex;align-items:center;justify-content:center;
+  color:#6fbf4c;font-size:.85em;
+}
+.dd-item-info{flex:1;min-width:0;}
+.dd-item-title{font-size:.82em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.dd-item-meta{font-size:.68em;color:var(--text3);margin-top:2px;}
+.dd-item-del{
+  width:28px;height:28px;flex-shrink:0;
+  background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.18);
+  border-radius:7px;color:#f87171;font-size:.75em;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;transition:all .15s;
+}
+.dd-item-del:hover{background:rgba(239,68,68,.22);}
+.dd-foot{
+  padding:12px 18px;border-top:1px solid var(--border);flex-shrink:0;
+}
+.dd-foot-note{font-size:.68em;color:var(--text3);display:flex;align-items:center;gap:6px;}
 
 /* ══ PROGRESS ══ */
 .pub-prog{
@@ -699,11 +813,13 @@ body::before{
     <!-- بعد الدخول: بيانات المستخدم -->
     <div class="profile-pill" id="profilePill">
       <div class="profile-av" id="profileAv">J</div>
-      <div>
+      <div class="profile-info">
         <div class="profile-name" id="profileName">الناشر</div>
         <div class="profile-email" id="profileEmail"></div>
       </div>
-      <span class="session-timer" id="sessionTimer"></span>
+      <button class="btn-logout" onclick="if(confirm('تسجيل الخروج؟')){clearToken();toast('تم الخروج','info');}" title="تسجيل الخروج">
+        <i class="fas fa-right-from-bracket"></i>
+      </button>
     </div>
   </div>
 </div>
@@ -966,6 +1082,12 @@ body::before{
       <button class="btn-prev" onclick="openPreview()">
         <i class="fas fa-eye"></i> معاينة
       </button>
+      <button class="btn-draft-save" id="btnDraft" onclick="saveDraft()" title="حفظ مسودة الآن">
+        <i class="fas fa-floppy-disk"></i>
+      </button>
+      <button class="btn-drafts-open" onclick="openDraftsDrawer()" title="المسودات المحفوظة">
+        <i class="fas fa-clock-rotate-left"></i>
+      </button>
       <button class="btn-rst" onclick="resetForm()">
         <i class="fas fa-rotate-left"></i> إعادة
       </button>
@@ -1049,11 +1171,22 @@ function buildGsiClient(){
     callback: async res => {
       if(res.access_token){
         try{
+          // جلب معلومات المستخدم من Google
           const ur = await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+res.access_token}});
           const ui = await ur.json();
           setProfileUI(ui.name||'الناشر', ui.email||'', ui.picture||'');
-          // حفظ بيانات المستخدم
-          try{ localStorage.setItem('jwb_uname', ui.name||''); localStorage.setItem('jwb_uemail', ui.email||''); localStorage.setItem('jwb_upic', ui.picture||''); }catch(e){}
+          try{
+            localStorage.setItem('jwb_uname', ui.name||'');
+            localStorage.setItem('jwb_uemail', ui.email||'');
+            localStorage.setItem('jwb_upic', ui.picture||'');
+          }catch(e){}
+          // جلب الـ ID الفريد من Blogger
+          try{
+            const br = await fetch('https://www.googleapis.com/blogger/v3/users/self',{headers:{Authorization:'Bearer '+res.access_token}});
+            const bd = await br.json();
+            currentUserId = bd.id || '';
+            try{ localStorage.setItem('jwb_uid', currentUserId); }catch(e){}
+          }catch(e){}
         }catch(e){}
         saveToken(res.access_token, res.expires_in||3600);
       } else if(res.error && res.error !== 'interaction_required'){ clearToken(); }
@@ -1080,11 +1213,11 @@ function restoreToken(){
     const tok = localStorage.getItem(TOKEN_KEY);
     const exp = parseInt(localStorage.getItem(EXPIRY_KEY)||'0');
     if(tok && exp && Date.now() < exp){
-      gToken=tok;
-      // استعادة بيانات المستخدم المحفوظة
+      gToken = tok;
       const name  = localStorage.getItem('jwb_uname')||'الناشر';
       const email = localStorage.getItem('jwb_uemail')||'';
       const pic   = localStorage.getItem('jwb_upic')||'';
+      currentUserId = localStorage.getItem('jwb_uid')||'';
       setProfileUI(name, email, pic);
       setAuthUI(true); scheduleRenew(exp); startTimer(); loadPosts(); return true;
     }
@@ -1108,7 +1241,7 @@ function silentRenew(){
   }
 }
 function clearToken(){
-  gToken='';
+  gToken=''; currentUserId=''; isAdmin=false;
   if(renewTimer){clearTimeout(renewTimer);renewTimer=null;}
   try{
     localStorage.removeItem(TOKEN_KEY);
@@ -1116,6 +1249,7 @@ function clearToken(){
     localStorage.removeItem('jwb_uname');
     localStorage.removeItem('jwb_uemail');
     localStorage.removeItem('jwb_upic');
+    localStorage.removeItem('jwb_uid');
   }catch(e){}
   setAuthUI(false);
 }
@@ -1833,6 +1967,7 @@ async function publish(){
     if(r.ok){
       showProg(100,'اكتمل','done');
       toast(editMode?'تم تعديل الصفحة':'تم نشر الصفحة','ok');
+      clearDraftStorage();
       setTimeout(()=>{ resetForm(); hideProg(); if(isLive) loadPosts(); },1800);
       editMode=false; editId=null;
     } else {
@@ -1871,8 +2006,222 @@ function resetForm(){
 }
 
 /* ═════════════════════════════════════════════
-   PREVIEW
+   AUTO-DRAFT — حفظ تلقائي كل 30 ثانية
 ═════════════════════════════════════════════ */
+const DRAFT_KEY   = 'jwb_draft';
+const DRAFT_LIST  = 'jwb_draft_list';
+let   draftTimer  = null;
+let   draftDirty  = false;   // تغيّر شيء منذ آخر حفظ؟
+let   draftSaving = false;
+
+/* تجميع حالة النموذج الحالية في كائن */
+function captureDraft(){
+  const g = id => { const e=document.getElementById(id); return e?e.value:''; };
+  return {
+    ts:       Date.now(),
+    type:     curType,
+    title:    g('fTitle'),
+    ep:       g('fEp'),
+    labels:   g('fLabels'),
+    desc:     g('fDesc'),
+    thumb:    g('fThumb'),
+    ytUrl:    g('fYtUrl'),
+    year:     g('fYear'),
+    rating:   g('fRating'),
+    genres:   g('fGenres'),
+    live:     g('fLive'),
+    liveName: g('fLiveName'),
+    liveLogo: g('fLiveLogo'),
+    subTxt:   g('fSubTxt'),
+    quals:    qualities.filter(q=>q&&q.url),
+    eps:      episodes.filter(e=>e&&(e.title||e.url)),
+    pubPill:  getPill('pubPills'),
+    statusP:  getPill('statusPills'),
+    subLang:  getPill('subLangPills'),
+    editMode, editId
+  };
+}
+
+/* حفظ المسودة في localStorage */
+function saveDraft(silent=false){
+  const d = captureDraft();
+  if(!d.title && !d.desc && !d.thumb && !d.ytUrl && !d.live && !d.quals.length && !d.eps.length) return;
+  try{
+    // المسودة الحالية
+    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    // قائمة المسودات (آخر 10)
+    let list = [];
+    try{ list = JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]'); }catch(e){}
+    // استبدل إذا نفس العنوان، وإلا أضف
+    const idx = list.findIndex(x => x.title === d.title && x.type === d.type);
+    if(idx >= 0) list[idx] = {id:list[idx].id, ts:d.ts, title:d.title, type:d.type};
+    else list.unshift({id: 'draft_'+Date.now(), ts:d.ts, title:d.title||'(بدون عنوان)', type:d.type});
+    list = list.slice(0, 10);
+    localStorage.setItem(DRAFT_LIST, JSON.stringify(list));
+    draftDirty = false;
+    if(!silent) showDraftToast();
+    updateDraftBadge(d.ts);
+  }catch(e){}
+}
+
+/* استعادة مسودة إلى النموذج */
+function restoreDraft(d){
+  if(!d) return;
+  // اختر النوع أولاً
+  const typeBtn = document.querySelector(`.type-btn[data-t="${d.type}"]`);
+  if(typeBtn){ typeBtn.click(); }
+  setTimeout(()=>{
+    const set = (id,v) => { const e=document.getElementById(id); if(e&&v!==undefined) e.value=v; };
+    set('fTitle',   d.title);
+    set('fEp',      d.ep);
+    set('fLabels',  d.labels);
+    set('fDesc',    d.desc);
+    set('fThumb',   d.thumb);
+    set('fYtUrl',   d.ytUrl);
+    set('fYear',    d.year);
+    set('fRating',  d.rating);
+    set('fGenres',  d.genres);
+    set('fLive',    d.live);
+    set('fLiveName',d.liveName);
+    set('fLiveLogo',d.liveLogo);
+    set('fSubTxt',  d.subTxt);
+    if(d.thumb) prevThumb(d.thumb);
+    if(d.ytUrl) parseYT(d.ytUrl);
+    // جودات
+    document.getElementById('qualList').innerHTML=''; qualities=[];
+    (d.quals||[]).forEach(q=>addQual(q.lbl,q.url));
+    // حلقات
+    document.getElementById('epList').innerHTML=''; episodes=[];
+    (d.eps||[]).forEach(e=>addEp(e.title,e.url,e.thumb));
+    // pills
+    if(d.pubPill){
+      const pb=document.querySelector(`#pubPills .pill[data-v="${d.pubPill}"]`);
+      if(pb) selPill(pb,'pubPills');
+    }
+    if(d.statusP){
+      const sp=document.querySelector(`#statusPills .pill[data-v="${d.statusP}"]`);
+      if(sp) selPill(sp,'statusPills');
+    }
+    editMode = d.editMode||false;
+    editId   = d.editId||null;
+    if(editMode){
+      document.getElementById('btnPub').innerHTML='<i class="fas fa-pen"></i> حفظ تعديلات الصفحة';
+    }
+    updateDraftBadge(d.ts);
+    toast('تم استعادة المسودة ✓','ok');
+  }, 120);
+}
+
+/* تشغيل التايمر التلقائي */
+function startDraftTimer(){
+  if(draftTimer) clearInterval(draftTimer);
+  draftTimer = setInterval(()=>{
+    if(draftDirty) saveDraft(true);
+  }, 30000);
+}
+
+/* مراقبة التغييرات في النموذج */
+function watchDraftChanges(){
+  const ids=['fTitle','fEp','fLabels','fDesc','fThumb','fYtUrl','fYear','fRating','fGenres','fLive','fLiveName','fLiveLogo','fSubTxt'];
+  ids.forEach(id=>{
+    const el=document.getElementById(id);
+    if(el) el.addEventListener('input',()=>{ draftDirty=true; updateDraftBadgeUnsaved(); });
+  });
+}
+
+/* شارة "لم يُحفظ" في الزر */
+function updateDraftBadgeUnsaved(){
+  const btn = document.getElementById('btnDraft');
+  if(btn) btn.setAttribute('data-unsaved','1');
+}
+
+/* تحديث شارة وقت آخر حفظ */
+function updateDraftBadge(ts){
+  const btn = document.getElementById('btnDraft');
+  if(!btn) return;
+  btn.removeAttribute('data-unsaved');
+  const d = new Date(ts);
+  const hm = d.toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});
+  btn.title = `آخر حفظ: ${hm}`;
+  // أنيمشن بسيط
+  btn.classList.add('draft-saved');
+  setTimeout(()=>btn.classList.remove('draft-saved'),1200);
+}
+
+/* Toast المسودة */
+function showDraftToast(){
+  const t = document.createElement('div');
+  t.className = 'draft-toast';
+  t.innerHTML = '<i class="fas fa-floppy-disk"></i> حُفظت مسودةً تلقائياً';
+  document.body.appendChild(t);
+  setTimeout(()=>t.classList.add('show'),10);
+  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),400); },2500);
+}
+
+/* حذف المسودة بعد النشر */
+function clearDraftStorage(){
+  try{
+    localStorage.removeItem(DRAFT_KEY);
+    const list = JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]');
+    const title = document.getElementById('fTitle').value.trim();
+    const filtered = list.filter(x=>x.title!==title);
+    localStorage.setItem(DRAFT_LIST, JSON.stringify(filtered));
+  }catch(e){}
+  const btn=document.getElementById('btnDraft');
+  if(btn){ btn.title='لا توجد مسودة محفوظة'; btn.removeAttribute('data-unsaved'); }
+}
+
+/* فتح درج المسودات */
+function openDraftsDrawer(){
+  let list=[];
+  try{ list=JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]'); }catch(e){}
+  const drawer=document.getElementById('draftsDrawer');
+  if(!list.length){
+    drawer.querySelector('.dd-list').innerHTML='<div class="dd-empty"><i class="fas fa-box-open"></i><br>لا توجد مسودات محفوظة</div>';
+  } else {
+    const tmap={movie:'فيلم',series:'مسلسل',drama:'دراما',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث'};
+    drawer.querySelector('.dd-list').innerHTML = list.map((d,i)=>{
+      const dt=new Date(d.ts).toLocaleString('ar',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      return `<div class="dd-item" onclick="loadDraftByIndex(${i})">
+        <div class="dd-item-icon"><i class="fas fa-file-pen"></i></div>
+        <div class="dd-item-info">
+          <div class="dd-item-title">${d.title||'(بدون عنوان)'}</div>
+          <div class="dd-item-meta">${tmap[d.type]||d.type} · ${dt}</div>
+        </div>
+        <button class="dd-item-del" onclick="event.stopPropagation();deleteDraftByIndex(${i})" title="حذف"><i class="fas fa-trash"></i></button>
+      </div>`;
+    }).join('');
+  }
+  drawer.classList.add('open');
+  document.getElementById('ddOverlay').style.display='block';
+}
+function closeDraftsDrawer(){
+  document.getElementById('draftsDrawer').classList.remove('open');
+  document.getElementById('ddOverlay').style.display='none';
+}
+
+function loadDraftByIndex(i){
+  try{
+    const list=JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]');
+    const item=list[i]; if(!item) return;
+    // نحاول تحميل آخر مسودة محفوظة إذا تطابق العنوان
+    const cur = JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');
+    if(cur && cur.title===item.title && cur.type===item.type){
+      closeDraftsDrawer(); restoreDraft(cur);
+    } else {
+      closeDraftsDrawer(); restoreDraft(item);
+    }
+  }catch(e){}
+}
+function deleteDraftByIndex(i){
+  try{
+    let list=JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]');
+    list.splice(i,1);
+    localStorage.setItem(DRAFT_LIST,JSON.stringify(list));
+    openDraftsDrawer(); // تحديث الدرج
+  }catch(e){}
+}
+
 function openPreview(){
   const title  = document.getElementById('fTitle').value.trim()||'(بدون عنوان)';
   const ep     = document.getElementById('fEp').value.trim();
@@ -1938,85 +2287,130 @@ document.addEventListener('DOMContentLoaded',()=>{
 /* ═════════════════════════════════════════════
    LOAD POSTS (الصفحات) — full pagination + author filter
 ═════════════════════════════════════════════ */
-let allPosts = [];  // كل الصفحات المحملة
-let currentUserEmail = '';  // بريد المستخدم الحالي
-let isAdmin = false;  // هل هو مشرف؟
+let allPosts        = [];
+let currentUserEmail= '';
+let currentUserId   = '';   // المعرّف الفريد لحساب المستخدم (blogger user ID)
+let isAdmin         = false;
 
-// استخراج بريد المستخدم عند تسجيل الدخول
-const _origBuildGsi = buildGsiClient;
-
-async function loadPosts(){
-  if(!gToken){ toast('سجل الدخول أولاً','warn'); return; }
-  document.getElementById('postsList').innerHTML='<div class="posts-empty"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
-  allPosts = [];
-
-  // إذا currentUserEmail فارغ، استعده من localStorage
-  if(!currentUserEmail){
-    currentUserEmail = localStorage.getItem('jwb_uemail') || '';
-  }
-
+/* ═══════════════════════════════════════════
+   جلب معرّف المستخدم ودوره من blogUserInfos
+═══════════════════════════════════════════ */
+async function fetchUserRole(){
   try{
-    // جلب كل الصفحات عبر nextPageToken
-    let pageToken = '';
-    let page = 0;
-    do {
-      const url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?maxResults=50&fetchBodies=false&orderBy=published${pageToken?'&pageToken='+pageToken:''}`;
-      const r = await fetch(url, {headers:{'Authorization':'Bearer '+gToken}});
-      const d = await r.json();
-      if(d.error){ throw new Error(d.error.message); }
-      if(d.items) allPosts = allPosts.concat(d.items);
-      pageToken = d.nextPageToken || '';
-      page++;
-      if(page > 20) break;
-    } while(pageToken);
+    // 1. جلب الـ ID من blogger users.get
+    const ur = await fetch(
+      'https://www.googleapis.com/blogger/v3/users/self',
+      {headers:{'Authorization':'Bearer '+gToken}}
+    );
+    const ud = await ur.json();
+    currentUserId = ud.id || '';
 
-    // تحديد المشرف: إذا كانت هناك صفحات من مؤلفين مختلفين فهو مشرف
-    // أو إذا لم يكن بريده مطابقاً لأي مؤلف فهو مشرف
-    if(allPosts.length > 0 && currentUserEmail){
-      const authors = new Set(allPosts.filter(p=>p.author).map(p=>p.author.email));
-      // إذا كانت هناك صفحات بمؤلفين متعددين — أو المستخدم مؤلف وله صفحات — نحدد
-      const myPosts = allPosts.filter(p => p.author && p.author.email === currentUserEmail);
-      const othersPosts = allPosts.filter(p => p.author && p.author.email !== currentUserEmail);
-      // إذا كان له صفحات أو لا — والمشرف يرى الكل
-      // نفترض: إذا كان هناك صفحات لآخرين → مشرف
-      isAdmin = othersPosts.length > 0;
-    } else {
-      // إذا لا يوجد بريد → اعرض كل شيء (افتراض مشرف)
-      isAdmin = !currentUserEmail;
-    }
-
-    renderPosts(allPosts);
-  } catch(e){
-    document.getElementById('postsList').innerHTML='<div class="posts-empty" style="color:#f87171;">خطأ في التحميل: '+e.message+'</div>';
+    // 2. جلب الدور من blogUserInfos.get
+    const br = await fetch(
+      `https://www.googleapis.com/blogger/v3/users/self/blogs/${BLOG_ID}`,
+      {headers:{'Authorization':'Bearer '+gToken}}
+    );
+    const bd = await br.json();
+    // blogUserInfo.role → 'ADMIN' | 'AUTHOR' | 'READER'
+    const role = bd?.blogUserInfo?.role || bd?.role || '';
+    isAdmin = (role === 'ADMIN');
+    return role;
+  }catch(e){
+    isAdmin = false;
+    return '';
   }
 }
 
+/* ═══════════════════════════════════════════
+   تحميل الصفحات (كل الصفحات عبر pagination)
+═══════════════════════════════════════════ */
+async function loadPosts(){
+  if(!gToken){ toast('سجل الدخول أولاً','warn'); return; }
+  const list = document.getElementById('postsList');
+  list.innerHTML = '<div class="posts-empty"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
+  allPosts = [];
+
+  // استعادة البريد من localStorage إن كان فارغاً
+  if(!currentUserEmail) currentUserEmail = localStorage.getItem('jwb_uemail')||'';
+
+  try{
+    // تحديد الدور أولاً
+    await fetchUserRole();
+
+    // جلب الصفحات — AUTHOR يرى LIVE فقط؛ ADMIN يرى كل الحالات
+    const statuses = isAdmin ? ['LIVE','DRAFT','SCHEDULED'] : ['LIVE'];
+
+    for(const status of statuses){
+      let pageToken = '';
+      let page = 0;
+      do{
+        const url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`
+          + `?maxResults=50&fetchBodies=false&orderBy=published&status=${status}`
+          + (pageToken ? '&pageToken='+pageToken : '');
+        const r = await fetch(url, {headers:{'Authorization':'Bearer '+gToken}});
+        const d = await r.json();
+        if(d.error) throw new Error(d.error.message);
+        if(d.items) allPosts = allPosts.concat(d.items);
+        pageToken = d.nextPageToken || '';
+        page++;
+        if(page > 20) break;
+      }while(pageToken);
+    }
+
+    // إزالة التكرار (نفس الصفحة قد تأتي في أكثر من status)
+    const seen = new Set();
+    allPosts = allPosts.filter(p=>{ if(seen.has(p.id)) return false; seen.add(p.id); return true; });
+
+    renderPosts(allPosts);
+  }catch(e){
+    list.innerHTML = `<div class="posts-empty" style="color:#f87171;">خطأ في التحميل: ${e.message}</div>`;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   عرض الصفحات مع فلترة بـ author.id
+═══════════════════════════════════════════ */
 function renderPosts(posts){
-  if(!posts||!posts.length){ document.getElementById('postsList').innerHTML='<div class="posts-empty">لا توجد صفحات</div>'; return; }
+  const list = document.getElementById('postsList');
+  if(!posts||!posts.length){ list.innerHTML='<div class="posts-empty">لا توجد صفحات</div>'; return; }
+
   const imap={movie:'fa-film',series:'fa-film',drama:'fa-tv',anime:'fa-wand-sparkles',youtube:'fa-youtube fab',video:'fa-video',live:'fa-satellite-dish'};
   const lmap={movie:'فيلم',series:'مسلسل',drama:'دراما',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث'};
+  const smap={LIVE:'',DRAFT:'مسودة',SCHEDULED:'مجدول'};
+  const scol={LIVE:'',DRAFT:'#f59e0b',SCHEDULED:'#3b82f6'};
 
-  // فلترة بحسب الدور
+  // فلترة بـ author.id (الأدق من البريد)
   let filtered = posts;
-  if(!isAdmin && currentUserEmail){
-    const mine = posts.filter(p => p.author && p.author.email === currentUserEmail);
-    // إذا وُجدت صفحات له → اعرضها؛ وإلا اعرض الكل (ربما الـ API لا يرجع author)
-    filtered = mine.length > 0 ? mine : posts;
+  if(!isAdmin){
+    if(currentUserId){
+      // فلترة صارمة بالـ ID
+      filtered = posts.filter(p => p.author && p.author.id === currentUserId);
+    } else if(currentUserEmail){
+      // fallback على البريد
+      filtered = posts.filter(p => p.author && p.author.email === currentUserEmail);
+    }
+    if(!filtered.length){
+      list.innerHTML='<div class="posts-empty">لا توجد صفحات منشورة باسمك</div>';
+      return;
+    }
   }
 
-  document.getElementById('postsList').innerHTML = filtered.map(p=>{
+  list.innerHTML = filtered.map(p=>{
     const date = new Date(p.published).toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});
     let ico = 'fa-file-lines';
-    if(p.labels){ for(const[t,arLbl] of Object.entries(lmap)){
-      if(p.labels.some(l=>l===t||l===arLbl||l.toLowerCase().includes(t))){ico=imap[t]||ico;break;}
+    if(p.labels){ for(const[t] of Object.entries(lmap)){
+      if(p.labels.some(l=>l.toLowerCase().includes(t))){ ico=imap[t]||ico; break; }
     }}
+    const st   = p.status||'LIVE';
+    const stLbl= smap[st]||'';
+    const stClr= scol[st]||'';
     return `<div class="post-item" data-title="${(p.title||'').toLowerCase()}">
       <div class="pi-icon"><i class="fas ${ico}"></i></div>
-      <div class="pi-title" title="${p.title}">${p.title}</div>
+      <div class="pi-title" title="${p.title}">${p.title}${stLbl?`<span style="font-size:.65em;margin-right:6px;color:${stClr};background:${stClr}22;padding:1px 7px;border-radius:20px;">${stLbl}</span>`:''}</div>
       <div class="pi-date">${date}</div>
       <div class="pi-acts">
         <button class="pi-btn edit" onclick="startEdit('${p.id}')" title="تعديل"><i class="fas fa-pen"></i></button>
-        <button class="pi-btn del"  onclick="delPost('${p.id}')" title="حذف"><i class="fas fa-trash"></i></button>
+        <button class="pi-btn del"  onclick="delPost('${p.id}')"  title="حذف"><i class="fas fa-trash"></i></button>
       </div>
     </div>`;
   }).join('');
@@ -2168,13 +2562,36 @@ window.addEventListener('DOMContentLoaded',()=>{
   const firstTab = document.querySelector('[data-t="movie"]');
   setType('movie', firstTab);
   addQual('1080p','');
-  // إخفاء حقل الحالة مبدئياً (للفيلم)
   const sf = document.getElementById('fieldStatus');
   if(sf) sf.style.display='none';
-  // ضبط الزر مبدئياً قبل انتظار GSI
   setAuthUI(false);
   waitGSI().then(()=>{ buildGsiClient(); restoreToken(); });
+  // نظام المسودات التلقائية
+  startDraftTimer();
+  watchDraftChanges();
+  // تحذير عند محاولة مغادرة الصفحة وفيها بيانات غير منشورة
+  window.addEventListener('beforeunload', e=>{
+    const title = document.getElementById('fTitle')?.value?.trim();
+    if(title || draftDirty){
+      saveDraft(true);
+      e.preventDefault();
+      e.returnValue = '';
+    }
+  });
 });
 </script>
+<!-- DRAFTS DRAWER -->
+<div class="dd-overlay" id="ddOverlay" onclick="closeDraftsDrawer()"></div>
+<div class="drafts-drawer" id="draftsDrawer">
+  <div class="dd-head">
+    <div class="dd-head-title"><i class="fas fa-clock-rotate-left"></i> المسودات المحفوظة</div>
+    <button class="dd-close" onclick="closeDraftsDrawer()"><i class="fas fa-times"></i></button>
+  </div>
+  <div class="dd-list"></div>
+  <div class="dd-foot">
+    <div class="dd-foot-note"><i class="fas fa-info-circle"></i> تُحفظ تلقائياً كل 30 ثانية · آخر 10 مسودات</div>
+  </div>
+</div>
+
 </body>
 </html>

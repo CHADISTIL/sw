@@ -1198,18 +1198,28 @@ function buildGsiClient(){
         const isFirstLogin = !getCookie('jwb_uname');
         if(isFirstLogin){
           try{
-            const ur = await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+res.access_token}});
-            const ui = await ur.json();
-            setProfileUI(ui.name||'الناشر', ui.email||'', ui.picture||'');
-            setCookie('jwb_uname',  ui.name||'',    3650);
-            setCookie('jwb_uemail', ui.email||'',   3650);
-            setCookie('jwb_upic',   ui.picture||'', 3650);
-          }catch(e){}
-          try{
+            // جلب الاسم والصورة من Blogger — هذا هو الملف الشخصي على المدونة
             const br = await fetch('https://www.googleapis.com/blogger/v3/users/self',{headers:{Authorization:'Bearer '+res.access_token}});
             const bd = await br.json();
+            const bName = bd.displayName || '';
+            const bPic  = bd.image?.url
+              ? bd.image.url.replace(/\/s\d+(-c)?\//, '/s200-c/')  // دقة أعلى
+              : '';
             currentUserId = bd.id || '';
-            setCookie('jwb_uid', currentUserId, 3650);
+            // جلب البريد من Google فقط (Blogger لا يعطيه)
+            let email = '';
+            try{
+              const gr = await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+res.access_token}});
+              const gd = await gr.json();
+              email = gd.email || '';
+              // استخدم صورة Google كـ fallback إذا لم تكن هناك صورة Blogger
+              if(!bPic && gd.picture) setCookie('jwb_upic', gd.picture, 3650);
+            }catch(e){}
+            setProfileUI(bName||'الناشر', email, bPic);
+            setCookie('jwb_uname',  bName,          3650);
+            setCookie('jwb_uemail', email,           3650);
+            if(bPic) setCookie('jwb_upic', bPic,    3650);
+            setCookie('jwb_uid',    currentUserId,   3650);
           }catch(e){}
         }
         saveToken(res.access_token, res.expires_in||3600);
@@ -2506,7 +2516,7 @@ let isAdmin         = false;
 ═══════════════════════════════════════════ */
 async function fetchUserRole(){
   try{
-    // 1. جلب الـ ID والصورة من blogger users.self
+    // 1. جلب الاسم والصورة والـ ID من Blogger users.self
     const ur = await fetch(
       'https://www.googleapis.com/blogger/v3/users/self',
       {headers:{'Authorization':'Bearer '+gToken}}
@@ -2514,16 +2524,24 @@ async function fetchUserRole(){
     const ud = await ur.json();
     currentUserId = ud.id || '';
 
-    // تحديث الصورة من Blogger إذا كانت أوضح من Google
-    if(ud.image?.url){
-      const bloggerPic = ud.image.url.replace(/\/s\d+(-c)?\//, '/s96-c/');
-      const av = document.getElementById('profileAv');
-      if(av && !av.querySelector('img[src*="googleusercontent"]')){
-        av.innerHTML = `<img src="${bloggerPic}" alt="${ud.displayName||''}" referrerpolicy="no-referrer">`;
+    // تحديث الاسم والصورة من Blogger دائماً (هذا هو المصدر الصحيح)
+    if(ud.displayName){
+      const bName = ud.displayName;
+      const bPic  = ud.image?.url
+        ? ud.image.url.replace(/\/s\d+(-c)?\//, '/s200-c/')
+        : '';
+      // تحديث الواجهة والكوكيز
+      document.getElementById('profileName').textContent = bName;
+      setCookie('jwb_uname', bName, 3650);
+      if(bPic){
+        const av = document.getElementById('profileAv');
+        if(av) av.innerHTML = `<img src="${bPic}" alt="${bName}" referrerpolicy="no-referrer">`;
+        setCookie('jwb_upic', bPic, 3650);
       }
+      if(currentUserId) setCookie('jwb_uid', currentUserId, 3650);
     }
 
-    // 2. المصدر الأول: permissions endpoint (الأكثر دقة — يعيد ADMIN أو AUTHOR صراحةً)
+    // 2. الدور من permissions endpoint (الأدق)
     let role = '';
     try{
       const pr = await fetch(
@@ -2537,7 +2555,7 @@ async function fetchUserRole(){
       }
     }catch(e){}
 
-    // 3. المصدر الثاني: blogUserInfos.get — fallback
+    // 3. fallback: blogUserInfos.get
     if(!role){
       try{
         const br = await fetch(
@@ -2551,21 +2569,19 @@ async function fetchUserRole(){
       }catch(e){}
     }
 
-    // 4. المصدر الثالث: إذا نجح طلب permissions (endpoint خاص بالمشرف) → مشرف
+    // 4. آخر حل: إذا يمكنه جلب المدونة الكاملة → مشرف
     if(!role){
       try{
         const tr = await fetch(
           `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}`,
           {headers:{'Authorization':'Bearer '+gToken}}
         );
-        if(tr.ok) role = 'ADMIN'; // فقط المشرف يمكنه جلب بيانات المدونة الكاملة
+        role = tr.ok ? 'ADMIN' : 'AUTHOR';
       }catch(e){ role = 'AUTHOR'; }
     }
 
     role = role.toUpperCase();
     isAdmin = (role === 'ADMIN');
-
-    // حفظ وعرض
     setCookie('jwb_role', role, 3650);
     applyRoleBadge(role);
     return role;
@@ -2573,8 +2589,7 @@ async function fetchUserRole(){
   }catch(e){
     isAdmin = false;
     const cached = getCookie('jwb_role');
-    if(cached) applyRoleBadge(cached);
-    else applyRoleBadge('');
+    applyRoleBadge(cached || '');
     return cached || '';
   }
 }

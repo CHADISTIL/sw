@@ -8,53 +8,95 @@
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-      background: #fafafa;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       color: #1a1a1a;
       padding: 20px;
+      min-height: 100vh;
     }
-    .container { max-width: 800px; margin: 0 auto; }
-    .hero { margin-bottom: 30px; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-    .hero h1 { font-size: 24px; font-weight: 600; margin-bottom: 8px; color: #111; }
+    .container { max-width: 900px; margin: 0 auto; }
+    .hero {
+      margin-bottom: 25px;
+      background: white;
+      padding: 30px;
+      border-radius: 15px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    }
+    .hero h1 {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 10px;
+      background: linear-gradient(135deg, #667eea, #764ba2);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
     .hero p { font-size: 14px; color: #666; line-height: 1.6; }
     .card {
       background: white;
       border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 15px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     }
     .section-title {
       font-size: 13px;
-      font-weight: 600;
-      color: #666;
+      font-weight: 700;
+      color: #667eea;
       text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 15px;
+      letter-spacing: 1px;
+      margin-bottom: 20px;
       display: flex;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
     }
-    .input-group { margin-bottom: 15px; }
+    .mode-selector {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .mode-btn {
+      padding: 15px;
+      border: 2px solid #ddd;
+      background: white;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .mode-btn:hover {
+      border-color: #667eea;
+      background: #f8f9ff;
+    }
+    .mode-btn.active {
+      border-color: #667eea;
+      background: #667eea;
+      color: white;
+    }
+    .input-group { margin-bottom: 18px; }
     .input-group label {
       display: block;
       font-size: 13px;
       color: #555;
-      margin-bottom: 6px;
-      font-weight: 500;
+      margin-bottom: 8px;
+      font-weight: 600;
     }
     .input-group input, .input-group select {
       width: 100%;
-      padding: 10px 12px;
-      border: 1px solid #ddd;
+      padding: 12px;
+      border: 1.5px solid #e0e0e0;
       border-radius: 8px;
       font-size: 14px;
-      font-family: monospace;
+      font-family: 'Courier New', monospace;
       background: #fafafa;
+      transition: all 0.3s;
     }
     .input-group input:focus, .input-group select:focus {
       outline: none;
-      border-color: #4a90e2;
+      border-color: #667eea;
       background: white;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
     }
     .config-row {
       display: grid;
@@ -64,194 +106,305 @@
     }
     .btn-row {
       display: flex;
-      gap: 10px;
+      gap: 12px;
       flex-wrap: wrap;
+      margin-top: 20px;
     }
     .btn-primary {
-      background: #111;
+      background: linear-gradient(135deg, #667eea, #764ba2);
       color: white;
       border: none;
-      padding: 0 20px;
-      height: 42px;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 600;
+      padding: 0 24px;
+      height: 45px;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 700;
       cursor: pointer;
       display: inline-flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      transition: all 0.3s;
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
     }
-    .btn-primary:hover { background: #333; }
+    .btn-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+    }
     .btn-primary:disabled {
-      opacity: 0.4;
+      opacity: 0.5;
       cursor: not-allowed;
     }
     .btn-secondary {
       background: white;
-      color: #333;
-      border: 1px solid #ddd;
-      padding: 0 18px;
-      height: 42px;
-      border-radius: 8px;
+      color: #667eea;
+      border: 2px solid #667eea;
+      padding: 0 20px;
+      height: 45px;
+      border-radius: 10px;
       font-size: 14px;
+      font-weight: 600;
       cursor: pointer;
+      transition: all 0.3s;
     }
     .btn-secondary:hover {
-      background: #f5f5f5;
-      border-color: #bbb;
+      background: #f8f9ff;
+      transform: translateY(-2px);
     }
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
-      margin-bottom: 15px;
+      gap: 15px;
+      margin-bottom: 20px;
     }
     .stat-card {
-      background: #f8f9fa;
-      border-radius: 8px;
-      padding: 15px;
+      background: linear-gradient(135deg, #667eea15, #764ba215);
+      border-left: 4px solid #667eea;
+      border-radius: 10px;
+      padding: 18px;
     }
     .stat-label {
-      font-size: 11px;
-      color: #777;
-      margin-bottom: 6px;
+      font-size: 12px;
+      color: #999;
+      margin-bottom: 8px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
     }
     .stat-value {
-      font-size: 20px;
-      font-weight: 600;
-      color: #111;
+      font-size: 22px;
+      font-weight: 700;
+      color: #667eea;
     }
     .progress-wrap {
       background: #e9ecef;
-      height: 10px;
-      border-radius: 5px;
+      height: 12px;
+      border-radius: 6px;
       overflow: hidden;
-      margin: 12px 0;
+      margin: 15px 0;
     }
     .progress-bar {
       height: 100%;
-      background: linear-gradient(90deg, #4a90e2, #357abd);
+      background: linear-gradient(90deg, #667eea, #764ba2);
       transition: width 0.4s;
-      border-radius: 5px;
+      border-radius: 6px;
     }
     .log-box {
       background: #1e1e1e;
       color: #d4d4d4;
-      border-radius: 8px;
-      padding: 15px;
-      font-size: 12px;
+      border-radius: 10px;
+      padding: 18px;
+      font-size: 13px;
       font-family: 'Courier New', monospace;
-      max-height: 220px;
+      max-height: 280px;
       overflow-y: auto;
-      line-height: 1.7;
+      line-height: 1.8;
+      border: 1px solid #333;
     }
-    .log-line { display: block; }
+    .log-line { display: block; margin-bottom: 4px; }
     .log-line.success { color: #4ade80; }
     .log-line.error { color: #f87171; }
     .log-line.info { color: #60a5fa; }
+    .log-line.warn { color: #fbbf24; }
     .parts-list {
-      max-height: 200px;
+      max-height: 350px;
       overflow-y: auto;
+      border: 1px solid #e0e0e0;
+      border-radius: 10px;
+      padding: 15px;
     }
     .part-item {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: 12px;
-      padding: 10px 0;
-      border-bottom: 1px solid #eee;
-      font-size: 13px;
+      padding: 12px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 12px;
     }
     .part-item:last-child { border-bottom: none; }
     .part-num {
-      width: 40px;
-      font-weight: 600;
-      color: #888;
+      width: 50px;
+      font-weight: 700;
+      color: #667eea;
       font-family: monospace;
+      flex-shrink: 0;
     }
+    .part-info { flex: 1; }
     .part-url {
-      flex: 1;
-      color: #4a90e2;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      color: #667eea;
+      word-break: break-all;
       font-family: monospace;
-      direction: ltr;
-      text-align: left;
       font-size: 11px;
+      margin-bottom: 6px;
+      padding: 8px;
+      background: #f8f9ff;
+      border-radius: 6px;
+      display: block;
     }
     .part-size {
-      width: 70px;
+      color: #999;
+      font-size: 11px;
+    }
+    .part-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .btn-copy {
+      background: #f0f0f0;
+      border: none;
+      padding: 4px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 600;
       color: #666;
-      text-align: left;
-      direction: ltr;
-      font-family: monospace;
+      transition: all 0.2s;
+    }
+    .btn-copy:hover {
+      background: #667eea;
+      color: white;
     }
     .m3u8-output {
       background: #1e1e1e;
       color: #d4d4d4;
-      border-radius: 8px;
-      padding: 15px;
+      border-radius: 10px;
+      padding: 18px;
       font-family: 'Courier New', monospace;
       font-size: 12px;
       white-space: pre-wrap;
       word-break: break-all;
-      max-height: 280px;
+      max-height: 350px;
       overflow-y: auto;
-      line-height: 1.7;
+      line-height: 1.8;
       direction: ltr;
       text-align: left;
+      border: 1px solid #333;
     }
     .badge {
       display: inline-block;
       font-size: 11px;
-      padding: 4px 10px;
-      border-radius: 6px;
-      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 20px;
+      font-weight: 700;
     }
     .badge-success { background: #d1fae5; color: #065f46; }
     .badge-danger { background: #fee2e2; color: #991b1b; }
     .badge-info { background: #dbeafe; color: #1e40af; }
+    .badge-warn { background: #fef3c7; color: #92400e; }
     .worker-status {
-      background: #e8f5e9;
-      border-left: 4px solid #4caf50;
-      padding: 12px;
-      border-radius: 6px;
-      margin-bottom: 15px;
+      background: linear-gradient(135deg, #d1fae515, #6ee7b715);
+      border-left: 4px solid #10b981;
+      padding: 15px;
+      border-radius: 10px;
+      margin-bottom: 20px;
       font-size: 13px;
+      line-height: 1.8;
     }
     .worker-status.error {
-      background: #ffebee;
-      border-left-color: #f44336;
+      background: linear-gradient(135deg, #fee2e215, #fca5a515);
+      border-left-color: #ef4444;
     }
     .worker-status.warning {
-      background: #fff3e0;
-      border-left-color: #ff9800;
+      background: linear-gradient(135deg, #fef3c715, #fcd34d15);
+      border-left-color: #f59e0b;
+    }
+    .worker-info {
+      font-family: monospace;
+      font-size: 11px;
+      background: #f8f9ff;
+      padding: 8px;
+      border-radius: 6px;
+      margin-top: 8px;
+      word-break: break-all;
+    }
+    .tabs {
+      display: flex;
+      gap: 10px;
+      border-bottom: 2px solid #e0e0e0;
+      margin-bottom: 20px;
+    }
+    .tab {
+      padding: 12px 20px;
+      cursor: pointer;
+      font-weight: 600;
+      border-bottom: 3px solid transparent;
+      transition: all 0.3s;
+      color: #999;
+    }
+    .tab:hover {
+      color: #667eea;
+    }
+    .tab.active {
+      color: #667eea;
+      border-bottom-color: #667eea;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
     }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="hero">
-      <h1>☁️ CloudFront Video Splitter + M3U8</h1>
-      <p>نظام متكامل لتقسيم الفيديو تلقائيًا ورفعه على top4top عبر Cloudflare Workers ثم توليد ملف M3U8</p>
+      <h1>🚀 CloudFront Video Splitter Pro</h1>
+      <p>نظام متقدم لتقسيم الفيديو وتحميله عبر عدة طرق مع دعم top4top الكامل وتوليد M3U8</p>
     </div>
 
+    <!-- Workers Status -->
     <div class="card">
-      <div class="section-title">✅ حالة الاتصال</div>
+      <div class="section-title">✅ حالة Workers المتصلة</div>
       <div class="worker-status" id="workerStatus">
-        ✅ جميع الـ Workers متصلة وجاهزة للعمل
+        ⏳ جاري التحقق...
       </div>
-      <div style="font-size: 12px; color: #666; line-height: 1.8;">
-        <div>🔗 Upload Proxy: <code style="background:#f5f5f5; padding:2px 6px;">https://calm-frost-26fb.jawrab.workers.dev/?url=https://top4top.io/upload.php</code></div>
-        <div style="margin-top:6px">📹 Video Splitter: <code style="background:#f5f5f5; padding:2px 6px;">https://video-splitter.jawrab.workers.dev/splitter</code></div>
-        <div style="margin-top:6px">🎬 M3U8 Generator: <code style="background:#f5f5f5; padding:2px 6px;">https://m3u8-generator.jawrab.workers.dev/m3u8</code></div>
+      <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; font-size: 12px;">
+        <div class="worker-info">
+          <strong>Video Splitter:</strong><br>
+          https://video-splitter.jawrab.workers.dev/splitter
+        </div>
+        <div class="worker-info">
+          <strong>M3U8 Generator:</strong><br>
+          https://m3u8-generator.jawrab.workers.dev/m3u8
+        </div>
+        <div class="worker-info">
+          <strong>Upload Handler:</strong><br>
+          https://top4topuploadhandler.jawrab.workers.dev/
+        </div>
       </div>
     </div>
 
+    <!-- Mode Selection -->
     <div class="card">
-      <div class="section-title">🎥 رابط الفيديو</div>
+      <div class="section-title">⚙️ اختر طريقة الرفع</div>
+      
+      <div class="mode-selector">
+        <button class="mode-btn active" onclick="setUploadMode('batch')">
+          ⚡ Batch Upload<br>
+          <small>10 ملفات في المرة (أسرع)</small>
+        </button>
+        <button class="mode-btn" onclick="setUploadMode('single')">
+          📤 Single Upload<br>
+          <small>ملف واحد في المرة</small>
+        </button>
+        <button class="mode-btn" onclick="setUploadMode('direct')">
+          🔗 Direct Link<br>
+          <small>روابط جاهزة</small>
+        </button>
+        <button class="mode-btn" onclick="setUploadMode('manual')">
+          📋 Manual Input<br>
+          <small>إدخال روابط يدوي</small>
+        </button>
+      </div>
+
+      <div id="modeDescription" style="background: #f8f9ff; padding: 15px; border-radius: 8px; color: #667eea; font-size: 13px; line-height: 1.8;">
+        ⚡ <strong>Batch Mode:</strong> Worker سيرفع 10 أجزاء في نفس الوقت - الأسرع والأفضل
+      </div>
+    </div>
+
+    <!-- Video Input Section -->
+    <div class="card" id="videoInputCard">
+      <div class="section-title">🎥 معلومات الفيديو</div>
       
       <div class="input-group">
         <label>أدخل رابط الفيديو المباشر</label>
@@ -260,26 +413,44 @@
 
       <div class="config-row">
         <div class="input-group">
-          <label>حجم كل جزء (MB)</label>
-          <input type="number" id="chunkSize" value="5" min="1" max="100" />
+          <label>حجم الجزء (MB)</label>
+          <input type="number" id="chunkSize" value="5" min="1" max="500" />
         </div>
         <div class="input-group">
-          <label>طريقة العمل</label>
-          <select id="workMode">
-            <option value="auto">تلقائي (Worker يقسم ويرفع)</option>
-            <option value="manual">يدوي (المتصفح يقسم ويرفع)</option>
+          <label>نوع الملف</label>
+          <select id="fileType">
+            <option value="auto">تحديد تلقائي</option>
+            <option value="video">فيديو</option>
+            <option value="image">صورة</option>
+            <option value="other">ملف عام</option>
           </select>
         </div>
       </div>
 
       <div class="btn-row">
-        <button class="btn-primary" id="btnStart" onclick="startProcess()">▶️ بدء العملية</button>
-        <button class="btn-secondary" onclick="resetAll()">🔄 إعادة</button>
+        <button class="btn-primary" id="btnStart" onclick="startProcess()">▶️ بدء التقسيم والرفع</button>
+        <button class="btn-secondary" onclick="resetAll()">🔄 إعادة تعيين</button>
       </div>
     </div>
 
+    <!-- Manual Links Input -->
+    <div class="card" id="manualLinksCard" style="display:none">
+      <div class="section-title">📝 أدخل الروابط يدويًا</div>
+      
+      <div class="input-group">
+        <label>روابط الأجزاء (رابط في كل سطر)</label>
+        <textarea id="manualLinks" placeholder="https://example.com/part1.png&#10;https://example.com/part2.png" style="width:100%; height:150px; padding:12px; border:1.5px solid #e0e0e0; border-radius:8px; font-family:monospace; font-size:12px;"></textarea>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn-primary" onclick="processManualLinks()">✅ معالجة الروابط</button>
+        <button class="btn-secondary" onclick="resetAll()">🔄 مسح</button>
+      </div>
+    </div>
+
+    <!-- Progress Section -->
     <div class="card" id="progressCard" style="display:none">
-      <div class="section-title">📊 حالة المعالجة</div>
+      <div class="section-title">📊 تقدم المعالجة</div>
       
       <div class="stats">
         <div class="stat-card">
@@ -292,7 +463,7 @@
         </div>
         <div class="stat-card">
           <div class="stat-label">الحالة</div>
-          <div class="stat-value" id="statStatus" style="font-size:14px">جاري...</div>
+          <div class="stat-value" id="statStatus" style="font-size:16px">جاري...</div>
         </div>
       </div>
 
@@ -300,35 +471,94 @@
         <div class="progress-bar" id="progressBar" style="width:0%"></div>
       </div>
 
+      <div style="text-align:center; font-size:12px; color:#999; margin-bottom:15px;">
+        <span id="progressLabel">0%</span>
+      </div>
+
       <div class="log-box" id="logBox"></div>
     </div>
 
+    <!-- Parts Display Section -->
     <div class="card" id="partsCard" style="display:none">
       <div class="section-title">📋 الأجزاء المرفوعة</div>
-      <div class="parts-list" id="partsList"></div>
+      
+      <div class="tabs">
+        <div class="tab active" onclick="switchTab('parts-table')">📑 جدول الأجزاء</div>
+        <div class="tab" onclick="switchTab('parts-text')">📄 نسخ الروابط</div>
+        <div class="tab" onclick="switchTab('parts-json')">{ } JSON</div>
+      </div>
+
+      <div id="parts-table" class="tab-content active">
+        <div class="parts-list" id="partsList"></div>
+      </div>
+
+      <div id="parts-text" class="tab-content">
+        <textarea id="partsTextArea" style="width:100%; height:250px; padding:12px; border:1.5px solid #e0e0e0; border-radius:8px; font-family:monospace; font-size:12px;" readonly></textarea>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn-secondary" onclick="copyPartsText()">📋 نسخ النص</button>
+          <button class="btn-secondary" onclick="downloadPartsText()">⬇️ تحميل</button>
+        </div>
+      </div>
+
+      <div id="parts-json" class="tab-content">
+        <div class="m3u8-output" id="partsJsonOutput"></div>
+        <div class="btn-row" style="margin-top:12px;">
+          <button class="btn-secondary" onclick="copyPartsJson()">📋 نسخ JSON</button>
+          <button class="btn-secondary" onclick="downloadPartsJson()">⬇️ تحميل</button>
+        </div>
+      </div>
     </div>
 
+    <!-- M3U8 Output Section -->
     <div class="card" id="m3u8Card" style="display:none">
-      <div class="section-title">📄 ملف M3U8 الناتج</div>
+      <div class="section-title">🎬 ملف M3U8 النهائي</div>
+      
       <div class="m3u8-output" id="m3u8Output"></div>
-      <div class="btn-row" style="margin-top:15px">
-        <button class="btn-primary" onclick="copyM3u8()">📋 نسخ</button>
-        <button class="btn-secondary" onclick="downloadM3u8()">⬇️ تحميل</button>
-        <button class="btn-secondary" onclick="openM3u8InPlayer()">▶️ فتح في VLC</button>
+      
+      <div class="btn-row" style="margin-top:20px">
+        <button class="btn-primary" onclick="copyM3u8()">📋 نسخ M3U8</button>
+        <button class="btn-primary" onclick="downloadM3u8()">⬇️ تحميل M3U8</button>
+        <button class="btn-secondary" onclick="playM3u8()">▶️ تشغيل</button>
       </div>
     </div>
   </div>
 
   <script>
-    // الروابط التلقائية
     const WORKERS = {
-      uploadProxy: 'https://calm-frost-26fb.jawrab.workers.dev/?url=https://top4top.io/upload.php',
       videoSplitter: 'https://video-splitter.jawrab.workers.dev/splitter',
-      m3u8Generator: 'https://m3u8-generator.jawrab.workers.dev/m3u8'
+      m3u8Generator: 'https://m3u8-generator.jawrab.workers.dev/m3u8',
+      uploadHandler: 'https://top4topuploadhandler.jawrab.workers.dev/'
     };
 
     let uploadedParts = [];
     let m3u8Content = '';
+    let currentMode = 'batch';
+
+    function setUploadMode(mode) {
+      currentMode = mode;
+      document.querySelectorAll('.mode-btn').forEach(btn => btn.classList.remove('active'));
+      event.target.closest('.mode-btn').classList.add('active');
+
+      const descriptions = {
+        batch: '⚡ <strong>Batch Mode:</strong> Worker سيرفع 10 أجزاء في نفس الوقت - الأسرع والأفضل',
+        single: '📤 <strong>Single Mode:</strong> رفع ملف واحد في كل طلب - أبطأ لكن أكثر استقراراً',
+        direct: '🔗 <strong>Direct Mode:</strong> استخدم روابط جاهزة للأجزاء',
+        manual: '📋 <strong>Manual Mode:</strong> أدخل الروابط يدويًا'
+      };
+
+      document.getElementById('modeDescription').innerHTML = descriptions[mode];
+
+      document.getElementById('videoInputCard').style.display = mode !== 'manual' ? '' : 'none';
+      document.getElementById('manualLinksCard').style.display = mode === 'manual' ? '' : 'none';
+    }
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+      document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+      
+      document.getElementById(tabName).classList.add('active');
+      event.target.classList.add('active');
+    }
 
     function log(msg, type = '') {
       const box = document.getElementById('logBox');
@@ -341,13 +571,14 @@
     }
 
     function formatSize(bytes) {
-      return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      if (bytes >= 1024 * 1024 * 1024) return (bytes / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+      if (bytes >= 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
+      return (bytes / 1024).toFixed(2) + ' KB';
     }
 
     async function startProcess() {
       const videoUrl = document.getElementById('videoUrl').value.trim();
       const chunkSize = parseInt(document.getElementById('chunkSize').value) || 5;
-      const workMode = document.getElementById('workMode').value;
 
       if (!videoUrl) {
         alert('الرجاء إدخال رابط الفيديو');
@@ -360,11 +591,46 @@
       uploadedParts = [];
 
       try {
-        if (workMode === 'auto') {
-          await processAutoMode(videoUrl, chunkSize);
-        } else {
-          await processManualMode(videoUrl, chunkSize);
+        log(`🚀 بدء التقسيم والرفع بـ Mode: ${currentMode.toUpperCase()}`, 'info');
+        
+        const headResponse = await fetch(videoUrl, { method: 'HEAD' });
+        const fileSize = parseInt(headResponse.headers.get('content-length'));
+        
+        if (!fileSize) throw new Error('Cannot determine file size');
+
+        const chunkSizeBytes = chunkSize * 1024 * 1024;
+        const totalChunks = Math.ceil(fileSize / chunkSizeBytes);
+        
+        document.getElementById('statSize').textContent = formatSize(fileSize);
+        document.getElementById('statParts').textContent = totalChunks;
+        log(`📊 حجم الملف: ${formatSize(fileSize)} - عدد الأجزاء: ${totalChunks}`, 'info');
+
+        const response = await fetch(WORKERS.videoSplitter, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            videoUrl: videoUrl,
+            chunkSizeMB: chunkSize,
+            uploadProxyUrl: WORKERS.uploadHandler,
+            uploadMode: currentMode
+          })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || `HTTP ${response.status}`);
         }
+
+        const result = await response.json();
+        
+        if (!result.success) throw new Error(result.error || 'Failed');
+
+        log(`✅ تم رفع ${result.totalParts} جزء بنجاح!`, 'success');
+        uploadedParts = result.parts;
+        displayParts(uploadedParts);
+        
+        await generateM3U8(uploadedParts);
+
       } catch (error) {
         log(`❌ خطأ: ${error.message}`, 'error');
         document.getElementById('statStatus').innerHTML = '<span class="badge badge-danger">فشل</span>';
@@ -373,121 +639,38 @@
       document.getElementById('btnStart').disabled = false;
     }
 
-    async function processAutoMode(videoUrl, chunkSize) {
-      log('🚀 بدء الوضع التلقائي - Worker سيقوم بتقسيم ورفع الفيديو...', 'info');
-      document.getElementById('statStatus').innerHTML = '<span class="badge badge-info">تقسيم ورفع...</span>';
+    function displayParts(parts) {
+      const sorted = [...parts].sort((a, b) => a.size - b.size);
       
-      try {
-        const response = await fetch(WORKERS.videoSplitter, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            videoUrl: videoUrl,
-            chunkSizeMB: chunkSize,
-            uploadProxyUrl: WORKERS.uploadProxy
-          })
-        });
+      // جدول الأجزاء
+      const list = document.getElementById('partsList');
+      list.innerHTML = sorted.map((part, i) => `
+        <div class="part-item">
+          <span class="part-num">#${i + 1}</span>
+          <div class="part-info">
+            <a href="${part.url}" target="_blank" class="part-url">${part.url}</a>
+            <div class="part-size">حجم: ${formatSize(part.size)}</div>
+            <div class="part-actions">
+              <button class="btn-copy" onclick="copyToClipboard('${part.url}')">📋 نسخ</button>
+              <button class="btn-copy" onclick="window.open('${part.url}')">🔗 فتح</button>
+            </div>
+          </div>
+        </div>
+      `).join('');
 
-        if (!response.ok) {
-          const errorData = await response.json();
-          throw new Error(`Worker Error: ${errorData.error || response.status}`);
-        }
+      // نسخة نصية
+      const textUrls = sorted.map((p, i) => `Part ${i + 1} (${formatSize(p.size)}):\n${p.url}`).join('\n\n');
+      document.getElementById('partsTextArea').value = textUrls;
 
-        const result = await response.json();
-        
-        if (!result.success) {
-          throw new Error(result.error || 'فشلت العملية');
-        }
+      // نسخة JSON
+      document.getElementById('partsJsonOutput').textContent = JSON.stringify(sorted, null, 2);
 
-        log(`✅ تم رفع ${result.totalParts} جزء بنجاح`, 'success');
-        document.getElementById('statSize').textContent = formatSize(result.fileSize);
-        document.getElementById('statParts').textContent = result.totalParts;
-        
-        uploadedParts = result.parts;
-        displayParts(uploadedParts);
-        
-        await generateM3U8(uploadedParts);
-      } catch (error) {
-        log(`❌ خطأ في الوضع التلقائي: ${error.message}`, 'error');
-        throw error;
-      }
-    }
-
-    async function processManualMode(videoUrl, chunkSize) {
-      log('📦 بدء الوضع اليدوي - المتصفح سيقسم ويرفع...', 'info');
-
-      log('🔍 فحص حجم الفيديو...', 'info');
-      const headResponse = await fetch(videoUrl, { method: 'HEAD' });
-      const fileSize = parseInt(headResponse.headers.get('content-length'));
-      
-      if (!fileSize) {
-        throw new Error('لا يمكن الحصول على حجم الملف');
-      }
-
-      const chunkSizeBytes = chunkSize * 1024 * 1024;
-      const totalChunks = Math.ceil(fileSize / chunkSizeBytes);
-      
-      document.getElementById('statSize').textContent = formatSize(fileSize);
-      document.getElementById('statParts').textContent = totalChunks;
-      log(`📊 حجم الملف: ${formatSize(fileSize)} - سيتم تقسيمه إلى ${totalChunks} جزء`, 'info');
-
-      document.getElementById('statStatus').innerHTML = '<span class="badge badge-info">جاري الرفع...</span>';
-
-      for (let i = 0; i < totalChunks; i++) {
-        const start = i * chunkSizeBytes;
-        const end = Math.min(start + chunkSizeBytes - 1, fileSize - 1);
-        
-        log(`⬆️ جلب ورفع الجزء ${i + 1}/${totalChunks}...`, 'info');
-        
-        const chunkResponse = await fetch(videoUrl, {
-          headers: { 'Range': `bytes=${start}-${end}` }
-        });
-        
-        const blob = await chunkResponse.blob();
-        const actualSize = end - start + 1;
-        const sizeMB = (actualSize / (1024 * 1024)).toFixed(2);
-        
-        const formData = new FormData();
-        formData.append('file', blob, `part_${String(i + 1).padStart(4, '0')}_${sizeMB}mb.png`);
-        formData.append('uploadType', 'file');
-
-        try {
-          const uploadResponse = await fetch(WORKERS.uploadProxy, {
-            method: 'POST',
-            body: formData
-          });
-
-          const uploadText = await uploadResponse.text();
-          const urlMatch = uploadText.match(/https?:\/\/[^\s"<>]+\.(jpg|png|gif|jpeg)/i);
-          
-          if (urlMatch) {
-            uploadedParts.push({
-              index: i,
-              url: urlMatch[0],
-              size: actualSize,
-              sizeMB: sizeMB
-            });
-            log(`✅ الجزء ${i + 1} تم رفعه`, 'success');
-          } else {
-            throw new Error(`لم يتم الحصول على رابط (الرد: ${uploadText.substring(0, 100)})`);
-          }
-        } catch (uploadError) {
-          log(`❌ خطأ في رفع الجزء ${i + 1}: ${uploadError.message}`, 'error');
-          throw uploadError;
-        }
-
-        const progress = Math.round(((i + 1) / totalChunks) * 100);
-        document.getElementById('progressBar').style.width = progress + '%';
-      }
-
-      log(`🎉 اكتمل رفع جميع الأجزاء!`, 'success');
-      displayParts(uploadedParts);
-      await generateM3U8(uploadedParts);
+      document.getElementById('partsCard').style.display = '';
     }
 
     async function generateM3U8(parts) {
       log('🎬 إنشاء ملف M3U8...', 'info');
-      document.getElementById('statStatus').innerHTML = '<span class="badge badge-info">توليد M3U8...</span>';
+      document.getElementById('statStatus').innerHTML = '<span class="badge badge-info">توليد M3U8</span>';
 
       try {
         const response = await fetch(WORKERS.m3u8Generator, {
@@ -496,9 +679,7 @@
           body: JSON.stringify({ parts: parts, outputFormat: 'json' })
         });
 
-        if (!response.ok) {
-          throw new Error(`فشل توليد M3U8: ${response.status}`);
-        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
 
         const result = await response.json();
         
@@ -507,37 +688,75 @@
           document.getElementById('m3u8Output').textContent = m3u8Content;
           document.getElementById('m3u8Card').style.display = '';
           log('✅ تم إنشاء ملف M3U8 بنجاح!', 'success');
-          document.getElementById('statStatus').innerHTML = '<span class="badge badge-success">مكتمل</span>';
+          document.getElementById('statStatus').innerHTML = '<span class="badge badge-success">مكتمل ✓</span>';
           document.getElementById('progressBar').style.width = '100%';
+          document.getElementById('progressLabel').textContent = '100%';
         } else {
-          throw new Error(result.error || 'فشل توليد M3U8');
+          throw new Error(result.error);
         }
       } catch (error) {
-        log(`❌ خطأ في توليد M3U8: ${error.message}`, 'error');
-        throw error;
+        log(`❌ خطأ في M3U8: ${error.message}`, 'error');
       }
     }
 
-    function displayParts(parts) {
-      const sorted = [...parts].sort((a, b) => a.size - b.size);
-      const list = document.getElementById('partsList');
-      
-      list.innerHTML = sorted.map((part, i) => `
-        <div class="part-item">
-          <span class="part-num">#${i + 1}</span>
-          <span class="part-url">${part.url}</span>
-          <span class="part-size">${part.sizeMB} MB</span>
-        </div>
-      `).join('');
-      
-      document.getElementById('partsCard').style.display = '';
+    async function processManualLinks() {
+      const linksText = document.getElementById('manualLinks').value.trim();
+      const links = linksText.split('\n').filter(l => l.trim() && l.trim().startsWith('http'));
+
+      if (links.length === 0) {
+        alert('الرجاء إدخال روابط صحيحة');
+        return;
+      }
+
+      uploadedParts = links.map((url, i) => ({
+        index: i,
+        url: url.trim(),
+        size: 5 * 1024 * 1024,
+        sizeMB: '5.00'
+      }));
+
+      document.getElementById('progressCard').style.display = '';
+      document.getElementById('statParts').textContent = links.length;
+      log(`✅ تم تحميل ${links.length} رابط`, 'success');
+
+      displayParts(uploadedParts);
+      await generateM3U8(uploadedParts);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text);
+      log('✅ تم النسخ', 'success');
+    }
+
+    function copyPartsText() {
+      navigator.clipboard.writeText(document.getElementById('partsTextArea').value);
+      alert('✅ تم نسخ الروابط');
+    }
+
+    function copyPartsJson() {
+      navigator.clipboard.writeText(document.getElementById('partsJsonOutput').textContent);
+      alert('✅ تم نسخ JSON');
     }
 
     function copyM3u8() {
-      navigator.clipboard.writeText(m3u8Content).then(() => {
-        log('✅ تم نسخ M3U8', 'success');
-        alert('تم نسخ محتوى M3U8 إلى الحافظة!');
-      });
+      navigator.clipboard.writeText(m3u8Content);
+      alert('✅ تم نسخ M3U8');
+    }
+
+    function downloadPartsText() {
+      const blob = new Blob([document.getElementById('partsTextArea').value], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'parts-links.txt';
+      a.click();
+    }
+
+    function downloadPartsJson() {
+      const blob = new Blob([document.getElementById('partsJsonOutput').textContent], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'parts.json';
+      a.click();
     }
 
     function downloadM3u8() {
@@ -546,23 +765,12 @@
       a.href = URL.createObjectURL(blob);
       a.download = 'playlist.m3u8';
       a.click();
-      log('✅ تم تحميل M3U8', 'success');
     }
 
-    function openM3u8InPlayer() {
-      // VLC Media Player يمكنه فتح الملفات من الرابط
-      // لكن للتشغيل الفوري، نحتاج رابط تحميل مباشر
+    function playM3u8() {
       const m3u8Blob = new Blob([m3u8Content], { type: 'application/x-mpegURL' });
       const m3u8Url = URL.createObjectURL(m3u8Blob);
-      
-      // محاولة فتح مع VLC (إن كان مثبت)
-      window.location.href = 'vlc://' + m3u8Url;
-      
-      log('ℹ️ جاري محاولة فتح في VLC...', 'info');
-      setTimeout(() => {
-        // إذا لم يعمل، فتح في المتصفح
-        window.open(m3u8Url);
-      }, 1000);
+      window.open(m3u8Url);
     }
 
     function resetAll() {
@@ -571,29 +779,24 @@
       document.getElementById('progressCard').style.display = 'none';
       document.getElementById('partsCard').style.display = 'none';
       document.getElementById('m3u8Card').style.display = 'none';
-      document.getElementById('progressBar').style.width = '0%';
+      document.getElementById('videoUrl').value = '';
+      document.getElementById('manualLinks').value = '';
+      document.getElementById('chunkSize').value = '5';
       document.getElementById('logBox').innerHTML = '';
-      document.getElementById('statSize').textContent = '—';
-      document.getElementById('statParts').textContent = '—';
-      document.getElementById('statStatus').textContent = 'جاري...';
     }
 
-    // اختبار الاتصال عند التحميل
+    // Check workers on load
     window.addEventListener('load', async () => {
       try {
-        const response = await fetch(WORKERS.videoSplitter, { 
-          method: 'OPTIONS',
-          headers: { 'Content-Type': 'application/json' }
-        });
-        
+        const response = await fetch(WORKERS.videoSplitter, { method: 'OPTIONS' });
         if (response.ok) {
-          document.getElementById('workerStatus').innerHTML = '✅ جميع الـ Workers متصلة وجاهزة للعمل';
+          document.getElementById('workerStatus').innerHTML = '✅ جميع Workers متصلة وجاهزة!';
           document.getElementById('workerStatus').className = 'worker-status';
         } else {
           throw new Error('HTTP ' + response.status);
         }
       } catch (error) {
-        document.getElementById('workerStatus').innerHTML = '⚠️ تحذير: قد لا يكون الاتصال بـ Workers جاهزًا. تأكد من الروابط.';
+        document.getElementById('workerStatus').innerHTML = '⚠️ تحذير: قد توجد مشكلة في الاتصال بـ Workers';
         document.getElementById('workerStatus').className = 'worker-status warning';
       }
     });

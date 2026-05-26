@@ -997,7 +997,13 @@ body::before{
         <img id="ytThumb" src="" alt="">
         <div class="yt-prev-info">
           <i class="fab fa-youtube yt-prev-logo"></i>
-          <div class="yt-prev-txt"><b id="ytTitle">—</b><span id="ytId">—</span></div>
+          <div class="yt-prev-txt">
+            <b id="ytTitle">—</b>
+            <span style="display:flex;align-items:center;gap:6px;margin-top:2px;">
+              <span id="ytId" style="font-size:.75em;color:var(--text3);"></span>
+              <span id="ytTitleBadge" style="display:none;font-size:.65em;font-weight:700;padding:1px 7px;border-radius:20px;"></span>
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -1202,9 +1208,7 @@ function buildGsiClient(){
             const br = await fetch('https://www.googleapis.com/blogger/v3/users/self',{headers:{Authorization:'Bearer '+res.access_token}});
             const bd = await br.json();
             const bName = bd.displayName || '';
-            const bPic  = bd.image?.url
-              ? bd.image.url.replace(/\/s\d+(-c)?\//, '/s200-c/')  // دقة أعلى
-              : '';
+            const bPic  = fixImgUrl(bd.image?.url || '');
             currentUserId = bd.id || '';
             // جلب البريد من Google فقط (Blogger لا يعطيه)
             let email = '';
@@ -1326,16 +1330,29 @@ function clearToken(){
   delCookie('jwb_role');
   setAuthUI(false);
 }
+function fixImgUrl(url){
+  if(!url) return '';
+  if(url.startsWith('//')) url = 'https:' + url;
+  if(!url.startsWith('http')) url = 'https://' + url;
+  url = url.replace(/\/s\d+(-c)?\//, '/s200-c/');
+  url = url.replace(/=s\d+(-c)?$/, '=s200-c');
+  return url;
+}
+
 function setProfileUI(name, email, pic){
   currentUserEmail = email || '';
   const av = document.getElementById('profileAv');
-  if(pic){
-    av.innerHTML = `<img src="${pic}" alt="${name}" referrerpolicy="no-referrer">`;
+  const imgUrl = fixImgUrl(pic);
+  if(imgUrl){
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.onload  = () => { av.innerHTML = `<img src="${imgUrl}" alt="${name}" referrerpolicy="no-referrer">`; };
+    img.onerror = () => { av.textContent = (name||'J')[0].toUpperCase(); };
+    img.src = imgUrl;
   } else {
     av.textContent = (name||'J')[0].toUpperCase();
   }
   document.getElementById('profileName').textContent = name;
-  // عرض شارة "جاري التحقق..." حتى يصل الدور الحقيقي
   const roleEl = document.getElementById('profileRole');
   if(roleEl){
     const savedRole = getCookie('jwb_role')||'';
@@ -1894,30 +1911,126 @@ function getYtId(val){
   return m?m[1]:(val.length===11?val:'');
 }
 function parseYT(val){
-  const id=getYtId(val);
-  const prev=document.getElementById('ytPrev');
-  if(id){
-    prev.style.display='block';
-    document.getElementById('ytThumb').src=`https://img.youtube.com/vi/${id}/hqdefault.jpg`;
-    document.getElementById('ytId').textContent=id;
-    if(!document.getElementById('fThumb').value){
-      document.getElementById('fThumb').value=`https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
-      prevThumb(document.getElementById('fThumb').value);
-    }
-  } else { prev.style.display='none'; }
+  const id = getYtId(val);
+  const prev = document.getElementById('ytPrev');
+  if(!id){ prev.style.display='none'; return; }
+  prev.style.display = 'block';
+  document.getElementById('ytThumb').src = `https://img.youtube.com/vi/${id}/hqdefault.jpg`;
+  document.getElementById('ytId').textContent = id;
+  if(!document.getElementById('fThumb').value){
+    document.getElementById('fThumb').value = `https://img.youtube.com/vi/${id}/maxresdefault.jpg`;
+    prevThumb(document.getElementById('fThumb').value);
+  }
+  // جلب البيانات تلقائياً عند لصق الرابط
+  autoFetchYT(id);
 }
-async function fetchYtTitle(){
-  const val=document.getElementById('fYtUrl').value.trim();
-  const id=getYtId(val); if(!id){toast('أدخل رابط يوتيوب','warn');return;}
+
+/* ─── جلب تلقائي عند لصق الرابط ─── */
+let _ytFetchId = null;
+function autoFetchYT(id){
+  if(_ytFetchId === id) return; // منع التكرار
+  _ytFetchId = id;
+  fetchYtTitle(id, true); // silent=true لا toast
+}
+
+async function fetchYtTitle(forcedId, silent=false){
+  const val = document.getElementById('fYtUrl').value.trim();
+  const id  = forcedId || getYtId(val);
+  if(!id){ if(!silent) toast('أدخل رابط يوتيوب','warn'); return; }
+
+  const titleEl = document.getElementById('ytTitle');
+  const badge   = document.getElementById('ytTitleBadge');
+  if(titleEl) titleEl.textContent = '⏳ جاري الجلب...';
+  if(badge)   badge.style.display = 'none';
+
+  /* ── 1. جلب العنوان الأصلي عبر oEmbed ── */
+  let origTitle = '';
   try{
-    const r=await fetch(`https://www.youtube.com/oembed?url=https://youtu.be/${id}&format=json`);
-    const d=await r.json();
-    if(d.title){
-      document.getElementById('fTitle').value=d.title;
-      document.getElementById('ytTitle').textContent=d.title;
-      toast('تم جلب العنوان','ok');
+    const r = await fetch(`https://www.youtube.com/oembed?url=https://youtu.be/${id}&format=json`);
+    const d = await r.json();
+    origTitle = d.title || '';
+  }catch(e){}
+
+  const hasArabicOrig = /[\u0600-\u06FF]/.test(origTitle);
+
+  let finalTitle  = origTitle;
+  let titleSource = 'original'; // 'original' | 'translated' | 'dubbed'
+
+  if(!hasArabicOrig && origTitle){
+    /* ── 2. محاولة جلب صفحة يوتيوب بلغة عربية ──
+       يوتيوب يرد بعنوان مترجم أحياناً حسب Accept-Language */
+    try{
+      const r2 = await fetch(`https://www.youtube.com/watch?v=${id}`, {
+        headers:{ 'Accept-Language': 'ar,ar-SA;q=0.9,ar-AE;q=0.8' }
+      });
+      const html = await r2.text();
+
+      /* استخراج العنوان من الـ HTML */
+      let arTitle = '';
+      // يوتيوب يحفظ العنوان في عدة أماكن
+      const patterns = [
+        /"title":\{"runs":\[\{"text":"([^"]+)"/,
+        /<meta name="title" content="([^"]+)"/,
+        /<title>([^<]+)<\/title>/,
+      ];
+      for(const p of patterns){
+        const m = html.match(p);
+        if(m){
+          arTitle = m[1].replace(/ - YouTube$/,'').replace(/ – YouTube$/,'').trim();
+          if(arTitle) break;
+        }
+      }
+
+      const arTitleHasArabic = /[\u0600-\u06FF]/.test(arTitle);
+
+      /* ── 3. فحص الدبلجة العربية في HTML ── */
+      const isDubbed = /\"ar\"|arabic.*dub|دبلجة|مدبلج|الدبلجة|dubbed.*arabic/i.test(html)
+        || /"languageCode":"ar"/.test(html);
+
+      if(isDubbed){
+        /* الأولوية القصوى: مدبلج بالعربية */
+        finalTitle  = arTitleHasArabic ? arTitle : origTitle;
+        titleSource = 'dubbed';
+      } else if(arTitleHasArabic && arTitle !== origTitle){
+        /* عنوان مترجم للعربية */
+        finalTitle  = arTitle;
+        titleSource = 'translated';
+      } else {
+        finalTitle  = origTitle;
+        titleSource = 'original';
+      }
+    }catch(e){
+      finalTitle  = origTitle;
+      titleSource = 'original';
     }
-  }catch(e){ toast('تعذّر جلب العنوان','warn'); }
+  } else if(hasArabicOrig){
+    titleSource = 'original';
+  }
+
+  /* ── تطبيق العنوان ── */
+  if(finalTitle){
+    if(!document.getElementById('fTitle').value || silent){
+      document.getElementById('fTitle').value = finalTitle;
+    }
+    if(titleEl) titleEl.textContent = finalTitle;
+
+    /* شارة المصدر */
+    if(badge){
+      const badgeMap = {
+        dubbed:     { text:'🎙 مدبلج عربي',  bg:'rgba(251,191,36,.15)', border:'rgba(251,191,36,.4)', color:'#fbbf24' },
+        translated: { text:'🌐 مترجم عربي',  bg:'rgba(59,130,246,.12)', border:'rgba(59,130,246,.3)', color:'#7cb3f5' },
+        original:   { text:'📝 عنوان أصلي', bg:'rgba(100,100,100,.1)', border:'rgba(100,100,100,.2)', color:'var(--text3)' },
+      };
+      const b = badgeMap[titleSource];
+      badge.textContent = b.text;
+      badge.style.cssText = `display:inline-flex;font-size:.65em;font-weight:700;padding:1px 8px;border-radius:20px;background:${b.bg};border:1px solid ${b.border};color:${b.color};`;
+    }
+
+    if(!silent) toast(`تم جلب العنوان (${titleSource==='dubbed'?'مدبلج':titleSource==='translated'?'مترجم':'أصلي'})`, 'ok');
+  } else {
+    if(titleEl) titleEl.textContent = '—';
+    if(!silent) toast('تعذّر جلب العنوان','warn');
+  }
 }
 
 /* ═════════════════════════════════════════════
@@ -2527,15 +2640,18 @@ async function fetchUserRole(){
     // تحديث الاسم والصورة من Blogger دائماً (هذا هو المصدر الصحيح)
     if(ud.displayName){
       const bName = ud.displayName;
-      const bPic  = ud.image?.url
-        ? ud.image.url.replace(/\/s\d+(-c)?\//, '/s200-c/')
-        : '';
-      // تحديث الواجهة والكوكيز
+      const bPic  = fixImgUrl(ud.image?.url || '');
       document.getElementById('profileName').textContent = bName;
       setCookie('jwb_uname', bName, 3650);
       if(bPic){
         const av = document.getElementById('profileAv');
-        if(av) av.innerHTML = `<img src="${bPic}" alt="${bName}" referrerpolicy="no-referrer">`;
+        if(av){
+          const img = new Image();
+          img.referrerPolicy = 'no-referrer';
+          img.onload  = () => { av.innerHTML = `<img src="${bPic}" alt="${bName}" referrerpolicy="no-referrer">`; };
+          img.onerror = () => { av.textContent = (bName||'J')[0].toUpperCase(); };
+          img.src = bPic;
+        }
         setCookie('jwb_upic', bPic, 3650);
       }
       if(currentUserId) setCookie('jwb_uid', currentUserId, 3650);

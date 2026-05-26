@@ -100,7 +100,7 @@ body::before{
   padding:0;
   cursor:default;overflow:hidden;
   height:44px;
-  max-width:min(260px, calc(100vw - 180px));
+  max-width:min(280px, calc(100vw - 180px));
   flex-shrink:1;min-width:0;
 }
 .profile-pill.visible{display:flex;}
@@ -394,12 +394,12 @@ body::before{
 .yt-prev-txt b{color:var(--text);display:block;}
 
 /* ══ SUBMIT ROW ══ */
-.submit-row{display:flex;gap:8px;flex-wrap:wrap;padding-top:4px;}
+.submit-row{display:flex;gap:8px;flex-wrap:nowrap;padding-top:4px;align-items:stretch;}
 .btn-pub{
-  flex:1;min-width:140px;
+  flex:1;min-width:120px;
   background:linear-gradient(135deg,#2b6e3c,#1e4a28);
   border:none;color:#dcfce7;border-radius:var(--r3);
-  padding:12px 22px;font-size:.9em;font-weight:800;
+  padding:0 22px;font-size:.88em;font-weight:800;height:44px;
   cursor:pointer;font-family:'Cairo',sans-serif;
   display:flex;align-items:center;justify-content:center;gap:7px;
   transition:all .2s;box-shadow:0 4px 16px rgba(43,110,60,.3);
@@ -410,24 +410,25 @@ body::before{
 .btn-rst{
   background:rgba(15,21,17,.8);border:1.5px solid var(--border2);
   color:var(--text3);border-radius:var(--r3);
-  padding:12px 18px;font-size:.85em;font-weight:600;
+  padding:0 14px;font-size:.82em;font-weight:600;height:44px;
   cursor:pointer;font-family:'Cairo',sans-serif;
-  display:flex;align-items:center;gap:6px;transition:all .18s;
+  display:flex;align-items:center;gap:6px;transition:all .18s;flex-shrink:0;
 }
 .btn-rst:hover{border-color:var(--text2);color:var(--text);}
 .btn-prev{
-  background:rgba(59,130,246,.1);border:1.5px solid rgba(59,130,246,.22);
+  background:rgba(59,130,246,.08);border:1.5px solid rgba(59,130,246,.22);
   color:#7cb3f5;border-radius:var(--r3);
-  padding:12px 18px;font-size:.85em;font-weight:600;
+  padding:0 14px;font-size:.82em;font-weight:600;height:44px;
   cursor:pointer;font-family:'Cairo',sans-serif;
-  display:flex;align-items:center;gap:6px;transition:all .18s;
+  display:flex;align-items:center;gap:6px;transition:all .18s;flex-shrink:0;
 }
-.btn-prev:hover{background:rgba(59,130,246,.2);}
+.btn-prev:hover{background:rgba(59,130,246,.18);}
 /* أزرار المسودات */
 .btn-draft-save{
   background:rgba(111,191,76,.08);border:1.5px solid rgba(111,191,76,.22);
   color:#6fbf4c;border-radius:var(--r3);
-  width:44px;height:44px;font-size:.9em;
+  width:44px;height:44px;font-size:.88em;
+
   cursor:pointer;display:flex;align-items:center;justify-content:center;
   transition:all .18s;flex-shrink:0;position:relative;
 }
@@ -705,8 +706,10 @@ body::before{
   .main{padding:18px 12px 70px;}
   .card-body{padding:14px;}
   .qual-row{grid-template-columns:74px 1fr auto auto;}
-  .submit-row{flex-direction:column;}
-  .btn-pub,.btn-rst,.btn-prev{width:100%;justify-content:center;}
+  .submit-row{flex-wrap:wrap;}
+  .btn-pub{flex-basis:100%;min-width:unset;}
+  .btn-prev,.btn-rst{flex:1;justify-content:center;}
+  .btn-draft-save,.btn-drafts-open{flex-shrink:0;}
 }
 
 /* ══ EXTRA FIELDS BUTTON ══ */
@@ -1176,16 +1179,16 @@ function buildGsiClient(){
           const ui = await ur.json();
           setProfileUI(ui.name||'الناشر', ui.email||'', ui.picture||'');
           try{
-            localStorage.setItem('jwb_uname', ui.name||'');
-            localStorage.setItem('jwb_uemail', ui.email||'');
-            localStorage.setItem('jwb_upic', ui.picture||'');
+            setCookie('jwb_uname',  ui.name||'',    365);
+            setCookie('jwb_uemail', ui.email||'',   365);
+            setCookie('jwb_upic',   ui.picture||'', 365);
           }catch(e){}
           // جلب الـ ID الفريد من Blogger
           try{
             const br = await fetch('https://www.googleapis.com/blogger/v3/users/self',{headers:{Authorization:'Bearer '+res.access_token}});
             const bd = await br.json();
             currentUserId = bd.id || '';
-            try{ localStorage.setItem('jwb_uid', currentUserId); }catch(e){}
+            try{ setCookie('jwb_uid', currentUserId, 365); }catch(e){}
           }catch(e){}
         }catch(e){}
         saveToken(res.access_token, res.expires_in||3600);
@@ -1198,10 +1201,24 @@ function doLogin(){
   if(!gsiClient){ toast('فشل تحميل Google Sign-In، أعد تحميل الصفحة','err'); return; }
   gsiClient.requestAccessToken({prompt:'consent'});
 }
+/* ── مساعدات الكوكيز (جلسة دائمة 365 يوم) ── */
+function setCookie(name,val,days){
+  const d=new Date(); d.setTime(d.getTime()+days*864e5);
+  document.cookie=`${name}=${encodeURIComponent(val)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
+}
+function getCookie(name){
+  const m=document.cookie.match('(?:^|; )'+name+'=([^;]*)');
+  return m?decodeURIComponent(m[1]):'';
+}
+function delCookie(name){
+  document.cookie=`${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
+}
+
 function saveToken(tok, exp){
   const expiry = Date.now() + (exp-60)*1000;
   gToken = tok;
-  try{ localStorage.setItem(TOKEN_KEY,tok); localStorage.setItem(EXPIRY_KEY,String(expiry)); }catch(e){}
+  setCookie(TOKEN_KEY,    tok,           365);
+  setCookie(EXPIRY_KEY,   String(expiry),365);
   scheduleRenew(expiry);
   setAuthUI(true);
   startTimer();
@@ -1210,14 +1227,14 @@ function saveToken(tok, exp){
 }
 function restoreToken(){
   try{
-    const tok = localStorage.getItem(TOKEN_KEY);
-    const exp = parseInt(localStorage.getItem(EXPIRY_KEY)||'0');
+    const tok = getCookie(TOKEN_KEY);
+    const exp = parseInt(getCookie(EXPIRY_KEY)||'0');
     if(tok && exp && Date.now() < exp){
       gToken = tok;
-      const name  = localStorage.getItem('jwb_uname')||'الناشر';
-      const email = localStorage.getItem('jwb_uemail')||'';
-      const pic   = localStorage.getItem('jwb_upic')||'';
-      currentUserId = localStorage.getItem('jwb_uid')||'';
+      const name  = getCookie('jwb_uname')||'الناشر';
+      const email = getCookie('jwb_uemail')||'';
+      const pic   = getCookie('jwb_upic')||'';
+      currentUserId = getCookie('jwb_uid')||'';
       setProfileUI(name, email, pic);
       setAuthUI(true); scheduleRenew(exp); startTimer(); loadPosts(); return true;
     }
@@ -1226,31 +1243,21 @@ function restoreToken(){
 }
 function scheduleRenew(expMs){
   if(renewTimer) clearTimeout(renewTimer);
-  // تجديد دائم — 5 دقائق قبل الانتهاء
   const d = expMs - Date.now() - 5*60*1000;
-  const delay = d > 0 ? d : 30*1000; // إذا انتهت جدد بعد 30 ثانية
+  const delay = d > 0 ? d : 30*1000;
   renewTimer = setTimeout(silentRenew, delay);
 }
 function silentRenew(){
   if(!gsiClient) buildGsiClient();
-  try{
-    gsiClient.requestAccessToken({prompt:''});
-  }catch(e){
-    // إعادة المحاولة بدلاً من تسجيل الخروج
-    setTimeout(silentRenew, 60*1000);
-  }
+  try{ gsiClient.requestAccessToken({prompt:''}); }
+  catch(e){ setTimeout(silentRenew, 60*1000); }
 }
 function clearToken(){
   gToken=''; currentUserId=''; isAdmin=false;
   if(renewTimer){clearTimeout(renewTimer);renewTimer=null;}
-  try{
-    localStorage.removeItem(TOKEN_KEY);
-    localStorage.removeItem(EXPIRY_KEY);
-    localStorage.removeItem('jwb_uname');
-    localStorage.removeItem('jwb_uemail');
-    localStorage.removeItem('jwb_upic');
-    localStorage.removeItem('jwb_uid');
-  }catch(e){}
+  delCookie(TOKEN_KEY);   delCookie(EXPIRY_KEY);
+  delCookie('jwb_uname'); delCookie('jwb_uemail');
+  delCookie('jwb_upic');  delCookie('jwb_uid');
   setAuthUI(false);
 }
 function setProfileUI(name, email, pic){
@@ -1287,7 +1294,7 @@ function startTimer(){
   if(!el) return;
   function tick(){
     try{
-      const exp=parseInt(localStorage.getItem(EXPIRY_KEY)||'0');
+      const exp=parseInt(getCookie(EXPIRY_KEY)||'0');
       if(!exp||!gToken){el.textContent='';return;}
       const left=exp-Date.now();
       if(left<=0){el.textContent='';return;}
@@ -1545,46 +1552,154 @@ function addQual(lbl='',url=''){
 function delQual(idx){
   const el=document.getElementById(`qr${idx}`); if(el)el.remove(); qualities[idx]=null;
 }
+/* ═══════════════════════════════════════════
+   اختبار رابط الفيديو — تشغيل حقيقي في الخلفية
+═══════════════════════════════════════════ */
+let _testVid = null; // عنصر video مشترك
+
+function getTestPlayer(){
+  if(!_testVid){
+    _testVid = document.createElement('video');
+    _testVid.style.cssText = 'position:fixed;left:-9999px;top:-9999px;width:1px;height:1px;opacity:0;pointer-events:none;';
+    _testVid.preload = 'metadata';
+    _testVid.muted   = true;
+    document.body.appendChild(_testVid);
+  }
+  // إيقاف أي تشغيل سابق
+  try{ _testVid.pause(); _testVid.removeAttribute('src'); _testVid.load(); }catch(e){}
+  return _testVid;
+}
+
 async function testQual(idx){
-  const q=qualities[idx]; if(!q||!q.url) return;
+  const q = qualities[idx];
+  if(!q || !q.url.trim()){ toast('أدخل رابطاً أولاً','warn'); return; }
+
   let url = q.url.trim();
-  // دعم صيغة #m3u8|link
   if(url.startsWith('#m3u8|')) url = url.slice(6).trim();
   url = formatUrl(url);
-  const btn=document.getElementById(`qt${idx}`);
-  btn.classList.add('testing'); btn.innerHTML='<i class="fas fa-spinner fa-spin"></i>';
+
+  const btn = document.getElementById(`qt${idx}`);
+  if(!btn) return;
+
+  // حالة: جاري الاختبار
+  btn.classList.add('testing');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  btn.title = 'جاري الاختبار...';
+
+  const isM3u8 = /m3u8/i.test(url);
+  const isMp4  = /\.mp4/i.test(url);
+  const isVideo = isM3u8 || isMp4;
+
   try{
-    const isM3u8 = url.includes('.m3u8') || url.includes('m3u8');
-    const isMp4  = url.includes('.mp4');
-    if(isM3u8 || isMp4){
-      // اختبار تشغيل حقيقي في الخلفية عبر عنصر video
-      await new Promise((resolve, reject)=>{
-        const vid = document.createElement('video');
-        vid.style.display = 'none';
-        vid.preload = 'metadata';
-        let done = false;
-        const finish = (ok) => {
-          if(done) return; done = true;
-          document.body.removeChild(vid);
-          ok ? resolve() : reject();
-        };
-        vid.onloadedmetadata = () => finish(true);
-        vid.onerror = () => finish(false);
-        setTimeout(() => finish(false), 8000);
-        document.body.appendChild(vid);
-        vid.src = url;
-        vid.load();
-      });
+    if(isVideo){
+      const result = await testVideoUrl(url);
+      applyTestResult(btn, q.lbl, result);
     } else {
-      await fetch(url,{method:'HEAD',mode:'no-cors'});
+      // روابط أخرى: HEAD request
+      try{
+        const r = await Promise.race([
+          fetch(url, {method:'HEAD', mode:'no-cors'}),
+          new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')),6000))
+        ]);
+        applyTestResult(btn, q.lbl, {ok:true, msg:'الرابط يستجيب', latency:null});
+      }catch(e){
+        applyTestResult(btn, q.lbl, {ok:false, msg: e.message==='timeout'?'انتهت المهلة':'لا استجابة'});
+      }
     }
-    btn.classList.remove('testing'); btn.innerHTML='<i class="fas fa-check vtest-ok"></i>';
-    toast(`${q.lbl} — الرابط صالح ✓`,'ok');
   }catch(e){
-    btn.classList.remove('testing'); btn.innerHTML='<i class="fas fa-times vtest-fail"></i>';
-    toast(`${q.lbl} — رابط غير صالح`,'err');
+    applyTestResult(btn, q.lbl, {ok:false, msg:'خطأ غير متوقع'});
   }
-  setTimeout(()=>{btn.innerHTML='<i class="fas fa-play"></i>';},3500);
+}
+
+/* اختبار رابط فيديو mp4/m3u8 بالتشغيل الفعلي في الخلفية */
+function testVideoUrl(url){
+  return new Promise(resolve => {
+    const vid = getTestPlayer();
+    const startTime = Date.now();
+    let settled = false;
+
+    const finish = (ok, msg) => {
+      if(settled) return;
+      settled = true;
+      // تنظيف المستمعات
+      vid.onloadedmetadata = null;
+      vid.oncanplay        = null;
+      vid.onerror          = null;
+      clearTimeout(timer);
+      const latency = Date.now() - startTime;
+      resolve({ok, msg, latency, dur: vid.duration||null});
+    };
+
+    // ✅ نجح — يمكن تشغيله
+    vid.oncanplay = () => finish(true, 'الرابط يعمل');
+
+    // ✅ metadata فقط (m3u8 live streams)
+    vid.onloadedmetadata = () => {
+      const d = vid.duration;
+      if(isFinite(d) && d > 0){
+        finish(true, `مدة الفيديو: ${formatDur(d)}`);
+      } else if(!isFinite(d)){
+        // بث مباشر — duration = Infinity
+        finish(true, 'بث مباشر ✓');
+      }
+    };
+
+    // ❌ خطأ حقيقي من المتصفح
+    vid.onerror = () => {
+      const code = vid.error ? vid.error.code : 0;
+      const msgs = {
+        1: 'جُلب جزء ثم توقف',
+        2: 'خطأ شبكة',
+        3: 'خطأ في فك الترميز',
+        4: 'صيغة غير مدعومة',
+      };
+      finish(false, msgs[code] || 'رابط غير صالح');
+    };
+
+    // ⏰ مهلة 10 ثوانٍ
+    const timer = setTimeout(()=>{
+      // إذا لم تأتِ استجابة → الرابط بطيء أو محجوب
+      finish(false, 'انتهت المهلة (10 ثانية)');
+    }, 10000);
+
+    vid.src = url;
+    vid.load();
+  });
+}
+
+function formatDur(s){
+  if(!s || !isFinite(s)) return '';
+  const h = Math.floor(s/3600), m = Math.floor((s%3600)/60), sec = Math.floor(s%60);
+  return h > 0 ? `${h}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}` : `${m}:${String(sec).padStart(2,'0')}`;
+}
+
+function applyTestResult(btn, lbl, {ok, msg, latency, dur}){
+  btn.classList.remove('testing');
+
+  const latStr = latency ? ` · ${latency}ms` : '';
+  const fullMsg = `${lbl} — ${msg}${latStr}`;
+
+  if(ok){
+    btn.innerHTML = '<i class="fas fa-circle-check" style="color:#9bdf7a;"></i>';
+    btn.title     = fullMsg;
+    btn.style.borderColor = 'rgba(111,191,76,.5)';
+    btn.style.background  = 'rgba(111,191,76,.15)';
+    toast(fullMsg, 'ok');
+  } else {
+    btn.innerHTML = '<i class="fas fa-circle-xmark" style="color:#f87171;"></i>';
+    btn.title     = fullMsg;
+    btn.style.borderColor = 'rgba(239,68,68,.4)';
+    btn.style.background  = 'rgba(239,68,68,.1)';
+    toast(fullMsg, 'err');
+  }
+
+  // إعادة الزر لحالته بعد 4 ثوانٍ
+  setTimeout(()=>{
+    btn.innerHTML = '<i class="fas fa-play"></i>';
+    btn.title     = 'اختبار الرابط';
+    btn.style.borderColor = '';
+    btn.style.background  = '';
+  }, 4000);
 }
 function formatUrl(url){
   url=url.trim();
@@ -1619,7 +1734,7 @@ function addEp(title='', url='', thumb=''){
         <div style="display:flex;gap:6px;align-items:center;">
           <input class="inp" placeholder="https://...mp4" style="height:32px;font-size:.8em;flex:1;"
             value="${url.replace(/"/g,'&quot;')}" oninput="episodes[${idx}].url=this.value">
-          <div class="q-test" onclick="testEp(${idx})" title="اختبار"><i class="fas fa-play"></i></div>
+          <div class="q-test" id="et${idx}" onclick="testEp(${idx})" title="اختبار الرابط"><i class="fas fa-play"></i></div>
         </div>
       </div>
       <div>
@@ -1639,14 +1754,30 @@ function delEp(idx){
   document.querySelectorAll('#epList .ep-num').forEach(n => { n.textContent = `ح ${num++}`; });
 }
 async function testEp(idx){
-  const ep = episodes[idx]; if(!ep||!ep.url) return;
-  const url = formatUrl(ep.url);
-  toast(`اختبار الحلقة ${idx+1}...`,'info');
-  try{
-    await fetch(url,{method:'HEAD',mode:'no-cors'});
-    toast(`الحلقة ${idx+1} — الرابط يعمل`,'ok');
-  }catch(e){
-    toast(`الحلقة ${idx+1} — تعذّر الوصول`,'warn');
+  const ep = episodes[idx];
+  if(!ep || !ep.url.trim()){ toast('أدخل رابط الحلقة أولاً','warn'); return; }
+  const url = formatUrl(ep.url.trim());
+  const btn = document.getElementById(`et${idx}`);
+  if(!btn) return;
+
+  btn.classList.add('testing');
+  btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+  btn.title = 'جاري الاختبار...';
+
+  const isVideo = /mp4|m3u8/i.test(url);
+  if(isVideo){
+    const result = await testVideoUrl(url);
+    applyTestResult(btn, `ح ${idx+1}`, result);
+  } else {
+    try{
+      await Promise.race([
+        fetch(url, {method:'HEAD', mode:'no-cors'}),
+        new Promise((_,rej) => setTimeout(()=>rej(new Error('timeout')),6000))
+      ]);
+      applyTestResult(btn, `ح ${idx+1}`, {ok:true, msg:'الرابط يستجيب', latency:null});
+    }catch(e){
+      applyTestResult(btn, `ح ${idx+1}`, {ok:false, msg: e.message==='timeout'?'انتهت المهلة':'لا استجابة'});
+    }
   }
 }
 function getEpisodes(){
@@ -2330,8 +2461,8 @@ async function loadPosts(){
   list.innerHTML = '<div class="posts-empty"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
   allPosts = [];
 
-  // استعادة البريد من localStorage إن كان فارغاً
-  if(!currentUserEmail) currentUserEmail = localStorage.getItem('jwb_uemail')||'';
+  // استعادة البريد من الكوكيز إن كان فارغاً
+  if(!currentUserEmail) currentUserEmail = getCookie('jwb_uemail')||'';
 
   try{
     // تحديد الدور أولاً

@@ -121,6 +121,27 @@ body::before{
 .profile-info{min-width:0;overflow:hidden;flex:1;}
 .profile-name{font-size:.78em;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .profile-email{font-size:.6em;color:var(--text3);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.profile-role{
+  display:inline-flex;align-items:center;gap:4px;
+  font-size:.58em;font-weight:700;
+  padding:1px 7px;border-radius:20px;
+  margin-top:2px;white-space:nowrap;
+}
+.profile-role.admin{
+  background:rgba(251,191,36,.15);
+  border:1px solid rgba(251,191,36,.3);
+  color:#fbbf24;
+}
+.profile-role.author{
+  background:rgba(111,191,76,.12);
+  border:1px solid rgba(111,191,76,.25);
+  color:#86efac;
+}
+.profile-role.loading{
+  background:rgba(100,100,100,.1);
+  border:1px solid rgba(100,100,100,.2);
+  color:var(--text3);
+}
 .session-timer{display:none;}
 .btn-logout{
   width:32px;height:32px;flex-shrink:0;margin-left:6px;
@@ -818,7 +839,7 @@ body::before{
       <div class="profile-av" id="profileAv">J</div>
       <div class="profile-info">
         <div class="profile-name" id="profileName">الناشر</div>
-        <div class="profile-email" id="profileEmail"></div>
+        <div class="profile-role" id="profileRole"></div>
       </div>
       <button class="btn-logout" onclick="if(confirm('تسجيل الخروج؟')){clearToken();toast('تم الخروج','info');}" title="تسجيل الخروج">
         <i class="fas fa-right-from-bracket"></i>
@@ -1292,6 +1313,7 @@ function clearToken(){
   delCookie(TOKEN_KEY);   delCookie(EXPIRY_KEY);
   delCookie('jwb_uname'); delCookie('jwb_uemail');
   delCookie('jwb_upic');  delCookie('jwb_uid');
+  delCookie('jwb_role');
   setAuthUI(false);
 }
 function setProfileUI(name, email, pic){
@@ -1302,8 +1324,29 @@ function setProfileUI(name, email, pic){
   } else {
     av.textContent = (name||'J')[0].toUpperCase();
   }
-  document.getElementById('profileName').textContent  = name;
-  document.getElementById('profileEmail').textContent = email;
+  document.getElementById('profileName').textContent = name;
+  // عرض شارة "جاري التحقق..." حتى يصل الدور الحقيقي
+  const roleEl = document.getElementById('profileRole');
+  if(roleEl){
+    const savedRole = getCookie('jwb_role')||'';
+    if(savedRole) applyRoleBadge(savedRole);
+    else { roleEl.className='profile-role loading'; roleEl.innerHTML='<i class="fas fa-circle-notch fa-spin"></i> جاري التحقق'; }
+  }
+}
+
+function applyRoleBadge(role){
+  const el = document.getElementById('profileRole');
+  if(!el) return;
+  if(role === 'ADMIN'){
+    el.className = 'profile-role admin';
+    el.innerHTML = '<i class="fas fa-crown"></i> مشرف';
+  } else if(role === 'AUTHOR'){
+    el.className = 'profile-role author';
+    el.innerHTML = '<i class="fas fa-pen-nib"></i> مؤلف';
+  } else {
+    el.className = 'profile-role loading';
+    el.innerHTML = '<i class="fas fa-user"></i> ناشر';
+  }
 }
 function setAuthUI(on){
   const pill = document.getElementById('profilePill');
@@ -1320,7 +1363,8 @@ function setAuthUI(on){
     document.getElementById('sessionTimer').textContent = '';
     document.getElementById('profileAv').textContent = 'J';
     document.getElementById('profileName').textContent = 'الناشر';
-    document.getElementById('profileEmail').textContent = '';
+    const roleEl = document.getElementById('profileRole');
+    if(roleEl){ roleEl.className='profile-role'; roleEl.innerHTML=''; }
   }
 }
 function startTimer(){
@@ -2476,12 +2520,18 @@ async function fetchUserRole(){
       {headers:{'Authorization':'Bearer '+gToken}}
     );
     const bd = await br.json();
-    // blogUserInfo.role → 'ADMIN' | 'AUTHOR' | 'READER'
     const role = bd?.blogUserInfo?.role || bd?.role || '';
     isAdmin = (role === 'ADMIN');
+
+    // 3. حفظ الدور في كوكيز وتحديث الشارة
+    if(role){
+      setCookie('jwb_role', role, 3650);
+      applyRoleBadge(role);
+    }
     return role;
   }catch(e){
     isAdmin = false;
+    applyRoleBadge('');
     return '';
   }
 }

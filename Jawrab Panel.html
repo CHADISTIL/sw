@@ -2506,7 +2506,7 @@ let isAdmin         = false;
 ═══════════════════════════════════════════ */
 async function fetchUserRole(){
   try{
-    // 1. جلب الـ ID من blogger users.get
+    // 1. جلب الـ ID والصورة من blogger users.self
     const ur = await fetch(
       'https://www.googleapis.com/blogger/v3/users/self',
       {headers:{'Authorization':'Bearer '+gToken}}
@@ -2514,25 +2514,68 @@ async function fetchUserRole(){
     const ud = await ur.json();
     currentUserId = ud.id || '';
 
-    // 2. جلب الدور من blogUserInfos.get
-    const br = await fetch(
-      `https://www.googleapis.com/blogger/v3/users/self/blogs/${BLOG_ID}`,
-      {headers:{'Authorization':'Bearer '+gToken}}
-    );
-    const bd = await br.json();
-    const role = bd?.blogUserInfo?.role || bd?.role || '';
+    // تحديث الصورة من Blogger إذا كانت أوضح من Google
+    if(ud.image?.url){
+      const bloggerPic = ud.image.url.replace(/\/s\d+(-c)?\//, '/s96-c/');
+      const av = document.getElementById('profileAv');
+      if(av && !av.querySelector('img[src*="googleusercontent"]')){
+        av.innerHTML = `<img src="${bloggerPic}" alt="${ud.displayName||''}" referrerpolicy="no-referrer">`;
+      }
+    }
+
+    // 2. المصدر الأول: permissions endpoint (الأكثر دقة — يعيد ADMIN أو AUTHOR صراحةً)
+    let role = '';
+    try{
+      const pr = await fetch(
+        `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/permissions`,
+        {headers:{'Authorization':'Bearer '+gToken}}
+      );
+      if(pr.ok){
+        const pd = await pr.json();
+        const me = (pd.items||[]).find(p => p.user?.id === currentUserId || p.id === currentUserId);
+        if(me?.role) role = me.role.toUpperCase();
+      }
+    }catch(e){}
+
+    // 3. المصدر الثاني: blogUserInfos.get — fallback
+    if(!role){
+      try{
+        const br = await fetch(
+          `https://www.googleapis.com/blogger/v3/users/self/blogs/${BLOG_ID}`,
+          {headers:{'Authorization':'Bearer '+gToken}}
+        );
+        if(br.ok){
+          const bd = await br.json();
+          role = bd?.blogUserInfo?.role || bd?.role || '';
+        }
+      }catch(e){}
+    }
+
+    // 4. المصدر الثالث: إذا نجح طلب permissions (endpoint خاص بالمشرف) → مشرف
+    if(!role){
+      try{
+        const tr = await fetch(
+          `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}`,
+          {headers:{'Authorization':'Bearer '+gToken}}
+        );
+        if(tr.ok) role = 'ADMIN'; // فقط المشرف يمكنه جلب بيانات المدونة الكاملة
+      }catch(e){ role = 'AUTHOR'; }
+    }
+
+    role = role.toUpperCase();
     isAdmin = (role === 'ADMIN');
 
-    // 3. حفظ الدور في كوكيز وتحديث الشارة
-    if(role){
-      setCookie('jwb_role', role, 3650);
-      applyRoleBadge(role);
-    }
+    // حفظ وعرض
+    setCookie('jwb_role', role, 3650);
+    applyRoleBadge(role);
     return role;
+
   }catch(e){
     isAdmin = false;
-    applyRoleBadge('');
-    return '';
+    const cached = getCookie('jwb_role');
+    if(cached) applyRoleBadge(cached);
+    else applyRoleBadge('');
+    return cached || '';
   }
 }
 

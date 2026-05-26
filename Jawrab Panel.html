@@ -1173,26 +1173,29 @@ function buildGsiClient(){
     scope: 'https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
     callback: async res => {
       if(res.access_token){
-        try{
-          // جلب معلومات المستخدم من Google
-          const ur = await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+res.access_token}});
-          const ui = await ur.json();
-          setProfileUI(ui.name||'الناشر', ui.email||'', ui.picture||'');
+        // جلب بيانات المستخدم فقط في أول تسجيل دخول (لا عند التجديد الصامت)
+        const isFirstLogin = !getCookie('jwb_uname');
+        if(isFirstLogin){
           try{
-            setCookie('jwb_uname',  ui.name||'',    365);
-            setCookie('jwb_uemail', ui.email||'',   365);
-            setCookie('jwb_upic',   ui.picture||'', 365);
+            const ur = await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+res.access_token}});
+            const ui = await ur.json();
+            setProfileUI(ui.name||'الناشر', ui.email||'', ui.picture||'');
+            setCookie('jwb_uname',  ui.name||'',    3650);
+            setCookie('jwb_uemail', ui.email||'',   3650);
+            setCookie('jwb_upic',   ui.picture||'', 3650);
           }catch(e){}
-          // جلب الـ ID الفريد من Blogger
           try{
             const br = await fetch('https://www.googleapis.com/blogger/v3/users/self',{headers:{Authorization:'Bearer '+res.access_token}});
             const bd = await br.json();
             currentUserId = bd.id || '';
-            try{ setCookie('jwb_uid', currentUserId, 365); }catch(e){}
+            setCookie('jwb_uid', currentUserId, 3650);
           }catch(e){}
-        }catch(e){}
+        }
         saveToken(res.access_token, res.expires_in||3600);
-      } else if(res.error && res.error !== 'interaction_required'){ clearToken(); }
+      } else if(res.error && res.error !== 'interaction_required'){
+        // لا نسجّل خروج — نعيد المحاولة بعد دقيقة
+        setTimeout(silentRenew, 60*1000);
+      }
     }
   });
 }
@@ -1215,43 +1218,74 @@ function delCookie(name){
 }
 
 function saveToken(tok, exp){
-  const expiry = Date.now() + (exp-60)*1000;
+  const expiry = Date.now() + (exp - 60) * 1000;
   gToken = tok;
-  setCookie(TOKEN_KEY,    tok,           365);
-  setCookie(EXPIRY_KEY,   String(expiry),365);
+  // كوكيز دائمة 10 سنوات — التوكن يُجدَّد تلقائياً
+  setCookie(TOKEN_KEY,  tok,           3650);
+  setCookie(EXPIRY_KEY, String(expiry),3650);
   scheduleRenew(expiry);
   setAuthUI(true);
   startTimer();
-  toast('الجلسة محفوظة','ok');
   loadPosts();
 }
+
 function restoreToken(){
   try{
-    const tok = getCookie(TOKEN_KEY);
-    const exp = parseInt(getCookie(EXPIRY_KEY)||'0');
+    const tok   = getCookie(TOKEN_KEY);
+    const exp   = parseInt(getCookie(EXPIRY_KEY)||'0');
+    const name  = getCookie('jwb_uname')||'';
+    const email = getCookie('jwb_uemail')||'';
+    const pic   = getCookie('jwb_upic')||'';
+    currentUserId = getCookie('jwb_uid')||'';
+
+    if(name || email){
+      setProfileUI(name||'الناشر', email, pic);
+      setAuthUI(true);
+    }
+
     if(tok && exp && Date.now() < exp){
       gToken = tok;
-      const name  = getCookie('jwb_uname')||'الناشر';
-      const email = getCookie('jwb_uemail')||'';
-      const pic   = getCookie('jwb_upic')||'';
-      currentUserId = getCookie('jwb_uid')||'';
-      setProfileUI(name, email, pic);
-      setAuthUI(true); scheduleRenew(exp); startTimer(); loadPosts(); return true;
+      scheduleRenew(exp);
+      startTimer();
+      loadPosts();
+      return true;
+    } else if(name || email){
+      // انتهى التوكن لكن هناك جلسة محفوظة — جدّد صامتاً
+      setTimeout(silentRenew, 500);
+      return true;
     }
   }catch(e){}
   return false;
 }
+
 function scheduleRenew(expMs){
   if(renewTimer) clearTimeout(renewTimer);
-  const d = expMs - Date.now() - 5*60*1000;
-  const delay = d > 0 ? d : 30*1000;
+  const delay = Math.max(expMs - Date.now() - 4*60*1000, 10*1000);
   renewTimer = setTimeout(silentRenew, delay);
 }
+
+let _renewAttempts = 0;
 function silentRenew(){
   if(!gsiClient) buildGsiClient();
-  try{ gsiClient.requestAccessToken({prompt:''}); }
-  catch(e){ setTimeout(silentRenew, 60*1000); }
+  try{
+    gsiClient.requestAccessToken({prompt:''});
+    _renewAttempts = 0;
+  }catch(e){
+    _renewAttempts++;
+    const delay = Math.min(30000 * Math.pow(2, _renewAttempts - 1), 5*60*1000);
+    setTimeout(silentRenew, delay);
+  }
 }
+
+// عودة المستخدم للتبويب → جدّد إذا قارب التوكن على الانتهاء
+document.addEventListener('visibilitychange', ()=>{
+  if(document.visibilityState === 'visible' && getCookie('jwb_uname')){
+    const exp = parseInt(getCookie(EXPIRY_KEY)||'0');
+    if(!gToken || !exp || (exp - Date.now()) < 10*60*1000){
+      silentRenew();
+    }
+  }
+});
 function clearToken(){
   gToken=''; currentUserId=''; isAdmin=false;
   if(renewTimer){clearTimeout(renewTimer);renewTimer=null;}

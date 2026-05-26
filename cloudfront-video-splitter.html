@@ -440,7 +440,7 @@
         formData.append('file', blob, `part_${String(i + 1).padStart(4, '0')}_${sizeMB}mb.png`);
         formData.append('uploadType', 'file');
 
-        const uploadResponse = await fetch(`${uploadProxyUrl}?url=${encodeURIComponent('https://top4top.io/upload.php')}`, {
+        const uploadResponse = await fetch(`${uploadProxyUrl}?url=${encodeURIComponent('https://calm-frost-26fb.jawrab.workers.dev/?url=https://top4top.io/upload.php')}`, {
           method: 'POST',
           body: formData
         });

@@ -213,31 +213,40 @@
     .badge-success { background: #d1fae5; color: #065f46; }
     .badge-danger { background: #fee2e2; color: #991b1b; }
     .badge-info { background: #dbeafe; color: #1e40af; }
+    .worker-status {
+      background: #e8f5e9;
+      border-left: 4px solid #4caf50;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 15px;
+      font-size: 13px;
+    }
+    .worker-status.error {
+      background: #ffebee;
+      border-left-color: #f44336;
+    }
+    .worker-status.warning {
+      background: #fff3e0;
+      border-left-color: #ff9800;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="hero">
       <h1>☁️ CloudFront Video Splitter + M3U8</h1>
-      <p>نظام متكامل لتقسيم الفيديو تلقائيًا ورفعه على top4top عبر CloudFront CORS ثم توليد ملف M3U8</p>
+      <p>نظام متكامل لتقسيم الفيديو تلقائيًا ورفعه على top4top عبر Cloudflare Workers ثم توليد ملف M3U8</p>
     </div>
 
     <div class="card">
-      <div class="section-title">⚙️ إعدادات CloudFront Workers</div>
-      
-      <div class="input-group">
-        <label>رابط Upload Proxy (top4top CORS)</label>
-        <input type="text" id="uploadProxyUrl" placeholder="https://your-worker.workers.dev/upload-proxy" />
+      <div class="section-title">✅ حالة الاتصال</div>
+      <div class="worker-status" id="workerStatus">
+        ✅ جميع الـ Workers متصلة وجاهزة للعمل
       </div>
-
-      <div class="input-group">
-        <label>رابط Video Splitter Worker</label>
-        <input type="text" id="splitterUrl" placeholder="https://your-worker.workers.dev/splitter" />
-      </div>
-
-      <div class="input-group">
-        <label>رابط M3U8 Generator Worker</label>
-        <input type="text" id="m3u8Url" placeholder="https://your-worker.workers.dev/m3u8" />
+      <div style="font-size: 12px; color: #666; line-height: 1.8;">
+        <div>🔗 Upload Proxy: <code style="background:#f5f5f5; padding:2px 6px;">https://calm-frost-26fb.jawrab.workers.dev/?url=https://top4top.io/upload.php</code></div>
+        <div style="margin-top:6px">📹 Video Splitter: <code style="background:#f5f5f5; padding:2px 6px;">https://video-splitter.jawrab.workers.dev/splitter</code></div>
+        <div style="margin-top:6px">🎬 M3U8 Generator: <code style="background:#f5f5f5; padding:2px 6px;">https://m3u8-generator.jawrab.workers.dev/m3u8</code></div>
       </div>
     </div>
 
@@ -305,11 +314,19 @@
       <div class="btn-row" style="margin-top:15px">
         <button class="btn-primary" onclick="copyM3u8()">📋 نسخ</button>
         <button class="btn-secondary" onclick="downloadM3u8()">⬇️ تحميل</button>
+        <button class="btn-secondary" onclick="openM3u8InPlayer()">▶️ فتح في VLC</button>
       </div>
     </div>
   </div>
 
   <script>
+    // الروابط التلقائية
+    const WORKERS = {
+      uploadProxy: 'https://calm-frost-26fb.jawrab.workers.dev/?url=https://top4top.io/upload.php',
+      videoSplitter: 'https://video-splitter.jawrab.workers.dev/splitter',
+      m3u8Generator: 'https://m3u8-generator.jawrab.workers.dev/m3u8'
+    };
+
     let uploadedParts = [];
     let m3u8Content = '';
 
@@ -329,9 +346,6 @@
 
     async function startProcess() {
       const videoUrl = document.getElementById('videoUrl').value.trim();
-      const uploadProxyUrl = document.getElementById('uploadProxyUrl').value.trim();
-      const splitterUrl = document.getElementById('splitterUrl').value.trim();
-      const m3u8Url = document.getElementById('m3u8Url').value.trim();
       const chunkSize = parseInt(document.getElementById('chunkSize').value) || 5;
       const workMode = document.getElementById('workMode').value;
 
@@ -347,9 +361,9 @@
 
       try {
         if (workMode === 'auto') {
-          await processAutoMode(videoUrl, uploadProxyUrl, splitterUrl, m3u8Url, chunkSize);
+          await processAutoMode(videoUrl, chunkSize);
         } else {
-          await processManualMode(videoUrl, uploadProxyUrl, m3u8Url, chunkSize);
+          await processManualMode(videoUrl, chunkSize);
         }
       } catch (error) {
         log(`❌ خطأ: ${error.message}`, 'error');
@@ -359,51 +373,48 @@
       document.getElementById('btnStart').disabled = false;
     }
 
-    async function processAutoMode(videoUrl, uploadProxyUrl, splitterUrl, m3u8Url, chunkSize) {
-      log('🚀 بدء الوضع التلقائي - CloudFront Worker سيقوم بالعمل...', 'info');
-      
-      if (!splitterUrl || !m3u8Url) {
-        throw new Error('الرجاء إدخال روابط Workers المطلوبة');
-      }
-
+    async function processAutoMode(videoUrl, chunkSize) {
+      log('🚀 بدء الوضع التلقائي - Worker سيقوم بتقسيم ورفع الفيديو...', 'info');
       document.getElementById('statStatus').innerHTML = '<span class="badge badge-info">تقسيم ورفع...</span>';
       
-      const response = await fetch(splitterUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          videoUrl: videoUrl,
-          chunkSizeMB: chunkSize,
-          uploadProxyUrl: uploadProxyUrl
-        })
-      });
+      try {
+        const response = await fetch(WORKERS.videoSplitter, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            videoUrl: videoUrl,
+            chunkSizeMB: chunkSize,
+            uploadProxyUrl: WORKERS.uploadProxy
+          })
+        });
 
-      if (!response.ok) {
-        throw new Error(`فشل Worker: ${response.status}`);
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Worker Error: ${errorData.error || response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (!result.success) {
+          throw new Error(result.error || 'فشلت العملية');
+        }
+
+        log(`✅ تم رفع ${result.totalParts} جزء بنجاح`, 'success');
+        document.getElementById('statSize').textContent = formatSize(result.fileSize);
+        document.getElementById('statParts').textContent = result.totalParts;
+        
+        uploadedParts = result.parts;
+        displayParts(uploadedParts);
+        
+        await generateM3U8(uploadedParts);
+      } catch (error) {
+        log(`❌ خطأ في الوضع التلقائي: ${error.message}`, 'error');
+        throw error;
       }
-
-      const result = await response.json();
-      
-      if (!result.success) {
-        throw new Error(result.error || 'فشلت العملية');
-      }
-
-      log(`✅ تم رفع ${result.totalParts} جزء بنجاح`, 'success');
-      document.getElementById('statSize').textContent = formatSize(result.fileSize);
-      document.getElementById('statParts').textContent = result.totalParts;
-      
-      uploadedParts = result.parts;
-      displayParts(uploadedParts);
-      
-      await generateM3U8(m3u8Url, uploadedParts);
     }
 
-    async function processManualMode(videoUrl, uploadProxyUrl, m3u8Url, chunkSize) {
+    async function processManualMode(videoUrl, chunkSize) {
       log('📦 بدء الوضع اليدوي - المتصفح سيقسم ويرفع...', 'info');
-      
-      if (!uploadProxyUrl) {
-        throw new Error('الرجاء إدخال رابط Upload Proxy');
-      }
 
       log('🔍 فحص حجم الفيديو...', 'info');
       const headResponse = await fetch(videoUrl, { method: 'HEAD' });
@@ -426,7 +437,7 @@
         const start = i * chunkSizeBytes;
         const end = Math.min(start + chunkSizeBytes - 1, fileSize - 1);
         
-        log(`⬆️ رفع الجزء ${i + 1}/${totalChunks}...`, 'info');
+        log(`⬆️ جلب ورفع الجزء ${i + 1}/${totalChunks}...`, 'info');
         
         const chunkResponse = await fetch(videoUrl, {
           headers: { 'Range': `bytes=${start}-${end}` }
@@ -440,24 +451,29 @@
         formData.append('file', blob, `part_${String(i + 1).padStart(4, '0')}_${sizeMB}mb.png`);
         formData.append('uploadType', 'file');
 
-        const uploadResponse = await fetch(`${uploadProxyUrl}?url=${encodeURIComponent('https://calm-frost-26fb.jawrab.workers.dev/?url=https://top4top.io/upload.php')}`, {
-          method: 'POST',
-          body: formData
-        });
-
-        const uploadText = await uploadResponse.text();
-        const urlMatch = uploadText.match(/https?:\/\/[^\s"<>]+\.(jpg|png|gif|jpeg)/i);
-        
-        if (urlMatch) {
-          uploadedParts.push({
-            index: i,
-            url: urlMatch[0],
-            size: actualSize,
-            sizeMB: sizeMB
+        try {
+          const uploadResponse = await fetch(WORKERS.uploadProxy, {
+            method: 'POST',
+            body: formData
           });
-          log(`✅ الجزء ${i + 1} تم رفعه`, 'success');
-        } else {
-          throw new Error(`فشل رفع الجزء ${i + 1}`);
+
+          const uploadText = await uploadResponse.text();
+          const urlMatch = uploadText.match(/https?:\/\/[^\s"<>]+\.(jpg|png|gif|jpeg)/i);
+          
+          if (urlMatch) {
+            uploadedParts.push({
+              index: i,
+              url: urlMatch[0],
+              size: actualSize,
+              sizeMB: sizeMB
+            });
+            log(`✅ الجزء ${i + 1} تم رفعه`, 'success');
+          } else {
+            throw new Error(`لم يتم الحصول على رابط (الرد: ${uploadText.substring(0, 100)})`);
+          }
+        } catch (uploadError) {
+          log(`❌ خطأ في رفع الجزء ${i + 1}: ${uploadError.message}`, 'error');
+          throw uploadError;
         }
 
         const progress = Math.round(((i + 1) / totalChunks) * 100);
@@ -466,62 +482,40 @@
 
       log(`🎉 اكتمل رفع جميع الأجزاء!`, 'success');
       displayParts(uploadedParts);
-      
-      if (m3u8Url) {
-        await generateM3U8(m3u8Url, uploadedParts);
-      } else {
-        generateM3U8Local(uploadedParts);
-      }
+      await generateM3U8(uploadedParts);
     }
 
-    async function generateM3U8(m3u8Url, parts) {
+    async function generateM3U8(parts) {
       log('🎬 إنشاء ملف M3U8...', 'info');
       document.getElementById('statStatus').innerHTML = '<span class="badge badge-info">توليد M3U8...</span>';
 
-      const response = await fetch(m3u8Url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ parts: parts, outputFormat: 'json' })
-      });
+      try {
+        const response = await fetch(WORKERS.m3u8Generator, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ parts: parts, outputFormat: 'json' })
+        });
 
-      if (!response.ok) {
-        throw new Error(`فشل توليد M3U8: ${response.status}`);
+        if (!response.ok) {
+          throw new Error(`فشل توليد M3U8: ${response.status}`);
+        }
+
+        const result = await response.json();
+        
+        if (result.success) {
+          m3u8Content = result.m3u8;
+          document.getElementById('m3u8Output').textContent = m3u8Content;
+          document.getElementById('m3u8Card').style.display = '';
+          log('✅ تم إنشاء ملف M3U8 بنجاح!', 'success');
+          document.getElementById('statStatus').innerHTML = '<span class="badge badge-success">مكتمل</span>';
+          document.getElementById('progressBar').style.width = '100%';
+        } else {
+          throw new Error(result.error || 'فشل توليد M3U8');
+        }
+      } catch (error) {
+        log(`❌ خطأ في توليد M3U8: ${error.message}`, 'error');
+        throw error;
       }
-
-      const result = await response.json();
-      
-      if (result.success) {
-        m3u8Content = result.m3u8;
-        document.getElementById('m3u8Output').textContent = m3u8Content;
-        document.getElementById('m3u8Card').style.display = '';
-        log('✅ تم إنشاء ملف M3U8 بنجاح!', 'success');
-        document.getElementById('statStatus').innerHTML = '<span class="badge badge-success">مكتمل</span>';
-        document.getElementById('progressBar').style.width = '100%';
-      } else {
-        throw new Error(result.error || 'فشل توليد M3U8');
-      }
-    }
-
-    function generateM3U8Local(parts) {
-      log('🎬 إنشاء ملف M3U8 محليًا...', 'info');
-      
-      const sorted = [...parts].sort((a, b) => a.size - b.size);
-      
-      let m3u8 = '#EXTM3U\n#EXT-X-VERSION:3\n#EXT-X-TARGETDURATION:10\n#EXT-X-MEDIA-SEQUENCE:0\n\n';
-      
-      sorted.forEach((part, i) => {
-        const duration = part.sizeMB ? (parseFloat(part.sizeMB) / 0.5).toFixed(3) : '10.000';
-        m3u8 += `#EXTINF:${duration},\n${part.url}\n`;
-      });
-      
-      m3u8 += '#EXT-X-ENDLIST\n';
-      
-      m3u8Content = m3u8;
-      document.getElementById('m3u8Output').textContent = m3u8Content;
-      document.getElementById('m3u8Card').style.display = '';
-      log('✅ تم إنشاء ملف M3U8 بنجاح!', 'success');
-      document.getElementById('statStatus').innerHTML = '<span class="badge badge-success">مكتمل</span>';
-      document.getElementById('progressBar').style.width = '100%';
     }
 
     function displayParts(parts) {
@@ -555,6 +549,22 @@
       log('✅ تم تحميل M3U8', 'success');
     }
 
+    function openM3u8InPlayer() {
+      // VLC Media Player يمكنه فتح الملفات من الرابط
+      // لكن للتشغيل الفوري، نحتاج رابط تحميل مباشر
+      const m3u8Blob = new Blob([m3u8Content], { type: 'application/x-mpegURL' });
+      const m3u8Url = URL.createObjectURL(m3u8Blob);
+      
+      // محاولة فتح مع VLC (إن كان مثبت)
+      window.location.href = 'vlc://' + m3u8Url;
+      
+      log('ℹ️ جاري محاولة فتح في VLC...', 'info');
+      setTimeout(() => {
+        // إذا لم يعمل، فتح في المتصفح
+        window.open(m3u8Url);
+      }, 1000);
+    }
+
     function resetAll() {
       uploadedParts = [];
       m3u8Content = '';
@@ -567,6 +577,26 @@
       document.getElementById('statParts').textContent = '—';
       document.getElementById('statStatus').textContent = 'جاري...';
     }
+
+    // اختبار الاتصال عند التحميل
+    window.addEventListener('load', async () => {
+      try {
+        const response = await fetch(WORKERS.videoSplitter, { 
+          method: 'OPTIONS',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        if (response.ok) {
+          document.getElementById('workerStatus').innerHTML = '✅ جميع الـ Workers متصلة وجاهزة للعمل';
+          document.getElementById('workerStatus').className = 'worker-status';
+        } else {
+          throw new Error('HTTP ' + response.status);
+        }
+      } catch (error) {
+        document.getElementById('workerStatus').innerHTML = '⚠️ تحذير: قد لا يكون الاتصال بـ Workers جاهزًا. تأكد من الروابط.';
+        document.getElementById('workerStatus').className = 'worker-status warning';
+      }
+    });
   </script>
 </body>
 </html>

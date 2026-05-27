@@ -1175,6 +1175,7 @@ body::before{
 ═════════════════════════════════════════════ */
 const CLIENT_ID = "1095244236392-eqhgorr4t587vvr4vblmvlkqbh8kae9i.apps.googleusercontent.com";
 const BLOG_ID   = "6155177137677743195";
+const YT_API_KEY = ""; // اختياري — أضف YouTube Data API v3 key لعناوين مترجمة أدق
 const TMDB_KEY  = "1427d0e123035564137327f27f47c86c";
 const TMDB_BASE = "https://api.themoviedb.org/3";
 const TMDB_IMG  = "https://image.tmdb.org/t/p/w500";
@@ -1184,7 +1185,7 @@ const ICON_URL  = "https://i.suar.me/e9M10/h";
 /* ═════════════════════════════════════════════
    STATE
 ═════════════════════════════════════════════ */
-let gToken = '', renewTimer = null, gsiClient = null;
+let gToken = '', renewTimer = null, gsiClient = null, oneTapClient = null;
 const TOKEN_KEY = 'jwb_t', EXPIRY_KEY = 'jwb_e';
 let editMode = false, editId = null;
 let curType  = 'movie';
@@ -1192,54 +1193,12 @@ let tmdbData = null;
 let qualities = [];
 
 /* ═════════════════════════════════════════════
-   AUTH — جلسة مطوّلة
+   AUTH — جلسة دائمة بنظام مزدوج
+   ١. Google One Tap → تجديد صامت تلقائي
+   ٢. Token Client  → أول تسجيل دخول
 ═════════════════════════════════════════════ */
-function buildGsiClient(){
-  gsiClient = google.accounts.oauth2.initTokenClient({
-    client_id: CLIENT_ID,
-    scope: 'https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
-    callback: async res => {
-      if(res.access_token){
-        // جلب بيانات المستخدم فقط في أول تسجيل دخول (لا عند التجديد الصامت)
-        const isFirstLogin = !getCookie('jwb_uname');
-        if(isFirstLogin){
-          try{
-            // جلب الاسم والصورة من Blogger — هذا هو الملف الشخصي على المدونة
-            const br = await fetch('https://www.googleapis.com/blogger/v3/users/self',{headers:{Authorization:'Bearer '+res.access_token}});
-            const bd = await br.json();
-            const bName = bd.displayName || '';
-            const bPic  = fixImgUrl(bd.image?.url || '');
-            currentUserId = bd.id || '';
-            // جلب البريد من Google فقط (Blogger لا يعطيه)
-            let email = '';
-            try{
-              const gr = await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+res.access_token}});
-              const gd = await gr.json();
-              email = gd.email || '';
-              // استخدم صورة Google كـ fallback إذا لم تكن هناك صورة Blogger
-              if(!bPic && gd.picture) setCookie('jwb_upic', gd.picture, 3650);
-            }catch(e){}
-            setProfileUI(bName||'الناشر', email, bPic);
-            setCookie('jwb_uname',  bName,          3650);
-            setCookie('jwb_uemail', email,           3650);
-            if(bPic) setCookie('jwb_upic', bPic,    3650);
-            setCookie('jwb_uid',    currentUserId,   3650);
-          }catch(e){}
-        }
-        saveToken(res.access_token, res.expires_in||3600);
-      } else if(res.error && res.error !== 'interaction_required'){
-        // لا نسجّل خروج — نعيد المحاولة بعد دقيقة
-        setTimeout(silentRenew, 60*1000);
-      }
-    }
-  });
-}
-function doLogin(){
-  if(!gsiClient) buildGsiClient();
-  if(!gsiClient){ toast('فشل تحميل Google Sign-In، أعد تحميل الصفحة','err'); return; }
-  gsiClient.requestAccessToken({prompt:'consent'});
-}
-/* ── مساعدات الكوكيز (جلسة دائمة 365 يوم) ── */
+
+/* ── مساعدات الكوكيز ── */
 function setCookie(name,val,days){
   const d=new Date(); d.setTime(d.getTime()+days*864e5);
   document.cookie=`${name}=${encodeURIComponent(val)};expires=${d.toUTCString()};path=/;SameSite=Lax`;
@@ -1252,41 +1211,131 @@ function delCookie(name){
   document.cookie=`${name}=;expires=Thu, 01 Jan 1970 00:00:00 UTC;path=/`;
 }
 
-function saveToken(tok, exp){
+/* ── بناء Token Client (للدخول الأول) ── */
+function buildGsiClient(){
+  gsiClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: 'https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+    callback: async res => {
+      if(res.access_token){
+        const isFirstLogin = !getCookie('jwb_uname');
+        if(isFirstLogin) await fetchAndSaveProfile(res.access_token);
+        await onTokenReceived(res.access_token, res.expires_in||3600);
+      } else if(res.error === 'interaction_required' || res.error === 'access_denied'){
+        // التجديد الصامت فشل → أظهر زر الدخول مرة أخرى فقط إذا لا يوجد توكن أصلاً
+        if(!gToken) setAuthUI(false);
+      }
+    }
+  });
+}
+
+/* ── One Tap: تجديد صامت عبر credential ── */
+function initOneTap(){
+  if(!google?.accounts?.id) return;
+  google.accounts.id.initialize({
+    client_id:          CLIENT_ID,
+    auto_select:        true,           // تجديد تلقائي بدون تفاعل
+    cancel_on_tap_outside: false,
+    callback: async (credRes) => {
+      // credential هو JWT — نحوله لـ access_token عبر exchange
+      if(credRes.credential){
+        try{
+          await exchangeCredential(credRes.credential);
+        }catch(e){}
+      }
+    }
+  });
+  // تشغيل One Tap صامتاً فقط إذا كان هناك جلسة سابقة
+  if(getCookie('jwb_uname')){
+    google.accounts.id.prompt(notification => {
+      // لا نفعل شيئاً — One Tap يعمل في الخلفية
+    });
+  }
+}
+
+/* ── تبادل credential JWT → access_token عبر Google Token endpoint ── */
+async function exchangeCredential(credential){
+  // One Tap يعطي ID token — نستخدمه لجلب access_token عبر OAuth
+  // الطريقة: requestAccessToken بعد تأكيد الهوية
+  if(!gsiClient) buildGsiClient();
+  gsiClient.requestAccessToken({prompt:'', hint: getCookie('jwb_uemail')||''});
+}
+
+/* ── جلب وحفظ بيانات المستخدم عند الدخول الأول ── */
+async function fetchAndSaveProfile(tok){
+  try{
+    const br = await fetch('https://www.googleapis.com/blogger/v3/users/self',{headers:{Authorization:'Bearer '+tok}});
+    const bd = await br.json();
+    const bName = bd.displayName || '';
+    const bPic  = fixImgUrl(bd.image?.url || '');
+    currentUserId = bd.id || '';
+    let email = '';
+    try{
+      const gr = await fetch('https://www.googleapis.com/oauth2/v2/userinfo',{headers:{Authorization:'Bearer '+tok}});
+      const gd = await gr.json();
+      email = gd.email || '';
+      if(!bPic && gd.picture) setCookie('jwb_upic', fixImgUrl(gd.picture), 3650);
+    }catch(e){}
+    setProfileUI(bName||'الناشر', email, bPic);
+    setCookie('jwb_uname',  bName,          3650);
+    setCookie('jwb_uemail', email,           3650);
+    if(bPic) setCookie('jwb_upic', bPic,    3650);
+    setCookie('jwb_uid',    currentUserId,   3650);
+  }catch(e){}
+}
+
+/* ── معالجة كل توكن جديد ── */
+async function onTokenReceived(tok, exp){
   const expiry = Date.now() + (exp - 60) * 1000;
   gToken = tok;
-  // كوكيز دائمة 10 سنوات — التوكن يُجدَّد تلقائياً
   setCookie(TOKEN_KEY,  tok,           3650);
   setCookie(EXPIRY_KEY, String(expiry),3650);
-  scheduleRenew(expiry);
+  // استعادة بيانات الواجهة إذا لم تكن ظاهرة
+  const name = getCookie('jwb_uname')||'';
+  if(name) setProfileUI(name, getCookie('jwb_uemail')||'', getCookie('jwb_upic')||'');
   setAuthUI(true);
   startTimer();
+  scheduleRenew(expiry);
+  // جلب الدور في الخلفية
+  fetchUserRole().catch(()=>{});
   loadPosts();
 }
 
+function doLogin(){
+  if(!gsiClient) buildGsiClient();
+  if(!gsiClient){ toast('فشل تحميل Google Sign-In، أعد تحميل الصفحة','err'); return; }
+  gsiClient.requestAccessToken({prompt:'consent'});
+}
+
+function saveToken(tok, exp){ return onTokenReceived(tok, exp); }
+
 function restoreToken(){
   try{
-    const tok   = getCookie(TOKEN_KEY);
-    const exp   = parseInt(getCookie(EXPIRY_KEY)||'0');
     const name  = getCookie('jwb_uname')||'';
     const email = getCookie('jwb_uemail')||'';
     const pic   = getCookie('jwb_upic')||'';
     currentUserId = getCookie('jwb_uid')||'';
+    const savedRole = getCookie('jwb_role')||'';
+    if(savedRole) isAdmin = (savedRole === 'ADMIN');
 
     if(name || email){
       setProfileUI(name||'الناشر', email, pic);
       setAuthUI(true);
     }
 
+    const tok = getCookie(TOKEN_KEY);
+    const exp = parseInt(getCookie(EXPIRY_KEY)||'0');
+
     if(tok && exp && Date.now() < exp){
+      // التوكن صالح
       gToken = tok;
       scheduleRenew(exp);
       startTimer();
       loadPosts();
       return true;
     } else if(name || email){
-      // انتهى التوكن لكن هناك جلسة محفوظة — جدّد صامتاً
-      setTimeout(silentRenew, 500);
+      // انتهى التوكن — اطلب تجديداً صامتاً فوراً
+      setTimeout(silentRenew, 300);
       return true;
     }
   }catch(e){}
@@ -1295,63 +1344,112 @@ function restoreToken(){
 
 function scheduleRenew(expMs){
   if(renewTimer) clearTimeout(renewTimer);
-  const delay = Math.max(expMs - Date.now() - 4*60*1000, 10*1000);
+  // جدّد قبل 3 دقائق من الانتهاء
+  const delay = Math.max(expMs - Date.now() - 3*60*1000, 5*1000);
   renewTimer = setTimeout(silentRenew, delay);
 }
 
 let _renewAttempts = 0;
+let _renewPending = false;
 function silentRenew(){
+  if(_renewPending) return; // منع التكرار المتزامن
+  _renewPending = true;
   if(!gsiClient) buildGsiClient();
   try{
-    gsiClient.requestAccessToken({prompt:''});
+    gsiClient.requestAccessToken({
+      prompt: '',
+      hint:   getCookie('jwb_uemail')||''
+    });
     _renewAttempts = 0;
   }catch(e){
     _renewAttempts++;
-    const delay = Math.min(30000 * Math.pow(2, _renewAttempts - 1), 5*60*1000);
-    setTimeout(silentRenew, delay);
+    const delay = Math.min(15000 * Math.pow(2, _renewAttempts - 1), 5*60*1000);
+    setTimeout(()=>{ _renewPending=false; silentRenew(); }, delay);
+    return;
   }
+  // إعادة تعيين _renewPending بعد ثانية (وقت كافٍ للـ callback)
+  setTimeout(()=>{ _renewPending=false; }, 1000);
 }
 
-// عودة المستخدم للتبويب → جدّد إذا قارب التوكن على الانتهاء
+// عودة للتبويب → جدّد فوراً إذا انتهى التوكن أو قارب على الانتهاء
 document.addEventListener('visibilitychange', ()=>{
-  if(document.visibilityState === 'visible' && getCookie('jwb_uname')){
-    const exp = parseInt(getCookie(EXPIRY_KEY)||'0');
-    if(!gToken || !exp || (exp - Date.now()) < 10*60*1000){
-      silentRenew();
-    }
+  if(document.visibilityState !== 'visible') return;
+  if(!getCookie('jwb_uname')) return;
+  const exp = parseInt(getCookie(EXPIRY_KEY)||'0');
+  if(!gToken || !exp || (exp - Date.now()) < 8*60*1000){
+    silentRenew();
   }
 });
+
+// فحص دوري كل دقيقة — ضمان إضافي
+setInterval(()=>{
+  if(!getCookie('jwb_uname')) return;
+  const exp = parseInt(getCookie(EXPIRY_KEY)||'0');
+  if(exp && (exp - Date.now()) < 5*60*1000){
+    silentRenew();
+  }
+}, 60*1000);
+
 function clearToken(){
-  gToken=''; currentUserId=''; isAdmin=false;
+  gToken=''; currentUserId=''; isAdmin=false; _renewPending=false;
   if(renewTimer){clearTimeout(renewTimer);renewTimer=null;}
   delCookie(TOKEN_KEY);   delCookie(EXPIRY_KEY);
   delCookie('jwb_uname'); delCookie('jwb_uemail');
   delCookie('jwb_upic');  delCookie('jwb_uid');
   delCookie('jwb_role');
+  try{ google?.accounts?.id?.disableAutoSelect(); }catch(e){}
+  setAuthUI(false);
+}
   setAuthUI(false);
 }
 function fixImgUrl(url){
   if(!url) return '';
+  // إضافة البروتوكول
   if(url.startsWith('//')) url = 'https:' + url;
   if(!url.startsWith('http')) url = 'https://' + url;
-  url = url.replace(/\/s\d+(-c)?\//, '/s200-c/');
-  url = url.replace(/=s\d+(-c)?$/, '=s200-c');
+
+  // ── نمط 1: /photo.jpg?sz=35 أو =s35 في نهاية الرابط
+  url = url.replace(/[=?]sz=\d+/, '=s400');
+  url = url.replace(/=s\d+(-c)?(-no)?$/, '=s400-c');
+
+  // ── نمط 2: /s35-c/ أو /s35/ في المسار
+  url = url.replace(/\/s\d+(-c)?(-no)?\//, '/s400-c/');
+
+  // ── نمط 3: روابط googleusercontent بدون حجم — أضف حجماً
+  if(url.includes('googleusercontent.com') && !/[=\/]s\d+/.test(url)){
+    url = url.replace(/\/(photo|image)\.jpg/, '/s400-c/photo.jpg');
+    if(!url.includes('s400')) url += '=s400-c';
+  }
+
+  // ── نمط 4: blogger profile photos
+  url = url.replace(/\/u\/\d+\/photo\.jpg.*$/, '/u/0/photo.jpg=s400-c');
+
   return url;
 }
 
 function setProfileUI(name, email, pic){
   currentUserEmail = email || '';
   const av = document.getElementById('profileAv');
-  const imgUrl = fixImgUrl(pic);
-  if(imgUrl){
-    const img = new Image();
-    img.referrerPolicy = 'no-referrer';
-    img.onload  = () => { av.innerHTML = `<img src="${imgUrl}" alt="${name}" referrerpolicy="no-referrer">`; };
-    img.onerror = () => { av.textContent = (name||'J')[0].toUpperCase(); };
-    img.src = imgUrl;
-  } else {
-    av.textContent = (name||'J')[0].toUpperCase();
-  }
+  const fallback = () => { av.textContent = (name||'J')[0].toUpperCase(); };
+
+  if(pic){
+    // جرّب الرابط المُصلح أولاً، ثم الرابط الخام، ثم الحرف
+    const urls = [fixImgUrl(pic), pic].filter((u,i,a)=>u&&a.indexOf(u)===i);
+    let tried = 0;
+    const tryNext = () => {
+      if(tried >= urls.length){ fallback(); return; }
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.referrerPolicy = 'no-referrer';
+      img.onload = () => {
+        av.innerHTML = `<img src="${urls[tried-1]||pic}" alt="${name}" referrerpolicy="no-referrer" crossorigin="anonymous">`;
+      };
+      img.onerror = () => { tried++; tryNext(); };
+      img.src = urls[tried++];
+    };
+    tryNext();
+  } else { fallback(); }
+
   document.getElementById('profileName').textContent = name;
   const roleEl = document.getElementById('profileRole');
   if(roleEl){
@@ -1943,93 +2041,113 @@ async function fetchYtTitle(forcedId, silent=false){
   if(titleEl) titleEl.textContent = '⏳ جاري الجلب...';
   if(badge)   badge.style.display = 'none';
 
-  /* ── 1. جلب العنوان الأصلي عبر oEmbed ── */
-  let origTitle = '';
+  let origTitle = '', arTitle = '', finalTitle = '', titleSource = 'original';
+
+  /* ══ المصدر 1: oEmbed (بدون CORS، موثوق 100%) ══ */
   try{
     const r = await fetch(`https://www.youtube.com/oembed?url=https://youtu.be/${id}&format=json`);
     const d = await r.json();
     origTitle = d.title || '';
   }catch(e){}
 
-  const hasArabicOrig = /[\u0600-\u06FF]/.test(origTitle);
-
-  let finalTitle  = origTitle;
-  let titleSource = 'original'; // 'original' | 'translated' | 'dubbed'
-
-  if(!hasArabicOrig && origTitle){
-    /* ── 2. محاولة جلب صفحة يوتيوب بلغة عربية ──
-       يوتيوب يرد بعنوان مترجم أحياناً حسب Accept-Language */
+  /* ══ المصدر 2: noembed.com (proxy مفتوح، بدون CORS) ══ */
+  if(!origTitle){
     try{
-      const r2 = await fetch(`https://www.youtube.com/watch?v=${id}`, {
-        headers:{ 'Accept-Language': 'ar,ar-SA;q=0.9,ar-AE;q=0.8' }
-      });
-      const html = await r2.text();
-
-      /* استخراج العنوان من الـ HTML */
-      let arTitle = '';
-      // يوتيوب يحفظ العنوان في عدة أماكن
-      const patterns = [
-        /"title":\{"runs":\[\{"text":"([^"]+)"/,
-        /<meta name="title" content="([^"]+)"/,
-        /<title>([^<]+)<\/title>/,
-      ];
-      for(const p of patterns){
-        const m = html.match(p);
-        if(m){
-          arTitle = m[1].replace(/ - YouTube$/,'').replace(/ – YouTube$/,'').trim();
-          if(arTitle) break;
-        }
-      }
-
-      const arTitleHasArabic = /[\u0600-\u06FF]/.test(arTitle);
-
-      /* ── 3. فحص الدبلجة العربية في HTML ── */
-      const isDubbed = /\"ar\"|arabic.*dub|دبلجة|مدبلج|الدبلجة|dubbed.*arabic/i.test(html)
-        || /"languageCode":"ar"/.test(html);
-
-      if(isDubbed){
-        /* الأولوية القصوى: مدبلج بالعربية */
-        finalTitle  = arTitleHasArabic ? arTitle : origTitle;
-        titleSource = 'dubbed';
-      } else if(arTitleHasArabic && arTitle !== origTitle){
-        /* عنوان مترجم للعربية */
-        finalTitle  = arTitle;
-        titleSource = 'translated';
-      } else {
-        finalTitle  = origTitle;
-        titleSource = 'original';
-      }
-    }catch(e){
-      finalTitle  = origTitle;
-      titleSource = 'original';
-    }
-  } else if(hasArabicOrig){
-    titleSource = 'original';
+      const r = await fetch(`https://noembed.com/embed?url=https://www.youtube.com/watch?v=${id}`);
+      const d = await r.json();
+      origTitle = d.title || '';
+    }catch(e){}
   }
 
-  /* ── تطبيق العنوان ── */
-  if(finalTitle){
-    if(!document.getElementById('fTitle').value || silent){
-      document.getElementById('fTitle').value = finalTitle;
-    }
-    if(titleEl) titleEl.textContent = finalTitle;
+  if(!origTitle){ if(titleEl) titleEl.textContent='—'; if(!silent) toast('تعذّر جلب العنوان','warn'); return; }
 
-    /* شارة المصدر */
-    if(badge){
-      const badgeMap = {
-        dubbed:     { text:'🎙 مدبلج عربي',  bg:'rgba(251,191,36,.15)', border:'rgba(251,191,36,.4)', color:'#fbbf24' },
-        translated: { text:'🌐 مترجم عربي',  bg:'rgba(59,130,246,.12)', border:'rgba(59,130,246,.3)', color:'#7cb3f5' },
-        original:   { text:'📝 عنوان أصلي', bg:'rgba(100,100,100,.1)', border:'rgba(100,100,100,.2)', color:'var(--text3)' },
-      };
-      const b = badgeMap[titleSource];
-      badge.textContent = b.text;
-      badge.style.cssText = `display:inline-flex;font-size:.65em;font-weight:700;padding:1px 8px;border-radius:20px;background:${b.bg};border:1px solid ${b.border};color:${b.color};`;
+  const hasArabicOrig = /[\u0600-\u06FF]/.test(origTitle);
+  finalTitle  = origTitle;
+  titleSource = 'original';
+
+  if(!hasArabicOrig){
+    /* ══ المصدر 3: youtube.com/oembed بـ hl=ar (يُرجع عنوان مترجم إذا توفّر) ══ */
+    try{
+      const r = await fetch(`https://www.youtube.com/oembed?url=https://youtu.be/${id}&format=json&hl=ar`);
+      const d = await r.json();
+      if(d.title && /[\u0600-\u06FF]/.test(d.title) && d.title !== origTitle){
+        arTitle     = d.title;
+        finalTitle  = arTitle;
+        titleSource = 'translated';
+      }
+    }catch(e){}
+
+    /* ══ المصدر 4: Invidious API (مثيل مفتوح بدون CORS، يُرجع localized title) ══ */
+    if(!arTitle){
+      const instances = [
+        'https://invidious.nerdvpn.de',
+        'https://inv.nadeko.net',
+        'https://invidious.privacydev.net',
+      ];
+      for(const inst of instances){
+        try{
+          const r = await fetch(`${inst}/api/v1/videos/${id}?fields=title,isFamilyFriendly,secondaryRenderer,adaptiveFormats`, {signal: AbortSignal.timeout(4000)});
+          if(!r.ok) continue;
+          const d = await r.json();
+          // localizedTitle أو title
+          const localized = d?.secondaryRenderer?.title?.simpleText || d?.title || '';
+          if(localized && /[\u0600-\u06FF]/.test(localized)){
+            arTitle     = localized;
+            finalTitle  = arTitle;
+            titleSource = 'translated';
+          }
+          // فحص الدبلجة: adaptiveFormats قد تحتوي audioTrack
+          const tracks = d?.adaptiveFormats?.filter(f=>f.audioTrack?.id?.startsWith('ar')) || [];
+          if(tracks.length > 0){
+            titleSource = 'dubbed';
+            if(arTitle) finalTitle = arTitle;
+          }
+          if(d?.title) break; // نجح الطلب — اخرج
+        }catch(e){ continue; }
+      }
     }
 
-    if(!silent) toast(`تم جلب العنوان (${titleSource==='dubbed'?'مدبلج':titleSource==='translated'?'مترجم':'أصلي'})`, 'ok');
-  } else {
-    if(titleEl) titleEl.textContent = '—';
-    if(!silent) toast('تعذّر جلب العنوان','warn');
+    /* ══ المصدر 5: YouTube Data API v3 (إذا كان YT_API_KEY معرّفاً) ══ */
+    if(!arTitle && typeof YT_API_KEY !== 'undefined' && YT_API_KEY){
+      try{
+        const r = await fetch(`https://www.googleapis.com/youtube/v3/videos?id=${id}&part=snippet,localizations&hl=ar&key=${YT_API_KEY}`);
+        const d = await r.json();
+        const item = d?.items?.[0];
+        if(item){
+          // localizations.ar.title
+          const arLoc = item?.localizations?.ar?.title || item?.snippet?.localized?.title || '';
+          if(arLoc && /[\u0600-\u06FF]/.test(arLoc)){
+            arTitle     = arLoc;
+            finalTitle  = arTitle;
+            titleSource = 'translated';
+          }
+          // فحص الدبلجة عبر audioLanguage
+          if(item?.snippet?.defaultAudioLanguage === 'ar') titleSource = 'dubbed';
+        }
+      }catch(e){}
+    }
+  }
+
+  /* ══ تطبيق العنوان والشارة ══ */
+  if(!document.getElementById('fTitle').value || silent){
+    document.getElementById('fTitle').value = finalTitle;
+  }
+  if(titleEl) titleEl.textContent = finalTitle;
+
+  if(badge){
+    const map = {
+      dubbed:     { text:'🎙 مدبلج عربي', bg:'rgba(251,191,36,.15)', bdr:'rgba(251,191,36,.4)', clr:'#fbbf24' },
+      translated: { text:'🌐 مترجم عربي', bg:'rgba(59,130,246,.12)', bdr:'rgba(59,130,246,.3)',  clr:'#7cb3f5' },
+      original:   { text:'📝 عنوان أصلي', bg:'rgba(100,100,100,.1)', bdr:'rgba(100,100,100,.2)', clr:'var(--text3)' },
+    };
+    const b = map[titleSource];
+    badge.textContent = b.text;
+    badge.style.cssText = `display:inline-flex;font-size:.65em;font-weight:700;padding:1px 8px;border-radius:20px;background:${b.bg};border:1px solid ${b.bdr};color:${b.clr};`;
+  }
+
+  if(!silent){
+    const lbl = titleSource==='dubbed'?'مدبلج':titleSource==='translated'?'مترجم':'أصلي';
+    toast(`تم جلب العنوان — ${lbl}`, 'ok');
   }
 }
 
@@ -2954,11 +3072,13 @@ window.addEventListener('DOMContentLoaded',()=>{
   const sf = document.getElementById('fieldStatus');
   if(sf) sf.style.display='none';
   setAuthUI(false);
-  waitGSI().then(()=>{ buildGsiClient(); restoreToken(); });
-  // نظام المسودات التلقائية
+  waitGSI().then(()=>{
+    buildGsiClient();   // Token Client للدخول الأول
+    initOneTap();       // One Tap للتجديد الصامت
+    restoreToken();     // استعادة الجلسة السابقة
+  });
   startDraftTimer();
   watchDraftChanges();
-  // تحذير عند محاولة مغادرة الصفحة وفيها بيانات غير منشورة
   window.addEventListener('beforeunload', e=>{
     const title = document.getElementById('fTitle')?.value?.trim();
     if(title || draftDirty){

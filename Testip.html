@@ -3,22 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مستخرج ومستجلب روابط Top4Top التلقائي</title>
+    <title>مستخرج روابط Top4Top التلقائي الاحترافي</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f4f6f9;
+            background-color: #f0f2f5;
             color: #333;
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 850px;
             margin: 0 auto;
             background: #fff;
             padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
         }
         h2 {
             text-align: center;
@@ -36,38 +36,52 @@
         }
         input[type="url"] {
             width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+            padding: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
             box-sizing: border-box;
             font-size: 14px;
         }
+        .buttons-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
         button {
-            width: 100%;
-            padding: 12px;
-            background-color: #27ae60;
-            color: white;
+            flex: 1;
+            padding: 14px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             font-size: 16px;
             font-weight: bold;
             cursor: pointer;
-            margin-top: 15px;
-            transition: background 0.3s;
+            transition: all 0.3s ease;
         }
-        button:hover {
-            background-color: #219653;
+        #submitBtn {
+            background-color: #27ae60;
+            color: white;
+            flex: 2;
         }
+        #submitBtn:hover { background-color: #219653; }
+        #addMoreBtn {
+            background-color: #34495e;
+            color: white;
+        }
+        #addMoreBtn:hover { background-color: #2c3e50; }
         button:disabled {
-            background-color: #bdc3c7;
+            background-color: #bdc3c7 !important;
             cursor: not-allowed;
         }
         #loading {
             display: none;
             text-align: center;
-            margin-top: 15px;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #fff3cd;
+            color: #856404;
+            border: 1px solid #ffeeba;
+            border-radius: 6px;
             font-weight: bold;
-            color: #e67e22;
         }
         #results {
             margin-top: 30px;
@@ -79,31 +93,25 @@
             margin-top: 15px;
         }
         th, td {
-            border: 1px solid #ddd;
+            border: 1px solid #e2e8f0;
             padding: 12px;
             text-align: right;
         }
         th {
-            background-color: #2c3e50;
+            background-color: #1e293b;
             color: white;
         }
-        tr:nth-child(even) {
-            background-color: #f9f9f9;
-        }
+        tr:nth-child(even) { background-color: #f8fafc; }
         .copy-btn {
-            background-color: #2980b9;
+            background-color: #3b82f6;
             color: white;
-            padding: 5px 10px;
+            padding: 6px 12px;
             border: none;
-            border-radius: 3px;
+            border-radius: 4px;
             cursor: pointer;
-            font-size: 12px;
-            width: auto;
-            margin: 0;
+            font-size: 13px;
         }
-        .copy-btn:hover {
-            background-color: #3498db;
-        }
+        .copy-btn:hover { background-color: #2563eb; }
     </style>
 </head>
 <body>
@@ -113,10 +121,13 @@
     <form id="uploadForm">
         <div id="inputsContainer"></div>
         
-        <button type="submit" id="submitBtn">جلب الروابط وبدء الرفع التلقائي</button>
+        <div class="buttons-row">
+            <button type="button" id="addMoreBtn">➕ إضافة خانة رابط أخرى</button>
+            <button type="submit" id="submitBtn">🚀 جلب الروابط وبدء الرفع</button>
+        </div>
     </form>
 
-    <div id="loading">⏳ جاري إرسال الروابط إلى Top4Top وتحليل النتائج المستلمة... الرجاء الانتظار...</div>
+    <div id="loading">⏳ جاري جلب الملفات بواسطة السيرفر الآن والرفع... قد يستغرق هذا من دقيقة إلى دقيقتين حسب حجم الروابط، يرجى عدم إغلاق الصفحة...</div>
 
     <div id="results">
         <h3>الروابط المستخرجة بنجاح:</h3>
@@ -124,8 +135,8 @@
             <thead>
                 <tr>
                     <th>الرقم</th>
-                    <th>رابط التحميل المباشر من مخرجات Top4Top</th>
-                    <th>نسخ</th>
+                    <th>رابط تحميل الملف</th>
+                    <th>إجراء</th>
                 </tr>
             </thead>
             <tbody id="resultsBody"></tbody>
@@ -134,72 +145,87 @@
 </div>
 
 <script>
-    // تم تحديث الرابط هنا ليتطابق مع الـ Worker الجديد الخاص بك
     const workerUrl = "https://top4top.jawrab-app.workers.dev/";
     const targetAction = "https://top4top.io/index.php";
-
-    // توليد 10 مدخلات تلقائياً عند تحميل الصفحة
     const container = document.getElementById('inputsContainer');
-    for (let i = 0; i < 10; i++) {
-        container.innerHTML += `
-            <div class="input-group">
-                <label>الرابط ${i + 1}:</label>
-                <input type="url" name="url_file[${i}]" placeholder="https://example.com/file.mp4">
-            </div>
+    let linkCount = 0;
+
+    // دالة لإضافة خانة جديدة
+    function addInputRow() {
+        linkCount++;
+        const div = document.createElement('div');
+        div.className = 'input-group';
+        div.innerHTML = `
+            <label>الرابط ${linkCount}:</label>
+            <input type="url" class="url-input" placeholder="https://example.com/file.zip">
         `;
+        container.appendChild(div);
     }
+
+    // توليد أول 10 خانات تلقائياً عند الفتح
+    for (let i = 0; i < 10; i++) {
+        addInputRow();
+    }
+
+    // عند الضغط على زر إضافة خانة إضافية
+    document.getElementById('addMoreBtn').addEventListener('click', addInputRow);
 
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const submitBtn = document.getElementById('submitBtn');
+        const addMoreBtn = document.getElementById('addMoreBtn');
         const loading = document.getElementById('loading');
         const resultsDiv = document.getElementById('results');
         const resultsBody = document.getElementById('resultsBody');
 
         submitBtn.disabled = true;
+        addMoreBtn.disabled = true;
         loading.style.display = "block";
         resultsDiv.style.display = "none";
         resultsBody.innerHTML = "";
 
-        // تجهيز بيانات الـ Form للإرسال بصيغة FormData الخاصة بموقع Top4Top
-        const formData = new FormData();
-        const inputs = container.querySelectorAll('input[type="url"]');
+        // بناء البيانات بصيغة URL-Encoded المتوافقة تماماً مع سيرفر Top4Top وظروف الـ Worker
+        const urlParams = new URLSearchParams();
+        const inputs = container.querySelectorAll('.url-input');
         let hasData = false;
 
         inputs.forEach((input, index) => {
             if(input.value.trim() !== "") {
-                formData.append(`url_file[${index}]`, input.value.trim());
+                urlParams.append(`url_file[${index}]`, input.value.trim());
                 hasData = true;
             }
         });
 
-        // إضافة الزر الموجه لـ Top4Top حتى يبدأ الجلب
-        formData.append('submitr', 'جلب الملفات');
+        urlParams.append('submitr', 'جلب الملفات');
 
         if (!hasData) {
             alert("الرجاء إدخال رابط واحد على الأقل!");
             submitBtn.disabled = false;
+            addMoreBtn.disabled = false;
             loading.style.display = "none";
             return;
         }
 
         try {
-            // إرسال الطلب عبر الـ Worker الجديد الخاص بك موههاً إلى رابط الجلب الخاص بـ Top4Top
+            // إرسال الطلب عبر الـ Worker
             const response = await fetch(`${workerUrl}?url=${encodeURIComponent(targetAction)}`, {
                 method: 'POST',
-                body: formData
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: urlParams.toString() // إرسال النص المشفر لضمان انتظار الرفع
             });
 
-            if (!response.ok) throw new Error("فشل الاتصال بالخادم الوسيط.");
+            if (!response.ok) throw new Error("فشل في استجابة السيرفر الوسيط.");
 
             const htmlResult = await response.text();
 
-            // تحليل الصفحة المستلمة (HTML) لاستخراج روابط التحميل الناتجة
+            // تحليل الصفحة الناتجة بعد الانتظار
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlResult, 'text/html');
             
-            // البحث عن الروابط الناتجة بداخل الرد المستلم من Top4Top
+            // استخراج الروابط من خانات النصوص (Inputs) أو الروابط المباشرة في صفحة نجاح الرفع لـ Top4Top
             const textInputs = doc.querySelectorAll('input[type="text"]');
             let foundUrls = [];
 
@@ -211,26 +237,40 @@
                 }
             });
 
-            // عرض النتائج في الجدول
+            // إذا لم يجد في الـ inputs، نبحث في الـ Links العادية كخيار احتياطي
+            if(foundUrls.length === 0) {
+                const links = doc.querySelectorAll('a');
+                links.forEach(a => {
+                    if(a.href && a.href.includes('top4top.io/downloadf-')) {
+                        const cleanUrl = new URL(a.href).searchParams.get('url') || a.href;
+                        if(!foundUrls.includes(cleanUrl)) {
+                            foundUrls.push(cleanUrl);
+                        }
+                    }
+                });
+            }
+
+            // عرض النتائج للمستخدم
             if (foundUrls.length > 0) {
                 foundUrls.forEach((downloadUrl, idx) => {
                     resultsBody.innerHTML += `
                         <tr>
                             <td>${idx + 1}</td>
-                            <td><a href="${downloadUrl}" target="_blank">${downloadUrl}</a></td>
-                            <td><button class="copy-btn" onclick="navigator.clipboard.writeText('${downloadUrl}'); alert('تم النسخ!');">نسخ</button></td>
+                            <td><a href="${downloadUrl}" target="_blank" style="word-break: break-all;">${downloadUrl}</a></td>
+                            <td><button type="button" class="copy-btn" onclick="navigator.clipboard.writeText('${downloadUrl}'); alert('تم النسخ!');">📋 نسخ</button></td>
                         </tr>
                     `;
                 });
                 resultsDiv.style.display = "block";
             } else {
-                alert("لم يتم العثور على روابط مرفوعة. تأكد من أن الروابط المدخلة صالحة ومباشرة ويدعمها موقع Top4Top.");
+                alert("انتهى الرفع ولكن لم يتم العثور على روابط تحميل مباشرة بالصفحة المرجوعة. قد يكون الموقع رفض الملفات بسبب حجمها أو صيغتها أو تجاوز الحد الأقصى للموقع.");
             }
 
         } catch (error) {
-            alert("حدث خطأ أثناء الرفع والتحليل: " + error.message);
+            alert("حدث خطأ أثناء الرفع: " + error.message);
         } finally {
             submitBtn.disabled = false;
+            addMoreBtn.disabled = false;
             loading.style.display = "none";
         }
     });

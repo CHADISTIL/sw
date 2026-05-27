@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مستخرج ومستجلب روابط Top4Top التلقائي</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+        .input-group {
+            margin-bottom: 12px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #34495e;
+        }
+        input[type="url"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+            font-size: 14px;
+        }
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #27ae60;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background-color: #219653;
+        }
+        button:disabled {
+            background-color: #bdc3c7;
+            cursor: not-allowed;
+        }
+        #loading {
+            display: none;
+            text-align: center;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #e67e22;
+        }
+        #results {
+            margin-top: 30px;
+            display: none;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: right;
+        }
+        th {
+            background-color: #2c3e50;
+            color: white;
+        }
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+        .copy-btn {
+            background-color: #2980b9;
+            color: white;
+            padding: 5px 10px;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+            font-size: 12px;
+            width: auto;
+            margin: 0;
+        }
+        .copy-btn:hover {
+            background-color: #3498db;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>مستجلب الروابط التلقائي عبر Top4Top و Worker</h2>
+    <form id="uploadForm">
+        <div id="inputsContainer"></div>
+        
+        <button type="submit" id="submitBtn">جلب الروابط وبدء الرفع التلقائي</button>
+    </form>
+
+    <div id="loading">⏳ جاري إرسال الروابط إلى Top4Top وتحليل النتائج المستلمة... الرجاء الانتظار...</div>
+
+    <div id="results">
+        <h3>الروابط المستخرجة بنجاح:</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>الرقم</th>
+                    <th>رابط التحميل المباشر من مخرجات Top4Top</th>
+                    <th>نسخ</th>
+                </tr>
+            </thead>
+            <tbody id="resultsBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // تم تحديث الرابط هنا ليتطابق مع الـ Worker الجديد الخاص بك
+    const workerUrl = "https://top4top.jawrab-app.workers.dev/";
+    const targetAction = "https://top4top.io/index.php";
+
+    // توليد 10 مدخلات تلقائياً عند تحميل الصفحة
+    const container = document.getElementById('inputsContainer');
+    for (let i = 0; i < 10; i++) {
+        container.innerHTML += `
+            <div class="input-group">
+                <label>الرابط ${i + 1}:</label>
+                <input type="url" name="url_file[${i}]" placeholder="https://example.com/file.mp4">
+            </div>
+        `;
+    }
+
+    document.getElementById('uploadForm').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        const submitBtn = document.getElementById('submitBtn');
+        const loading = document.getElementById('loading');
+        const resultsDiv = document.getElementById('results');
+        const resultsBody = document.getElementById('resultsBody');
+
+        submitBtn.disabled = true;
+        loading.style.display = "block";
+        resultsDiv.style.display = "none";
+        resultsBody.innerHTML = "";
+
+        // تجهيز بيانات الـ Form للإرسال بصيغة FormData الخاصة بموقع Top4Top
+        const formData = new FormData();
+        const inputs = container.querySelectorAll('input[type="url"]');
+        let hasData = false;
+
+        inputs.forEach((input, index) => {
+            if(input.value.trim() !== "") {
+                formData.append(`url_file[${index}]`, input.value.trim());
+                hasData = true;
+            }
+        });
+
+        // إضافة الزر الموجه لـ Top4Top حتى يبدأ الجلب
+        formData.append('submitr', 'جلب الملفات');
+
+        if (!hasData) {
+            alert("الرجاء إدخال رابط واحد على الأقل!");
+            submitBtn.disabled = false;
+            loading.style.display = "none";
+            return;
+        }
+
+        try {
+            // إرسال الطلب عبر الـ Worker الجديد الخاص بك موههاً إلى رابط الجلب الخاص بـ Top4Top
+            const response = await fetch(`${workerUrl}?url=${encodeURIComponent(targetAction)}`, {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) throw new Error("فشل الاتصال بالخادم الوسيط.");
+
+            const htmlResult = await response.text();
+
+            // تحليل الصفحة المستلمة (HTML) لاستخراج روابط التحميل الناتجة
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlResult, 'text/html');
+            
+            // البحث عن الروابط الناتجة بداخل الرد المستلم من Top4Top
+            const textInputs = doc.querySelectorAll('input[type="text"]');
+            let foundUrls = [];
+
+            textInputs.forEach(input => {
+                if (input.value.includes('top4top.io/downloadf-')) {
+                    if(!foundUrls.includes(input.value)) {
+                        foundUrls.push(input.value);
+                    }
+                }
+            });
+
+            // عرض النتائج في الجدول
+            if (foundUrls.length > 0) {
+                foundUrls.forEach((downloadUrl, idx) => {
+                    resultsBody.innerHTML += `
+                        <tr>
+                            <td>${idx + 1}</td>
+                            <td><a href="${downloadUrl}" target="_blank">${downloadUrl}</a></td>
+                            <td><button class="copy-btn" onclick="navigator.clipboard.writeText('${downloadUrl}'); alert('تم النسخ!');">نسخ</button></td>
+                        </tr>
+                    `;
+                });
+                resultsDiv.style.display = "block";
+            } else {
+                alert("لم يتم العثور على روابط مرفوعة. تأكد من أن الروابط المدخلة صالحة ومباشرة ويدعمها موقع Top4Top.");
+            }
+
+        } catch (error) {
+            alert("حدث خطأ أثناء الرفع والتحليل: " + error.message);
+        } finally {
+            submitBtn.disabled = false;
+            loading.style.display = "none";
+        }
+    });
+</script>
+
+</body>
+</html>

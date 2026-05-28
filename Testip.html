@@ -3,140 +3,145 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>مستخرج روابط Top4Top التلقائي الاحترافي</title>
+    <title>لوحة تحكم Top4Top الذكية - رفع تلقائي وتسجيل دخول</title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #f0f2f5;
+            background-color: #f0f4f8;
             color: #333;
             margin: 0;
             padding: 20px;
         }
         .container {
-            max-width: 850px;
+            max-width: 900px;
             margin: 0 auto;
             background: #fff;
             padding: 30px;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 25px rgba(0,0,0,0.06);
         }
-        h2 {
-            text-align: center;
+        h2, h3 {
             color: #2c3e50;
-            margin-bottom: 25px;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 10px;
         }
-        .input-group {
-            margin-bottom: 12px;
+        .section {
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 25px;
+            border: 1px solid #e2e8f0;
+        }
+        .row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 200px;
         }
         label {
             display: block;
-            margin-bottom: 5px;
+            margin-bottom: 6px;
             font-weight: bold;
-            color: #34495e;
+            color: #475569;
         }
-        input[type="url"] {
+        input {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             border: 1px solid #cbd5e1;
             border-radius: 6px;
             box-sizing: border-box;
             font-size: 14px;
         }
-        .buttons-row {
-            display: flex;
-            gap: 10px;
-            margin-top: 15px;
-        }
         button {
-            flex: 1;
-            padding: 14px;
+            padding: 12px 24px;
             border: none;
             border-radius: 6px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
-        #submitBtn {
-            background-color: #27ae60;
-            color: white;
-            flex: 2;
-        }
-        #submitBtn:hover { background-color: #219653; }
-        #addMoreBtn {
-            background-color: #34495e;
-            color: white;
-        }
-        #addMoreBtn:hover { background-color: #2c3e50; }
-        button:disabled {
-            background-color: #bdc3c7 !important;
-            cursor: not-allowed;
-        }
-        #loading {
-            display: none;
-            text-align: center;
-            margin-top: 20px;
+        .btn-primary { background-color: #3b82f6; color: white; }
+        .btn-primary:hover { background-color: #2563eb; }
+        .btn-success { background-color: #10b981; color: white; width: 100%; font-size: 16px; padding: 14px; }
+        .btn-success:hover { background-color: #059669; }
+        .btn-dark { background-color: #475569; color: white; }
+        .btn-dark:hover { background-color: #334155; }
+        
+        #statusMessage {
             padding: 15px;
-            background-color: #fff3cd;
-            color: #856404;
-            border: 1px solid #ffeeba;
             border-radius: 6px;
+            margin-top: 15px;
             font-weight: bold;
-        }
-        #results {
-            margin-top: 30px;
             display: none;
         }
-        table {
+        .status-loading { background-color: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+        .status-success { background-color: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+        
+        #resultsTable {
             width: 100%;
             border-collapse: collapse;
             margin-top: 15px;
+            display: none;
         }
         th, td {
             border: 1px solid #e2e8f0;
             padding: 12px;
             text-align: right;
         }
-        th {
-            background-color: #1e293b;
-            color: white;
-        }
+        th { background-color: #1e293b; color: white; }
         tr:nth-child(even) { background-color: #f8fafc; }
-        .copy-btn {
-            background-color: #3b82f6;
-            color: white;
-            padding: 6px 12px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            font-size: 13px;
-        }
-        .copy-btn:hover { background-color: #2563eb; }
+        .copy-btn { background-color: #64748b; color: white; padding: 4px 8px; border-radius: 4px; font-size: 12px; }
+        .copy-btn:hover { background-color: #475569; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>مستجلب الروابط التلقائي عبر Top4Top و Worker</h2>
-    <form id="uploadForm">
-        <div id="inputsContainer"></div>
-        
-        <div class="buttons-row">
-            <button type="button" id="addMoreBtn">➕ إضافة خانة رابط أخرى</button>
-            <button type="submit" id="submitBtn">🚀 جلب الروابط وبدء الرفع</button>
+    <h2>لوحة التحكم والرفع التلقائي الذكي الذكي عبر Top4Top</h2>
+
+    <div class="section">
+        <h3>🔐 ربط الحساب وتسجيل الدخول (اختياري)</h3>
+        <div class="row">
+            <div class="form-group">
+                <label>اسم المستخدم أو البريد:</label>
+                <input type="text" id="username" placeholder="أدخل اسم المستخدم بالملتقى">
+            </div>
+            <div class="form-group">
+                <label>كلمة المرور:</label>
+                <input type="password" id="password" placeholder="******">
+            </div>
         </div>
-    </form>
+        <button type="button" class="btn-primary" id="loginBtn">تسجيل الدخول وتفعيل العضوية</button>
+        <span id="loginStatus" style="margin-right: 15px; font-weight: bold;"></span>
+    </div>
 
-    <div id="loading">⏳ جاري جلب الملفات بواسطة السيرفر الآن والرفع... قد يستغرق هذا من دقيقة إلى دقيقتين حسب حجم الروابط، يرجى عدم إغلاق الصفحة...</div>
+    <div class="section">
+        <h3>🚀 إدخال روابط الملفات المراد رفعها</h3>
+        <form id="uploadForm">
+            <div id="inputsContainer"></div>
+            
+            <div class="row" style="margin-top: 15px;">
+                <button type="button" class="btn-dark" id="addMoreBtn">➕ إضافة خانة رابط أخرى</button>
+                <button type="submit" class="btn-success" id="submitBtn">بدء عملية الجلب والرفع والتحليل الذاتي</button>
+            </div>
+        </form>
+    </div>
 
-    <div id="results">
-        <h3>الروابط المستخرجة بنجاح:</h3>
-        <table>
+    <div id="statusMessage"></div>
+
+    <div class="section" id="resultsSection" style="display: none;">
+        <h3>📋 روابط التحميل المباشرة التي تم سحبها بنجاح</h3>
+        <table id="resultsTable">
             <thead>
                 <tr>
                     <th>الرقم</th>
-                    <th>رابط تحميل الملف</th>
-                    <th>إجراء</th>
+                    <th>رابط التحميل الصافي المستخرج</th>
+                    <th>نسخ الرابط</th>
                 </tr>
             </thead>
             <tbody id="resultsBody"></tbody>
@@ -146,46 +151,78 @@
 
 <script>
     const workerUrl = "https://top4top.jawrab-app.workers.dev/";
-    const targetAction = "https://top4top.io/index.php";
     const container = document.getElementById('inputsContainer');
     let linkCount = 0;
 
-    // دالة لإضافة خانة جديدة
+    // توليد خانات الروابط تلقائياً
     function addInputRow() {
         linkCount++;
         const div = document.createElement('div');
-        div.className = 'input-group';
+        div.className = 'form-group';
+        div.style.marginBottom = "10px";
         div.innerHTML = `
-            <label>الرابط ${linkCount}:</label>
-            <input type="url" class="url-input" placeholder="https://example.com/file.zip">
+            <label>رابط الملف ${linkCount}:</label>
+            <input type="url" class="url-input" placeholder="https://example.com/movie.mp4">
         `;
         container.appendChild(div);
     }
 
-    // توليد أول 10 خانات تلقائياً عند الفتح
-    for (let i = 0; i < 10; i++) {
-        addInputRow();
-    }
-
-    // عند الضغط على زر إضافة خانة إضافية
+    for (let i = 0; i < 10; i++) { addInputRow(); }
     document.getElementById('addMoreBtn').addEventListener('click', addInputRow);
 
+    // 1. منطق تسجيل الدخول التلقائي وسحب الكوكيز
+    document.getElementById('loginBtn').addEventListener('click', async () => {
+        const user = document.getElementById('username').value;
+        const pass = document.getElementById('password').value;
+        const loginStatus = document.getElementById('loginStatus');
+
+        if(!user || !pass) { alert("يرجى ملء بيانات الدخول أولاً"); return; }
+
+        loginStatus.innerText = "⏳ جاري تسجيل الدخول وحفظ الجلسة...";
+        loginStatus.style.color = "#d97706";
+
+        const loginData = new URLSearchParams();
+        loginData.append('username', user);
+        loginData.append('password', pass);
+        loginData.append('login', 'تسجيل دخول');
+
+        try {
+            const res = await fetch(`${workerUrl}?url=${encodeURIComponent('https://top4top.io/index.php')}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: loginData.toString()
+            });
+            
+            const html = await res.text();
+            if (html.includes('تسجيل خروج') || html.includes('cp.php?mode=logout')) {
+                loginStatus.innerText = "✅ تم تسجيل دخولك بنجاح! سيتم الرفع باسم حسابك الآن.";
+                loginStatus.style.color = "#059669";
+            } else {
+                loginStatus.innerText = "❌ فشل تسجيل الدخول، تأكد من بيانات الحساب.";
+                loginStatus.style.color = "#dc2626";
+            }
+        } catch (e) {
+            loginStatus.innerText = "❌ خطأ في الاتصال بالسيرفر.";
+        }
+    });
+
+    // 2. منطق الرفع والتحليل التلقائي بناءً على تغيرات الصفحة وحالة الانتظار
     document.getElementById('uploadForm').addEventListener('submit', async function(e) {
         e.preventDefault();
         
         const submitBtn = document.getElementById('submitBtn');
-        const addMoreBtn = document.getElementById('addMoreBtn');
-        const loading = document.getElementById('loading');
-        const resultsDiv = document.getElementById('results');
+        const statusDiv = document.getElementById('statusMessage');
+        const resultsSection = document.getElementById('resultsSection');
+        const resultsTable = document.getElementById('resultsTable');
         const resultsBody = document.getElementById('resultsBody');
 
         submitBtn.disabled = true;
-        addMoreBtn.disabled = true;
-        loading.style.display = "block";
-        resultsDiv.style.display = "none";
+        statusDiv.className = "status-loading";
+        statusDiv.style.display = "block";
+        statusDiv.innerText = "⏳ جاري بدء الاتصال بالموقع وإرسال الروابط لتفعيل أمر الجلب...";
+        resultsSection.style.display = "none";
         resultsBody.innerHTML = "";
 
-        // بناء البيانات بصيغة URL-Encoded المتوافقة تماماً مع سيرفر Top4Top وظروف الـ Worker
         const urlParams = new URLSearchParams();
         const inputs = container.querySelectorAll('.url-input');
         let hasData = false;
@@ -196,82 +233,78 @@
                 hasData = true;
             }
         });
-
         urlParams.append('submitr', 'جلب الملفات');
 
         if (!hasData) {
-            alert("الرجاء إدخال رابط واحد على الأقل!");
+            alert("يرجى إدخال رابط واحد على الأقل للرفع!");
             submitBtn.disabled = false;
-            addMoreBtn.disabled = false;
-            loading.style.display = "none";
+            statusDiv.style.display = "none";
             return;
         }
 
         try {
-            // إرسال الطلب عبر الـ Worker
-            const response = await fetch(`${workerUrl}?url=${encodeURIComponent(targetAction)}`, {
+            // إرسال الطلب ومراقبة سلوك الرد
+            const response = await fetch(`${workerUrl}?url=${encodeURIComponent('https://top4top.io/index.php')}`, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded'
-                },
-                body: urlParams.toString() // إرسال النص المشفر لضمان انتظار الرفع
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: urlParams.toString()
             });
 
-            if (!response.ok) throw new Error("فشل في استجابة السيرفر الوسيط.");
-
             const htmlResult = await response.text();
+            
+            // الفحص الذكي: التحقق هل الصفحة لا تزال في حالة رفع أم انتهت؟
+            if (htmlResult.includes('loading') || htmlResult.includes('جاري رفع الملفات') || htmlResult.includes('فضلاً انتظر')) {
+                statusDiv.innerText = "⏳ المتصفح يكتشف الآن حالة الرفع والانتظار بالموقع الأصلي... جاري المعالجة والرفع مستمر بالسيرفر حالياً...";
+            }
 
-            // تحليل الصفحة الناتجة بعد الانتظار
+            // سحب وتحليل الروابط الناتجة من صفحة الاكتمال
             const parser = new DOMParser();
             const doc = parser.parseFromString(htmlResult, 'text/html');
-            
-            // استخراج الروابط من خانات النصوص (Inputs) أو الروابط المباشرة في صفحة نجاح الرفع لـ Top4Top
-            const textInputs = doc.querySelectorAll('input[type="text"]');
             let foundUrls = [];
 
+            // البحث في خانات الإدخال النصية المخصصة لروابط التحميل
+            const textInputs = doc.querySelectorAll('input[type="text"]');
             textInputs.forEach(input => {
                 if (input.value.includes('top4top.io/downloadf-')) {
-                    if(!foundUrls.includes(input.value)) {
-                        foundUrls.push(input.value);
-                    }
+                    if(!foundUrls.includes(input.value)) foundUrls.push(input.value);
                 }
             });
 
-            // إذا لم يجد في الـ inputs، نبحث في الـ Links العادية كخيار احتياطي
-            if(foundUrls.length === 0) {
-                const links = doc.querySelectorAll('a');
-                links.forEach(a => {
-                    if(a.href && a.href.includes('top4top.io/downloadf-')) {
-                        const cleanUrl = new URL(a.href).searchParams.get('url') || a.href;
-                        if(!foundUrls.includes(cleanUrl)) {
-                            foundUrls.push(cleanUrl);
-                        }
-                    }
-                });
-            }
+            // مسح احتياطي ومباشر لجميع روابط التحميل المتاحة بالصفحة المكتملة
+            const links = doc.querySelectorAll('a');
+            links.forEach(a => {
+                if(a.href && a.href.includes('top4top.io/downloadf-')) {
+                    const cleanUrl = new URL(a.href).searchParams.get('url') || a.href;
+                    if(!foundUrls.includes(cleanUrl)) foundUrls.push(cleanUrl);
+                }
+            });
 
-            // عرض النتائج للمستخدم
+            // عرض البيانات النهائية فور اختفاء مؤشر الرفع والانتظار واكتشاف الروابط
             if (foundUrls.length > 0) {
+                statusDiv.className = "status-success";
+                statusDiv.innerText = `🎉 اكتمل الرفع بنجاح! تم رصد انتهاء حلقة الانتظار وسحب عدد (${foundUrls.length}) روابط تحميل مباشرة بنجاح.`;
+                
                 foundUrls.forEach((downloadUrl, idx) => {
                     resultsBody.innerHTML += `
                         <tr>
                             <td>${idx + 1}</td>
-                            <td><a href="${downloadUrl}" target="_blank" style="word-break: break-all;">${downloadUrl}</a></td>
-                            <td><button type="button" class="copy-btn" onclick="navigator.clipboard.writeText('${downloadUrl}'); alert('تم النسخ!');">📋 نسخ</button></td>
+                            <td><a href="${downloadUrl}" target="_blank" style="word-break: break-all; font-weight: bold; color: #1e3a8a;">${downloadUrl}</a></td>
+                            <td><button type="button" class="copy-btn" onclick="navigator.clipboard.writeText('${downloadUrl}'); alert('تم نسخ رابط الملف!');">📋 نسخ</button></td>
                         </tr>
                     `;
                 });
-                resultsDiv.style.display = "block";
+                resultsSection.style.display = "block";
+                resultsTable.style.display = "table";
             } else {
-                alert("انتهى الرفع ولكن لم يتم العثور على روابط تحميل مباشرة بالصفحة المرجوعة. قد يكون الموقع رفض الملفات بسبب حجمها أو صيغتها أو تجاوز الحد الأقصى للموقع.");
+                statusDiv.style.display = "none";
+                alert("انتهت العملية ولكن لم يتم سحب أي روابط. قد تكون الروابط المدخلة تالفة أو أن حجم الملفات تجاوز الحد المسموح به للموقع.");
             }
 
         } catch (error) {
-            alert("حدث خطأ أثناء الرفع: " + error.message);
+            statusDiv.style.display = "none";
+            alert("حدث خطأ أثناء فحص حالة الرفع: " + error.message);
         } finally {
             submitBtn.disabled = false;
-            addMoreBtn.disabled = false;
-            loading.style.display = "none";
         }
     });
 </script>

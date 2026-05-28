@@ -1400,8 +1400,6 @@ function clearToken(){
   try{ google?.accounts?.id?.disableAutoSelect(); }catch(e){}
   setAuthUI(false);
 }
-  setAuthUI(false);
-}
 function fixImgUrl(url){
   if(!url) return '';
   // إضافة البروتوكول
@@ -2086,7 +2084,10 @@ async function fetchYtTitle(forcedId, silent=false){
       ];
       for(const inst of instances){
         try{
-          const r = await fetch(`${inst}/api/v1/videos/${id}?fields=title,isFamilyFriendly,secondaryRenderer,adaptiveFormats`, {signal: AbortSignal.timeout(4000)});
+          const ctrl = new AbortController();
+          const t = setTimeout(()=>ctrl.abort(), 4000);
+          const r = await fetch(`${inst}/api/v1/videos/${id}?fields=title,adaptiveFormats`, {signal: ctrl.signal});
+          clearTimeout(t);
           if(!r.ok) continue;
           const d = await r.json();
           // localizedTitle أو title

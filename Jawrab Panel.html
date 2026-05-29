@@ -290,7 +290,7 @@ body::before{
 
 /* ══ QUALITIES ══ */
 .qual-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;}
-.qual-row{display:grid;grid-template-columns:82px 1fr auto auto;gap:7px;align-items:center;}
+.qual-row{display:grid;grid-template-columns:82px 1fr auto auto auto;gap:7px;align-items:center;}
 .qual-badge{
   background:rgba(59,130,246,.12);border:1px solid rgba(59,130,246,.28);
   color:#7cb3f5;border-radius:8px;padding:4px 0;
@@ -313,6 +313,23 @@ body::before{
   cursor:pointer;font-size:.8em;transition:background .15s;flex-shrink:0;
 }
 .q-del:hover{background:rgba(239,68,68,.2);}
+.q-worker{
+  background:rgba(99,102,241,.08);border:1px solid rgba(99,102,241,.25);
+  color:#a5b4fc;border-radius:8px;width:34px;height:36px;
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;font-size:.75em;transition:all .15s;flex-shrink:0;
+  position:relative;
+}
+.q-worker:hover{background:rgba(99,102,241,.2);border-color:rgba(99,102,241,.5);}
+.q-worker.active{
+  background:rgba(99,102,241,.25);border-color:#818cf8;color:#c7d2fe;
+}
+.q-worker.active::after{
+  content:'✓';position:absolute;top:-4px;right:-4px;
+  width:14px;height:14px;border-radius:50%;
+  background:#6366f1;color:#fff;font-size:.55em;font-weight:900;
+  display:flex;align-items:center;justify-content:center;line-height:14px;text-align:center;
+}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 .btn-add-qual{
   width:100%;background:rgba(15,21,17,.9);
@@ -726,7 +743,7 @@ body::before{
   .tb{padding:0 14px;height:54px;}
   .main{padding:18px 12px 70px;}
   .card-body{padding:14px;}
-  .qual-row{grid-template-columns:74px 1fr auto auto;}
+  .qual-row{grid-template-columns:74px 1fr auto auto auto;}
   .submit-row{flex-wrap:wrap;}
   .btn-pub{flex-basis:100%;min-width:unset;}
   .btn-prev,.btn-rst{flex:1;justify-content:center;}
@@ -1736,15 +1753,18 @@ function getPill(gid){
 const QOPTS=['auto','4K','1080p','720p','480p','360p'];
 function addQual(lbl='',url=''){
   const idx=qualities.length;
-  qualities.push({lbl,url});
+  qualities.push({lbl,url,worker:false});
   const row=document.createElement('div');
   row.className='qual-row'; row.id=`qr${idx}`;
   row.innerHTML=`
     <select class="qual-badge" onchange="qualities[${idx}].lbl=this.value">
       ${QOPTS.map(q=>`<option ${q===lbl?'selected':''}>${q}</option>`).join('')}
     </select>
-    <input class="inp" placeholder="https://... أو #m3u8|link" style="height:36px;font-size:.79em;"
+    <input class="inp" id="qi${idx}" placeholder="https://... أو #m3u8|link" style="height:36px;font-size:.79em;"
       value="${url}" oninput="qualities[${idx}].url=this.value">
+    <div class="q-worker" id="qw${idx}" onclick="toggleWorker(${idx},'q')" title="تفعيل Worker (لسحب ملفات المديا من أي موقع)">
+      <i class="fas fa-bolt"></i>
+    </div>
     <div class="q-test" id="qt${idx}" onclick="testQual(${idx})" title="اختبار"><i class="fas fa-play"></i></div>
     <div class="q-del" onclick="delQual(${idx})"><i class="fas fa-trash"></i></div>`;
   document.getElementById('qualList').appendChild(row);
@@ -1902,15 +1922,78 @@ function applyTestResult(btn, lbl, {ok, msg, latency, dur}){
     btn.style.background  = '';
   }, 4000);
 }
-function formatUrl(url){
-  url=url.trim();
-  // دعم صيغة #m3u8|link المكتوبة في الصفحة
-  if(url.startsWith('#m3u8|')) return url.slice(6).trim();
-  if(url.match(/\.mp4/i)&&!url.includes('#.mp4')) url+='#.mp4';
+/* ── رابط الوركرز الوسيط ── */
+const WORKER_URL = 'https://top4top.jawrab-app.workers.dev/redirect?url=';
+
+/* هل يحتاج الرابط للوركرز؟ */
+function needsProxy(url){
+  if(!url) return false;
+  // روابط مباشرة لا تحتاج proxy
+  const direct = ['googleapis.com','youtube.com','youtu.be','googlevideo.com',
+                   'jawrab-app.workers.dev','localhost','127.0.0.1'];
+  try{
+    const host = new URL(url).hostname;
+    return !direct.some(d => host === d || host.endsWith('.'+d));
+  }catch(e){ return false; }
+}
+
+/* تطبيق الوركرز على رابط */
+function proxyUrl(url){
+  url = url.trim();
+  if(!url) return url;
+  if(url.startsWith('#m3u8|')) url = url.slice(6).trim();
+  if(url.startsWith(WORKER_URL)) return url; // لا تضاعف
+  if(needsProxy(url)) return WORKER_URL + encodeURIComponent(url);
   return url;
 }
+
+/* ─── تبديل Worker يدوياً لرابط جودة أو حلقة ─── */
+function toggleWorker(idx, type){
+  const arr  = type === 'q' ? qualities : episodes;
+  const item = arr[idx];
+  if(!item) return;
+
+  const btnId = type === 'q' ? `qw${idx}` : `ew${idx}`;
+  const inpId = type === 'q' ? `qi${idx}` : `ei${idx}`;
+  const btn   = document.getElementById(btnId);
+  const inp   = document.getElementById(inpId);
+  if(!inp) return;
+
+  const raw = inp.value.trim();
+  const isWrapped = raw.startsWith(WORKER_URL);
+
+  if(isWrapped){
+    // إزالة الـ Worker
+    const orig   = decodeURIComponent(raw.slice(WORKER_URL.length));
+    inp.value    = orig;
+    item.url     = orig;
+    item.worker  = false;
+    btn.classList.remove('active');
+    btn.title    = 'تفعيل Worker — لسحب ملفات المديا من أي موقع';
+    toast('تم إلغاء Worker','info');
+  } else {
+    // إضافة الـ Worker
+    if(!raw){ toast('أدخل رابطاً أولاً','warn'); return; }
+    const wrapped = WORKER_URL + encodeURIComponent(raw);
+    inp.value     = wrapped;
+    item.url      = wrapped;
+    item.worker   = true;
+    btn.classList.add('active');
+    btn.title     = 'Worker مفعّل — انقر لإلغاء';
+    toast('تم تفعيل Worker ✓','ok');
+  }
+}
+
+function formatUrl(url){
+  url = url.trim();
+  if(url.startsWith('#m3u8|')) url = url.slice(6).trim();
+  url = proxyUrl(url);
+  if(url.match(/\.mp4/i) && !url.includes('#.mp4')) url += '#.mp4';
+  return url;
+}
+
 function getQualities(){
-  return qualities.filter(q=>q&&q.url.trim()).map(q=>({lbl:q.lbl,url:formatUrl(q.url.trim())}));
+  return qualities.filter(q=>q&&q.url.trim()).map(q=>({lbl:q.lbl, url:formatUrl(q.url.trim())}));
 }
 
 /* ═════════════════════════════════════════════
@@ -1933,8 +2016,9 @@ function addEp(title='', url='', thumb=''){
       <div>
         <div style="font-size:.68em;color:var(--text3);margin-bottom:4px;text-transform:uppercase;letter-spacing:1px;">رابط الفيديو</div>
         <div style="display:flex;gap:6px;align-items:center;">
-          <input class="inp" placeholder="https://...mp4" style="height:32px;font-size:.8em;flex:1;"
+          <input class="inp" id="ei${idx}" placeholder="https://...mp4" style="height:32px;font-size:.8em;flex:1;"
             value="${url.replace(/"/g,'&quot;')}" oninput="episodes[${idx}].url=this.value">
+          <div class="q-worker" id="ew${idx}" onclick="toggleWorker(${idx},'e')" title="تفعيل Worker"><i class="fas fa-bolt"></i></div>
           <div class="q-test" id="et${idx}" onclick="testEp(${idx})" title="اختبار الرابط"><i class="fas fa-play"></i></div>
         </div>
       </div>

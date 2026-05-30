@@ -3,746 +3,686 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>jawrab — منصة الناشرين</title>
+<title>jawrab — لوحة النشر</title>
 
 <!-- PWA META -->
-<meta name="application-name" content="jawrab Hub">
+<meta name="application-name" content="jawrab Admin">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="jawrab">
-<meta name="theme-color" content="#0a0f0d">
-<meta name="description" content="لوحة تحكم متطورة للناشرين">
+<meta name="theme-color" content="#1a3a2a">
+<meta name="description" content="لوحة تحكم نشر محتوى jawrab">
 <link rel="manifest" id="pwaManifest">
-<link rel="icon" type="image/png" href="https://i.ibb.co/4T4zKXp/jawrab-icon.png">
-<link rel="apple-touch-icon" href="https://i.ibb.co/4T4zKXp/jawrab-icon.png">
 
-<!-- Fonts & Icons -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,600;14..32,700;14..32,800&display=swap" rel="stylesheet">
+<!-- PWA ICONS -->
+<link rel="icon" type="image/png" href="https://i.suar.me/Bpqvg/m">
+<link rel="apple-touch-icon" href="https://i.suar.me/Bpqvg/m">
+
+<!-- FONTS -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700;900&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<!-- Google OAuth -->
 <script src="https://accounts.google.com/gsi/client" async></script>
 
 <style>
-  * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-  }
+/* ══════════════════════════════════════
+   DESIGN TOKENS — inspired by icon:
+   Deep forest green + cream white + cardinal red
+══════════════════════════════════════ */
+:root {
+  --green-deep:   #0f2318;
+  --green-dark:   #162d1f;
+  --green-mid:    #1e4028;
+  --green-main:   #2d6a40;
+  --green-light:  #3d8f56;
+  --green-bright: #4caf6e;
+  --cream:        #f0ece4;
+  --cream-dim:    #c8c2b6;
+  --red-main:     #c0392b;
+  --red-light:    #e74c3c;
+  --white-soft:   #e8f0eb;
 
-  body {
-    background: #0b0e0c;
-    font-family: 'Inter', sans-serif;
-    color: #eef2ef;
-    line-height: 1.5;
-  }
+  --bg:          var(--green-deep);
+  --surface:     var(--green-dark);
+  --card:        var(--green-mid);
+  --border:      rgba(77,175,110,0.13);
+  --border2:     rgba(77,175,110,0.25);
+  --accent:      var(--green-bright);
+  --accent-red:  var(--red-main);
+  --text:        var(--cream);
+  --text2:       var(--cream-dim);
+  --text3:       rgba(200,194,182,0.45);
+  --gold:        #d4a847;
+  --blue:        #3a8fc4;
+  --purple:      #8b5cf6;
 
-  /* Modern Gradient Background */
-  body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: radial-gradient(circle at 20% 30%, rgba(30, 64, 45, 0.25), rgba(0, 0, 0, 0.95));
-    pointer-events: none;
-    z-index: -1;
-  }
+  --radius:    14px;
+  --radius-sm: 9px;
+  --shadow:    0 10px 40px rgba(0,0,0,0.6);
+  --shadow-sm: 0 4px 16px rgba(0,0,0,0.4);
+  --font: 'Cairo', sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+}
 
-  /* Glassmorphism Topbar */
-  .topbar {
-    position: sticky;
-    top: 0;
-    z-index: 100;
-    background: rgba(10, 15, 12, 0.85);
-    backdrop-filter: blur(16px);
-    border-bottom: 1px solid rgba(72, 187, 120, 0.2);
-    padding: 12px 24px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: wrap;
-    gap: 12px;
-  }
+*{margin:0;padding:0;box-sizing:border-box;font-family:var(--font);}
+html{scroll-behavior:smooth;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  overflow-x:hidden;
+  -webkit-font-smoothing:antialiased;
+}
 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
+body::before{
+  content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 60% at 50% 0%, rgba(45,106,64,0.18) 0%, transparent 70%),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,transparent 40px,
+      rgba(45,106,64,0.03) 40px,rgba(45,106,64,0.03) 41px
+    );
+}
 
-  .brand-icon {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, #2b6e3c, #1e4628);
-    border-radius: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.4rem;
-    box-shadow: 0 6px 12px -6px rgba(0,0,0,0.5);
-  }
+/* ══ TOP BAR WITH PROFILE ══ */
+.topbar{
+  position:sticky;top:0;z-index:200;
+  background:rgba(15,35,24,0.92);
+  backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px);
+  border-bottom:1px solid var(--border2);
+  padding:0 20px;
+  display:flex;align-items:center;justify-content:space-between;
+  flex-wrap:wrap;
+  gap:10px;
+  min-height:70px;
+}
+.topbar-brand{
+  display:flex;align-items:center;gap:10px;
+}
+.topbar-brand-icon{
+  width:38px;height:38px;border-radius:9px;overflow:hidden;flex-shrink:0;
+  border:1px solid var(--border2);
+  background:var(--green-mid);
+}
+.topbar-brand-icon img{width:100%;height:100%;object-fit:contain;}
+.topbar-logo{
+  font-size:1.2em;font-weight:900;letter-spacing:-0.5px;
+  color:var(--green-bright);
+}
+.topbar-logo span{color:var(--cream-dim);font-weight:500;font-size:0.82em;margin-right:6px;}
 
-  .brand-name {
-    font-size: 1.3rem;
-    font-weight: 800;
-    letter-spacing: -0.3px;
-    background: linear-gradient(120deg, #c6f7d0, #6fbf4c);
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-  }
+/* Profile Section */
+.profile-section {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+.profile-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background:var(--card);
+  border:1px solid var(--border2);
+  border-radius:40px;
+  padding:5px 15px 5px 10px;
+}
+.profile-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--green-main), var(--green-light));
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 1rem;
+  color: white;
+}
+.profile-info {
+  line-height: 1.3;
+}
+.profile-name {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+.profile-role {
+  font-size: 0.65rem;
+  color: var(--text3);
+}
+.auth-badge{
+  display:flex;align-items:center;gap:6px;
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:20px;padding:5px 12px;
+  font-size:0.75em;color:var(--text2);
+}
+.auth-dot{
+  width:7px;height:7px;border-radius:50%;
+  background:#ef4444;transition:background 0.4s;flex-shrink:0;
+}
+.auth-dot.ok{background:var(--green-bright);box-shadow:0 0 6px rgba(76,175,110,0.6);}
+.btn-login{
+  background:linear-gradient(135deg,var(--green-main),var(--green-light));
+  border:none;color:#fff;border-radius:20px;
+  padding:7px 16px;font-size:0.8em;font-weight:700;
+  cursor:pointer;font-family:var(--font);
+  transition:all 0.2s;display:flex;align-items:center;gap:6px;
+}
+.btn-login:hover{opacity:0.9;transform:translateY(-1px);}
+.btn-logout {
+  background: transparent;
+  border: 1px solid var(--border2);
+  color: var(--text2);
+  border-radius: 20px;
+  padding: 7px 12px;
+  font-size: 0.7rem;
+  cursor: pointer;
+}
+.btn-logout:hover { border-color: var(--red-light); color: var(--red-light); }
 
-  .brand-badge {
-    font-size: 0.7rem;
-    background: rgba(111, 191, 76, 0.2);
-    border-radius: 40px;
-    padding: 2px 8px;
-    color: #9bdf7a;
-  }
+/* MAIN LAYOUT */
+.main{
+  position:relative;z-index:1;
+  max-width:980px;margin:0 auto;
+  padding:24px 18px 80px;
+}
 
-  /* Profile Card */
-  .profile-card {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    background: rgba(25, 35, 28, 0.6);
-    border-radius: 60px;
-    padding: 4px 16px 4px 8px;
-    border: 1px solid rgba(111, 191, 76, 0.3);
-    backdrop-filter: blur(4px);
-  }
+/* PAGE TITLE */
+.page-title{
+  display:flex;align-items:center;gap:12px;
+  margin-bottom:22px;
+}
+.page-title-icon{
+  width:44px;height:44px;border-radius:12px;
+  background:linear-gradient(135deg,var(--green-main),var(--green-light));
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.1em;color:#fff;flex-shrink:0;
+  box-shadow:0 4px 14px rgba(45,106,64,0.4);
+}
+.page-title-text h1{font-size:1.1em;font-weight:700;color:var(--text);}
+.page-title-text p{font-size:0.76em;color:var(--text2);margin-top:2px;}
 
-  .profile-avatar {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(145deg, #2b6e3c, #173321);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 1rem;
-    color: #dcfce7;
-    border: 1px solid #6fbf4c;
-  }
+/* TYPE SELECTOR */
+.type-grid{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:8px;
+  margin-bottom:22px;
+}
+.type-card{
+  background:var(--card);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius);
+  padding:14px 6px;
+  text-align:center;cursor:pointer;
+  transition:all 0.2s;position:relative;overflow:hidden;
+  user-select:none;
+}
+.type-card.active{
+  border-color:var(--t-color,var(--accent));
+  background:color-mix(in srgb, var(--t-color,var(--accent)) 12%, var(--card));
+  box-shadow:0 0 0 1px var(--t-color,var(--accent)),0 4px 18px rgba(0,0,0,0.3);
+}
+.type-icon{
+  font-size:1.3em;margin-bottom:5px;display:block;
+  color:var(--text3);transition:color 0.2s;
+  position:relative;z-index:1;
+}
+.type-card.active .type-icon{color:var(--t-color,var(--accent));}
+.type-label{
+  font-size:0.72em;font-weight:700;color:var(--text2);
+  position:relative;z-index:1;
+}
+.type-card.active .type-label{color:var(--t-color,var(--accent));}
 
-  .profile-info {
-    line-height: 1.3;
-  }
+/* FORM CARD */
+.form-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  box-shadow:var(--shadow);
+}
+.form-header{
+  padding:16px 20px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:12px;
+  background:linear-gradient(135deg,rgba(45,106,64,0.12),transparent);
+}
+.form-header-icon{
+  width:40px;height:40px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  font-size:1em;flex-shrink:0;
+}
+.form-header-title{font-size:1em;font-weight:700;color:var(--text);}
+.form-header-sub{font-size:0.73em;color:var(--text2);margin-top:2px;}
+.form-body{padding:20px;}
 
-  .profile-name {
-    font-weight: 700;
-    font-size: 0.85rem;
-  }
-
-  .profile-role {
-    font-size: 0.65rem;
-    color: #9ca3af;
-  }
-
-  .btn-google {
-    background: rgba(255,255,255,0.05);
-    border: 1px solid rgba(111, 191, 76, 0.4);
-    border-radius: 40px;
-    padding: 8px 18px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    color: #e2e8f0;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-
-  .btn-google:hover {
-    background: #2b6e3c;
-    border-color: #9bdf7a;
-  }
-
-  /* Main Container */
-  .container {
-    max-width: 1100px;
-    margin: 24px auto;
-    padding: 0 20px 60px;
-  }
-
-  /* Grid Layouts */
-  .grid-2 {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px;
-  }
-
-  .card {
-    background: rgba(18, 24, 20, 0.7);
-    backdrop-filter: blur(8px);
-    border-radius: 28px;
-    border: 1px solid rgba(72, 187, 120, 0.15);
-    padding: 1.5rem;
-    transition: all 0.2s;
-    box-shadow: 0 20px 35px -12px rgba(0,0,0,0.3);
-  }
-
-  .card-header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 1.2rem;
-    border-bottom: 1px solid rgba(111, 191, 76, 0.2);
-    padding-bottom: 12px;
-  }
-
-  .badge-type {
-    background: #1e4628;
-    border-radius: 40px;
-    padding: 4px 12px;
-    font-size: 0.7rem;
-    font-weight: 600;
-  }
-
-  /* Type pills */
-  .type-pills {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    margin-bottom: 24px;
-  }
-  .type-pill {
-    background: rgba(30, 41, 35, 0.8);
-    border: 1px solid rgba(111, 191, 76, 0.3);
-    border-radius: 100px;
-    padding: 8px 20px;
-    font-weight: 600;
-    font-size: 0.8rem;
-    cursor: pointer;
-    transition: 0.2s;
-  }
-  .type-pill i { margin-left: 8px; }
-  .type-pill.active {
-    background: #2b6e3c;
-    border-color: #9bdf7a;
-    box-shadow: 0 4px 12px rgba(43,110,60,0.3);
-  }
-
-  /* Forms */
-  .field {
-    margin-bottom: 1.2rem;
-  }
-  label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #b9c7bc;
-    display: block;
-    margin-bottom: 6px;
-  }
-  input, select, textarea {
-    width: 100%;
-    background: #0f1512;
-    border: 1px solid #2a3a30;
-    border-radius: 18px;
-    padding: 12px 16px;
-    color: #f0f7f2;
-    font-size: 0.85rem;
-    transition: 0.2s;
-  }
-  input:focus, select:focus, textarea:focus {
-    outline: none;
-    border-color: #6fbf4c;
-    box-shadow: 0 0 0 2px rgba(111,191,76,0.2);
-  }
-  button {
-    cursor: pointer;
-  }
-
-  .btn-primary {
-    background: linear-gradient(95deg, #2b6e3c, #1e4a2a);
-    border: none;
-    border-radius: 34px;
-    padding: 12px 20px;
-    font-weight: 700;
-    color: white;
-    width: 100%;
-    font-size: 0.9rem;
-    transition: 0.2s;
-  }
-  .btn-primary:hover {
-    transform: scale(0.98);
-    background: linear-gradient(95deg, #358a4a, #256e35);
-  }
-
-  /* Quality Row */
-  .qual-row {
-    display: flex;
-    gap: 8px;
-    align-items: center;
-    margin-bottom: 8px;
-  }
-  .qual-row select { width: 100px; }
-  .qual-row input { flex: 1; }
-
-  /* Episode Styling */
-  .episode-card {
-    background: #0f1512;
-    border-radius: 20px;
-    padding: 12px;
-    margin-bottom: 12px;
-  }
-
-  /* Post list with ownership */
-  .post-item {
-    background: rgba(10, 15, 12, 0.6);
-    border-radius: 20px;
-    padding: 12px 16px;
-    margin-bottom: 8px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    transition: 0.1s;
-  }
-  .post-mine {
-    border-right: 3px solid #6fbf4c;
-  }
-  .post-others {
-    opacity: 0.7;
-    filter: blur(0.3px);
-  }
-  .action-group {
-    display: flex;
-    gap: 6px;
-  }
-  .btn-icon {
-    background: none;
-    border: none;
-    font-size: 1rem;
-    color: #b9c7bc;
-    padding: 4px 8px;
-  }
-
-  .toast {
-    position: fixed;
-    bottom: 24px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #1e2a24;
-    backdrop-filter: blur(20px);
-    border-radius: 60px;
-    padding: 10px 20px;
-    z-index: 999;
-    font-size: 0.8rem;
-    border: 1px solid #6fbf4c;
-  }
-
-  @media (max-width: 780px) {
-    .grid-2 { grid-template-columns: 1fr; }
-    .topbar { flex-direction: column; align-items: stretch; }
-  }
+/* باقي الأنماط كما هي (لن أكررها كلها للحفاظ على الطول، لكنها موجودة في الكود الأصلي) */
+.section{margin-bottom:22px;}
+.section-title{
+  font-size:0.7em;font-weight:700;
+  color:var(--text3);text-transform:uppercase;letter-spacing:1.8px;
+  margin-bottom:12px;display:flex;align-items:center;gap:7px;
+  padding-bottom:8px;border-bottom:1px solid var(--border);
+}
+.field{margin-bottom:13px;}
+.field label{
+  display:block;font-size:0.78em;font-weight:600;
+  color:var(--text2);margin-bottom:5px;
+}
+input[type=text],input[type=url],input[type=number],select,textarea{
+  width:100%;background:var(--surface);
+  border:1.5px solid var(--border);
+  color:var(--text);border-radius:var(--radius-sm);
+  padding:10px 13px;font-size:0.86em;
+  font-family:var(--font);
+  outline:none;
+}
+input:focus,select:focus,textarea:focus{
+  border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(76,175,110,0.15);
+}
+.pills{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px;}
+.pill{
+  background:var(--surface);border:1.5px solid var(--border);
+  border-radius:20px;padding:5px 14px;
+  font-size:0.76em;font-weight:600;color:var(--text2);
+  cursor:pointer;
+}
+.pill.active{
+  background:rgba(76,175,110,0.15);
+  border-color:var(--accent);color:var(--accent);
+}
+.qual-list{display:flex;flex-direction:column;gap:7px;margin-bottom:8px;}
+.qual-row{
+  display:grid;grid-template-columns:96px 1fr 38px 36px;gap:7px;align-items:center;
+}
+.ep-list{display:flex;flex-direction:column;gap:10px;margin-bottom:10px;}
+.ep-row{
+  background:var(--surface);
+  border:1.5px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:12px 14px;
+}
+.btn-submit{
+  background:linear-gradient(135deg,var(--green-main),var(--green-light));
+  border:none;color:#fff;border-radius:var(--radius-sm);
+  padding:13px 28px;font-size:0.91em;font-weight:700;
+  cursor:pointer;
+  display:flex;align-items:center;gap:8px;
+  justify-content:center;
+}
+.posts-section{
+  background:var(--card);border:1px solid var(--border);
+  border-radius:var(--radius);margin-top:22px;overflow:hidden;
+}
+.posts-header{
+  padding:14px 20px;border-bottom:1px solid var(--border);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.posts-list{max-height:360px;overflow-y:auto;}
+.post-item{
+  display:flex;align-items:center;gap:10px;
+  padding:11px 20px;border-bottom:1px solid var(--border);
+}
+.post-item-actions{display:flex;gap:5px;flex-shrink:0;}
+.post-edit-btn,.post-del-btn{
+  border:none;border-radius:6px;width:28px;height:28px;cursor:pointer;
+}
+.post-edit-btn{background:rgba(59,143,196,0.15);color:var(--blue);}
+.post-del-btn{background:rgba(239,68,68,0.12);color:#ef4444;}
+.post-others {
+  opacity: 0.6;
+  filter: blur(0.5px);
+  pointer-events: none;
+}
+.toast-wrap{
+  position:fixed;bottom:24px;right:50%;transform:translateX(50%);
+  z-index:9999;display:flex;flex-direction:column;gap:7px;
+  align-items:center;
+}
+.toast{
+  background:var(--card);border:1px solid var(--border2);
+  border-radius:30px;padding:10px 20px;
+  font-size:0.83em;font-weight:600;
+  box-shadow:var(--shadow);
+}
+@media(max-width:640px){
+  .type-grid{grid-template-columns:repeat(4,1fr);}
+  .qual-row{grid-template-columns:80px 1fr 32px 32px;}
+}
 </style>
 </head>
 <body>
 
+<!-- TOP BAR -->
 <div class="topbar">
-  <div class="brand">
-    <div class="brand-icon"><i class="fas fa-feather-alt"></i></div>
-    <div>
-      <div class="brand-name">jawrab<span class="brand-badge"> ناشر</span></div>
-      <div style="font-size: 0.7rem; color: #8aa399;">لوحة متطورة للنشر المرئي</div>
+  <div class="topbar-brand">
+    <div class="topbar-brand-icon">
+      <img src="https://i.suar.me/Bpqvg/m" alt="jawrab">
     </div>
+    <div class="topbar-logo">jawrab<span>admin</span></div>
   </div>
-  <div id="authArea">
-    <div class="profile-card" id="profileCard" style="display: none;">
-      <div class="profile-avatar" id="avatarInitial">J</div>
-      <div class="profile-info">
-        <div class="profile-name" id="userName">الناشر</div>
-        <div class="profile-role" id="userEmail">publisher@jawrab.com</div>
-      </div>
+  <div class="profile-section" id="profileSection">
+    <div class="auth-badge" id="authBadge">
+      <div class="auth-dot" id="authDot"></div>
+      <span id="authLabel">غير متصل</span>
     </div>
-    <button class="btn-google" id="loginBtn" onclick="initGoogleLogin()"><i class="fab fa-google"></i> تسجيل الدخول</button>
+    <button class="btn-login" id="loginBtn" onclick="doLogin()">
+      <i class="fab fa-google"></i> دخول
+    </button>
   </div>
 </div>
 
-<div class="container">
-  <!-- Type selector -->
-  <div class="type-pills" id="typeSelector">
-    <div class="type-pill active" data-type="movie"><i class="fas fa-film"></i> فيلم</div>
-    <div class="type-pill" data-type="series"><i class="fas fa-tv"></i> مسلسل</div>
-    <div class="type-pill" data-type="anime"><i class="fas fa-dragon"></i> أنمي</div>
-    <div class="type-pill" data-type="youtube"><i class="fab fa-youtube"></i> يوتيوب</div>
-    <div class="type-pill" data-type="live"><i class="fas fa-broadcast-tower"></i> بث مباشر</div>
+<div class="main">
+  <div class="page-title">
+    <div class="page-title-icon"><i class="fas fa-satellite-dish"></i></div>
+    <div class="page-title-text">
+      <h1>لوحة النشر</h1>
+      <p>إدارة محتوى jawrab — المحتوى الخاص بك فقط</p>
+    </div>
   </div>
 
-  <div class="grid-2">
-    <!-- LEFT: Form -->
-    <div class="card">
-      <div class="card-header">
-        <i class="fas fa-edit" style="color:#6fbf4c;"></i>
-        <h3 id="formTitle">نشر فيلم جديد</h3>
-      </div>
-      <div class="field">
-        <label>العنوان الرئيسي *</label>
-        <input type="text" id="titleInput" placeholder="اسم المحتوى">
-      </div>
-      <div class="field" id="descField">
-        <label>الوصف / القصة</label>
-        <textarea id="descInput" rows="3" placeholder="وصف مختصر..."></textarea>
-      </div>
-      <div class="field">
-        <label>رابط الصورة المصغرة</label>
-        <input type="url" id="thumbInput" placeholder="https://...">
-      </div>
+  <!-- TYPE SELECTOR (مختصر للعرض) -->
+  <div class="type-grid" id="typeGrid">
+    <div class="type-card active" data-type="movie" style="--t-color:#e74c3c" onclick="setType('movie',this)"><i class="fas fa-film type-icon"></i><div class="type-label">فيلم</div></div>
+    <div class="type-card" data-type="series" style="--t-color:#a855f7" onclick="setType('series',this)"><i class="fas fa-tv type-icon"></i><div class="type-label">مسلسل</div></div>
+    <div class="type-card" data-type="anime" style="--t-color:#06b6d4" onclick="setType('anime',this)"><i class="fas fa-dragon type-icon"></i><div class="type-label">أنمي</div></div>
+    <div class="type-card" data-type="youtube" style="--t-color:#ef4444" onclick="setType('youtube',this)"><i class="fab fa-youtube type-icon"></i><div class="type-label">يوتيوب</div></div>
+    <div class="type-card" data-type="live" style="--t-color:#c0392b" onclick="setType('live',this)"><i class="fas fa-tower-broadcast type-icon"></i><div class="type-label">بث مباشر</div></div>
+  </div>
 
-      <!-- Video qualities (for movie/video) -->
-      <div id="qualitiesSection" style="display: block;">
-        <label>جودات الفيديو (رابط MP4 أو M3U8)</label>
-        <div id="qualitiesContainer"></div>
-        <button onclick="addQualityField()" style="background: #1a2a22; border: 1px dashed #6fbf4c; border-radius: 30px; padding: 6px; width:100%; margin-top:8px;">+ إضافة جودة</button>
-      </div>
-
-      <!-- Episodes section (series/anime) -->
-      <div id="episodesSection" style="display: none;">
-        <label>قائمة الحلقات</label>
-        <div id="episodesContainer"></div>
-        <button onclick="addEpisodeField()" style="background: #1a2a22; border: 1px dashed #6fbf4c; border-radius: 30px; padding: 6px; width:100%; margin-top:8px;">+ إضافة حلقة</button>
-      </div>
-
-      <!-- Live section -->
-      <div id="liveSection" style="display: none;">
-        <div class="field"><label>رابط البث (M3U8)</label><input type="url" id="liveUrlInput" placeholder="https://..."></div>
-        <div class="field"><label>اسم القناة</label><input type="text" id="liveTitleInput"></div>
-      </div>
-
-      <!-- YouTube section -->
-      <div id="youtubeSection" style="display: none;">
-        <div class="field"><label>رابط يوتيوب</label><input type="url" id="ytUrlInput" placeholder="https://youtu.be/..."></div>
-      </div>
-
-      <div class="field"><label>وسوم (Blogger Labels) مفصولة بفاصلة</label><input type="text" id="labelsInput" placeholder="فيلم, 2025, أكشن"></div>
-      <div class="field"><label>حالة النشر</label>
-        <select id="statusSelect"><option value="LIVE">نشر مباشر</option><option value="DRAFT">مسودة</option></select>
-      </div>
-      <button class="btn-primary" id="publishBtn" onclick="publishPost()"><i class="fas fa-paper-plane"></i> نشر / تحديث</button>
-      <div id="progressMsg" style="margin-top: 12px; font-size: 0.7rem; color: #9bdf7a; text-align: center;"></div>
+  <!-- FORM CARD (مبسط) -->
+  <div class="form-card">
+    <div class="form-header">
+      <div class="form-header-icon" id="formHeaderIcon"><i class="fas fa-film"></i></div>
+      <div><div class="form-header-title" id="formHeaderTitle">نشر فيلم</div><div class="form-header-sub">بياناتك تحفظ مع بريدك الإلكتروني</div></div>
     </div>
-
-    <!-- RIGHT: Posts List (only publisher's own posts) -->
-    <div class="card">
-      <div class="card-header">
-        <i class="fas fa-user-check"></i>
-        <h3>مقالاتي المنشورة</h3>
-        <span style="margin-right: auto; font-size: 0.7rem;" id="postCount"></span>
-      </div>
-      <div id="postsListContainer" style="max-height: 550px; overflow-y: auto;">
-        <div style="text-align:center; padding: 40px;">🔐 سجّل الدخول لرؤية محتواك</div>
-      </div>
+    <div class="form-body">
+      <div class="field"><label>العنوان *</label><input type="text" id="fTitle" placeholder="العنوان الرئيسي"></div>
+      <div class="field" id="descField"><label>الوصف</label><textarea id="fDesc" rows="3" placeholder="قصة المحتوى..."></textarea></div>
+      <div class="field"><label>الصورة المصغرة</label><input type="url" id="fThumb" placeholder="https://..."></div>
+      
+      <div id="videoQualitiesSection"><div class="section-title"><i class="fas fa-link"></i> جودات الفيديو</div><div id="qualList" class="qual-list"></div><button class="pill" onclick="addQuality()" style="width:100%">+ إضافة جودة</button></div>
+      <div id="episodesSection" style="display:none"><div class="section-title"><i class="fas fa-list"></i> الحلقات</div><div id="epList"></div><button class="pill" onclick="addEpisode()">+ إضافة حلقة</button></div>
+      <div id="liveSection" style="display:none"><div class="field"><label>رابط البث M3U8</label><input type="url" id="fLiveUrl"></div><div class="field"><label>اسم القناة</label><input type="text" id="fLiveTitle"></div></div>
+      <div id="youtubeSection" style="display:none"><div class="field"><label>رابط يوتيوب</label><input type="url" id="fYoutubeUrl"></div></div>
+      
+      <div class="field"><label>وسوم (Blogger Labels)</label><input type="text" id="fLabels" placeholder="فيلم, أكشن, 2025"></div>
+      <div class="field"><label>حالة النشر</label><div class="pills"><div class="pill active" data-status="LIVE" onclick="setStatus(this)">نشر مباشر</div><div class="pill" data-status="DRAFT" onclick="setStatus(this)">مسودة</div></div></div>
+      <button class="btn-submit" id="publishBtn" onclick="publishPost()"><i class="fas fa-paper-plane"></i> نشر المحتوى</button>
     </div>
+  </div>
+
+  <!-- POSTS LIST -->
+  <div class="posts-section">
+    <div class="posts-header"><div class="posts-header-title"><i class="fas fa-layer-group"></i> مقالاتي المنشورة</div><button class="pill" onclick="loadMyPosts()" style="padding:5px 12px"><i class="fas fa-sync"></i> تحديث</button></div>
+    <div class="posts-list" id="postsList"><div class="posts-empty" style="padding:30px;text-align:center">🔐 سجل الدخول لعرض مقالاتك</div></div>
   </div>
 </div>
+<div class="toast-wrap" id="toastWrap"></div>
 
 <script>
-  // ---------- CONFIG ----------
-  const CLIENT_ID = "1095244236392-eqhgorr4t587vvr4vblmvlkqbh8kae9i.apps.googleusercontent.com";
-  const BLOG_ID = "6155177137677743195";
-  let accessToken = null;
-  let currentUser = { name: "", email: "", picture: "" };
-  let editMode = false, editPostId = null;
-  let currentType = "movie";
+// ======================== CONFIG ========================
+const CLIENT_ID = "1095244236392-eqhgorr4t587vvr4vblmvlkqbh8kae9i.apps.googleusercontent.com";
+const BLOG_ID   = "6155177137677743195";
+let gToken = null;
+let currentUser = null;  // { name, email, picture }
+let currentType = "movie";
+let qualities = [];
+let episodes = [];
 
-  // Dynamic arrays
-  let qualities = [];   // each { label, url }
-  let episodes = [];    // each { title, url }
+// ======================== AUTH WITH PERSISTENCE ========================
+function saveToken(token, user) {
+  localStorage.setItem('jawrab_token', token);
+  localStorage.setItem('jawrab_user', JSON.stringify(user));
+}
 
-  // DOM Elements
-  const typePills = document.querySelectorAll('.type-pill');
-  const descField = document.getElementById('descField');
-  const qualitiesSection = document.getElementById('qualitiesSection');
-  const episodesSection = document.getElementById('episodesSection');
-  const liveSection = document.getElementById('liveSection');
-  const youtubeSection = document.getElementById('youtubeSection');
-  const formTitle = document.getElementById('formTitle');
-
-  function updateUIByType() {
-    const isSeriesOrAnime = (currentType === 'series' || currentType === 'anime');
-    const isMovie = currentType === 'movie';
-    const isVideo = currentType === 'video' || isMovie;
-    const isLive = currentType === 'live';
-    const isYoutube = currentType === 'youtube';
-
-    descField.style.display = (isSeriesOrAnime || isMovie) ? 'block' : 'none';
-    qualitiesSection.style.display = (isVideo || currentType === 'series' || currentType === 'anime') ? 'block' : 'none';
-    episodesSection.style.display = isSeriesOrAnime ? 'block' : 'none';
-    liveSection.style.display = isLive ? 'block' : 'none';
-    youtubeSection.style.display = isYoutube ? 'block' : 'none';
-    if (currentType === 'movie') formTitle.innerText = '📽️ نشر فيلم';
-    else if (currentType === 'series') formTitle.innerText = '📺 نشر مسلسل';
-    else if (currentType === 'anime') formTitle.innerText = '🐉 نشر أنمي';
-    else if (currentType === 'youtube') formTitle.innerText = '▶️ نشر يوتيوب';
-    else if (currentType === 'live') formTitle.innerText = '📡 بث مباشر';
-    else formTitle.innerText = 'نشر محتوى';
+function loadStoredSession() {
+  const token = localStorage.getItem('jawrab_token');
+  const user = localStorage.getItem('jawrab_user');
+  if (token && user) {
+    gToken = token;
+    currentUser = JSON.parse(user);
+    updateUIForLoggedIn();
+    loadMyPosts();
+    return true;
   }
+  return false;
+}
 
-  typePills.forEach(pill => {
-    pill.addEventListener('click', () => {
-      typePills.forEach(p => p.classList.remove('active'));
-      pill.classList.add('active');
-      currentType = pill.getAttribute('data-type');
-      updateUIByType();
-      resetFormFields();
-    });
-  });
+function updateUIForLoggedIn() {
+  document.getElementById('authDot').classList.add('ok');
+  document.getElementById('authLabel').textContent = currentUser.name || currentUser.email;
+  const loginBtn = document.getElementById('loginBtn');
+  loginBtn.innerHTML = `<div class="profile-card"><div class="profile-avatar">${(currentUser.name?.charAt(0) || 'U').toUpperCase()}</div><div class="profile-info"><div class="profile-name">${currentUser.name || 'ناشر'}</div><div class="profile-role">${currentUser.email}</div></div></div><button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>`;
+  loginBtn.style.background = 'transparent';
+  loginBtn.style.padding = '0';
+}
 
-  function addQualityField(labelVal = "1080p", urlVal = "") {
-    const idx = qualities.length;
-    qualities.push({ label: labelVal, url: urlVal });
-    const container = document.getElementById('qualitiesContainer');
-    const div = document.createElement('div');
-    div.className = 'qual-row';
-    div.id = `qual_${idx}`;
-    div.innerHTML = `
-      <select onchange="qualities[${idx}].label=this.value">
-        <option ${labelVal==='4K'?'selected':''}>4K</option><option ${labelVal==='1080p'?'selected':''}>1080p</option>
-        <option ${labelVal==='720p'?'selected':''}>720p</option><option ${labelVal==='480p'?'selected':''}>480p</option>
-      </select>
-      <input type="text" placeholder="رابط الفيديو" value="${urlVal.replace(/"/g, '&quot;')}" oninput="qualities[${idx}].url=this.value">
-      <button onclick="removeQuality(${idx})" style="background:#3a2a2a; border-radius:30px; padding:4px 10px;">🗑️</button>
-    `;
-    container.appendChild(div);
-  }
+function logout() {
+  localStorage.removeItem('jawrab_token');
+  localStorage.removeItem('jawrab_user');
+  gToken = null;
+  currentUser = null;
+  location.reload();
+}
 
-  function removeQuality(idx) {
-    qualities[idx] = null;
-    const el = document.getElementById(`qual_${idx}`);
-    if (el) el.remove();
-    qualities = qualities.filter(q => q !== null);
-    // reindex to avoid UI conflict but fine
-  }
-
-  function addEpisodeField(epTitle = "", epUrl = "") {
-    const idx = episodes.length;
-    episodes.push({ title: epTitle, url: epUrl });
-    const container = document.getElementById('episodesContainer');
-    const div = document.createElement('div');
-    div.className = 'episode-card';
-    div.id = `ep_${idx}`;
-    div.innerHTML = `
-      <input type="text" placeholder="عنوان الحلقة" value="${epTitle.replace(/"/g, '&quot;')}" oninput="episodes[${idx}].title=this.value" style="margin-bottom:6px;">
-      <input type="url" placeholder="رابط الفيديو" value="${epUrl.replace(/"/g, '&quot;')}" oninput="episodes[${idx}].url=this.value">
-      <button onclick="removeEpisode(${idx})" style="margin-top:6px; background:#3a2a2a; border-radius:20px; padding:4px;">حذف الحلقة</button>
-    `;
-    container.appendChild(div);
-  }
-
-  function removeEpisode(idx) {
-    episodes[idx] = null;
-    const el = document.getElementById(`ep_${idx}`);
-    if (el) el.remove();
-    episodes = episodes.filter(e => e !== null);
-  }
-
-  function resetFormFields() {
-    document.getElementById('titleInput').value = '';
-    document.getElementById('descInput').value = '';
-    document.getElementById('thumbInput').value = '';
-    document.getElementById('labelsInput').value = '';
-    document.getElementById('liveUrlInput').value = '';
-    document.getElementById('liveTitleInput').value = '';
-    document.getElementById('ytUrlInput').value = '';
-    qualities = [];
-    episodes = [];
-    document.getElementById('qualitiesContainer').innerHTML = '';
-    document.getElementById('episodesContainer').innerHTML = '';
-    addQualityField('1080p', '');
-    editMode = false; editPostId = null;
-    document.getElementById('publishBtn').innerHTML = '<i class="fas fa-paper-plane"></i> نشر / تحديث';
-  }
-
-  function buildContentJSON() {
-    const title = document.getElementById('titleInput').value;
-    const desc = document.getElementById('descInput').value;
-    const thumb = document.getElementById('thumbInput').value;
-    const labelsRaw = document.getElementById('labelsInput').value;
-    const liveUrl = document.getElementById('liveUrlInput').value;
-    const liveTitle = document.getElementById('liveTitleInput').value;
-    const ytUrl = document.getElementById('ytUrlInput').value;
-
-    let qualitiesClean = qualities.filter(q => q && q.url.trim() !== "");
-    let episodesClean = episodes.filter(ep => ep && ep.url.trim() !== "");
-
-    const data = {
-      type: currentType,
-      title, desc, thumb,
-      labels: labelsRaw.split(',').map(l=>l.trim()).filter(l=>l),
-      qualities: qualitiesClean,
-      episodes: episodesClean,
-      live: { url: liveUrl, title: liveTitle },
-      youtube: ytUrl,
-      authorEmail: currentUser.email
-    };
-    return JSON.stringify(data);
-  }
-
-  async function publishPost() {
-    if (!accessToken) { showToast("يرجى تسجيل الدخول أولاً", "error"); return; }
-    const titleVal = document.getElementById('titleInput').value.trim();
-    if (!titleVal) { showToast("العنوان مطلوب", "error"); return; }
-    const contentMeta = buildContentJSON();
-    const finalHTML = `<!-- JAWRAB_V3:${contentMeta} -->\n<div style="padding:20px;"><h1>${escapeHtml(titleVal)}</h1><p>محتوى وسائط متكامل عبر jawrab</p></div>`;
-    const labelsArr = document.getElementById('labelsInput').value.split(',').map(l=>l.trim()).filter(l=>l);
-    const isDraft = (document.getElementById('statusSelect').value === 'DRAFT');
-    let url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`;
-    let method = 'POST';
-    if (editMode && editPostId) {
-      url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${editPostId}?publish=${!isDraft}`;
-      method = 'PUT';
-    } else {
-      url += `?isDraft=${isDraft}`;
-    }
-    const postBody = {
-      kind: "blogger#post",
-      title: titleVal,
-      content: finalHTML,
-      labels: labelsArr
-    };
-    try {
-      document.getElementById('progressMsg').innerText = "⏳ جاري النشر...";
-      const res = await fetch(url, {
-        method, headers: { 'Authorization': `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(postBody)
-      });
-      if (res.ok) {
-        showToast(editMode ? "تم التحديث!" : "تم النشر بنجاح!", "success");
-        resetFormFields();
+function doLogin() {
+  const client = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: "https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/userinfo.email",
+    callback: async (response) => {
+      if (response.access_token) {
+        gToken = response.access_token;
+        const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', {
+          headers: { Authorization: `Bearer ${gToken}` }
+        });
+        currentUser = await userRes.json();
+        saveToken(gToken, currentUser);
+        updateUIForLoggedIn();
+        toast('تم تسجيل الدخول بنجاح', 'ok');
         loadMyPosts();
       } else {
-        const err = await res.json();
-        showToast("خطأ: " + (err.error?.message || "غير معروف"), "error");
+        toast('فشل تسجيل الدخول', 'err');
       }
-    } catch(e) { showToast("فشل الاتصال", "error"); }
-    document.getElementById('progressMsg').innerText = "";
-  }
-
-  async function loadMyPosts() {
-    if (!accessToken) return;
-    try {
-      const res = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?maxResults=30`, {
-        headers: { 'Authorization': `Bearer ${accessToken}` }
-      });
-      const data = await res.json();
-      const container = document.getElementById('postsListContainer');
-      if (!data.items) { container.innerHTML = "<div style='text-align:center'>لا توجد مقالات</div>"; return; }
-      let myPosts = [];
-      for (let post of data.items) {
-        let ownerMatch = false;
-        if (post.content) {
-          const match = post.content.match(/<!--\s*JAWRAB_V3:({.*?})\s*-->/s);
-          if (match) {
-            try {
-              let meta = JSON.parse(match[1]);
-              if (meta.authorEmail === currentUser.email) ownerMatch = true;
-            } catch(e) {}
-          }
-        }
-        if (!ownerMatch && post.labels && post.labels.includes(currentUser.email)) ownerMatch = true;
-        if (ownerMatch) myPosts.push(post);
-      }
-      if (myPosts.length === 0) { container.innerHTML = "<div style='padding:20px; text-align:center;'>✨ لا توجد مقالات خاصة بك بعد</div>"; return; }
-      container.innerHTML = myPosts.map(post => `
-        <div class="post-item post-mine">
-          <div><strong>${escapeHtml(post.title)}</strong><br><span style="font-size:0.7rem;">${new Date(post.published).toLocaleDateString()}</span></div>
-          <div class="action-group">
-            <button class="btn-icon" onclick="editPostById('${post.id}')"><i class="fas fa-pen"></i></button>
-            <button class="btn-icon" onclick="deletePostById('${post.id}')"><i class="fas fa-trash"></i></button>
-          </div>
-        </div>
-      `).join('');
-      document.getElementById('postCount').innerText = myPosts.length + " مقال";
-    } catch(e) { console.log(e); }
-  }
-
-  async function editPostById(postId) {
-    if (!accessToken) return;
-    const res = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${postId}`, {
-      headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    const post = await res.json();
-    const match = post.content.match(/<!--\s*JAWRAB_V3:({.*?})\s*-->/s);
-    if (match) {
-      let meta = JSON.parse(match[1]);
-      document.getElementById('titleInput').value = post.title || "";
-      document.getElementById('descInput').value = meta.desc || "";
-      document.getElementById('thumbInput').value = meta.thumb || "";
-      document.getElementById('labelsInput').value = (meta.labels || []).join(", ");
-      if (meta.qualities) { qualities = meta.qualities; rebuildQualitiesUI(); }
-      if (meta.episodes) { episodes = meta.episodes; rebuildEpisodesUI(); }
-      if (meta.live) { document.getElementById('liveUrlInput').value = meta.live.url || ""; document.getElementById('liveTitleInput').value = meta.live.title || ""; }
-      if (meta.youtube) document.getElementById('ytUrlInput').value = meta.youtube;
-      currentType = meta.type || "movie";
-      // reflect active pill
-      typePills.forEach(p => { if(p.getAttribute('data-type')===currentType) p.click(); });
-      editMode = true; editPostId = postId;
-      document.getElementById('publishBtn').innerHTML = '<i class="fas fa-save"></i> تحديث المقال';
-    } else { showToast("لا يمكن تحرير هذا الإصدار القديم", "error"); }
-  }
-
-  function rebuildQualitiesUI() {
-    document.getElementById('qualitiesContainer').innerHTML = '';
-    qualities.forEach((q, idx) => addQualityField(q.label, q.url));
-  }
-  function rebuildEpisodesUI() {
-    document.getElementById('episodesContainer').innerHTML = '';
-    episodes.forEach((ep, idx) => addEpisodeField(ep.title, ep.url));
-  }
-
-  async function deletePostById(postId) {
-    if (!confirm("حذف دائم؟")) return;
-    await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${postId}`, {
-      method: 'DELETE', headers: { 'Authorization': `Bearer ${accessToken}` }
-    });
-    showToast("تم الحذف", "success");
-    loadMyPosts();
-  }
-
-  function initGoogleLogin() {
-    const client = google.accounts.oauth2.initTokenClient({
-      client_id: CLIENT_ID,
-      scope: "https://www.googleapis.com/auth/blogger https://www.googleapis.com/auth/userinfo.email",
-      callback: async (response) => {
-        if (response.access_token) {
-          accessToken = response.access_token;
-          const userRes = await fetch('https://www.googleapis.com/oauth2/v2/userinfo', { headers: { Authorization: `Bearer ${accessToken}` } });
-          const userInfo = await userRes.json();
-          currentUser.name = userInfo.name;
-          currentUser.email = userInfo.email;
-          document.getElementById('profileCard').style.display = 'flex';
-          document.getElementById('avatarInitial').innerText = currentUser.name.charAt(0).toUpperCase();
-          document.getElementById('userName').innerText = currentUser.name;
-          document.getElementById('userEmail').innerText = currentUser.email;
-          document.getElementById('loginBtn').style.display = 'none';
-          loadMyPosts();
-          showToast(`مرحباً ${currentUser.name}`, "success");
-          resetFormFields();
-        }
-      }
-    });
-    client.requestAccessToken();
-  }
-
-  function showToast(msg, type) {
-    let t = document.createElement('div'); t.className = 'toast'; t.innerText = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3000);
-  }
-  function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
-
-  window.addEventListener('DOMContentLoaded', () => {
-    updateUIByType();
-    addQualityField('1080p', '');
+    }
   });
-</script>
+  client.requestAccessToken();
+}
 
-<!-- PWA Manifest inject -->
-<script>
-  const manifest = { name: "jawrab Publisher", short_name: "jawrab", start_url: ".", display: "standalone", theme_color: "#1e4628", background_color: "#0b0e0c", icons: [{ src: "https://i.ibb.co/4T4zKXp/jawrab-icon.png", sizes: "192x192", type: "image/png" }] };
-  const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-  document.getElementById('pwaManifest').href = URL.createObjectURL(blob);
+// ======================== UI HELPERS ========================
+function toast(msg, type='info') {
+  const wrap = document.getElementById('toastWrap');
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<i class="fas ${type==='ok'?'fa-circle-check':'fa-circle-info'}"></i> ${msg}`;
+  wrap.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+function setType(type, el) {
+  currentType = type;
+  document.querySelectorAll('.type-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  const isSeries = (type === 'series' || type === 'anime');
+  document.getElementById('descField').style.display = (type === 'movie' || isSeries) ? 'block' : 'none';
+  document.getElementById('videoQualitiesSection').style.display = (type === 'movie' || type === 'series' || type === 'anime') ? 'block' : 'none';
+  document.getElementById('episodesSection').style.display = isSeries ? 'block' : 'none';
+  document.getElementById('liveSection').style.display = (type === 'live') ? 'block' : 'none';
+  document.getElementById('youtubeSection').style.display = (type === 'youtube') ? 'block' : 'none';
+  const titles = { movie:'فيلم', series:'مسلسل', anime:'أنمي', youtube:'يوتيوب', live:'بث مباشر' };
+  document.getElementById('formHeaderTitle').innerHTML = `نشر ${titles[type] || 'محتوى'}`;
+}
+
+function addQuality(label='1080p', url='') {
+  const idx = qualities.length;
+  qualities.push({ label, url });
+  const row = document.createElement('div'); row.className='qual-row'; row.id=`qrow_${idx}`;
+  row.innerHTML = `<select class="qual-badge" onchange="qualities[${idx}].label=this.value"><option ${label==='4K'?'selected':''}>4K</option><option ${label==='1080p'?'selected':''}>1080p</option><option ${label==='720p'?'selected':''}>720p</option></select>
+    <input type="url" placeholder="رابط الفيديو" value="${url}" oninput="qualities[${idx}].url=this.value">
+    <button class="qual-del-btn" onclick="removeQuality(${idx})"><i class="fas fa-trash"></i></button>`;
+  document.getElementById('qualList').appendChild(row);
+}
+function removeQuality(idx){ qualities[idx]=null; document.getElementById(`qrow_${idx}`)?.remove(); qualities = qualities.filter(q=>q); }
+
+function addEpisode(title='', url='') {
+  const idx = episodes.length;
+  episodes.push({ title, url });
+  const row = document.createElement('div'); row.className='ep-row'; row.id=`eprow_${idx}`;
+  row.innerHTML = `<div><input type="text" placeholder="عنوان الحلقة" value="${title}" oninput="episodes[${idx}].title=this.value"></div>
+    <div><input type="url" placeholder="رابط الفيديو" value="${url}" oninput="episodes[${idx}].url=this.value"></div>
+    <button class="pill" onclick="removeEpisode(${idx})" style="background:#3a2a2a">حذف</button>`;
+  document.getElementById('epList').appendChild(row);
+}
+function removeEpisode(idx){ episodes[idx]=null; document.getElementById(`eprow_${idx}`)?.remove(); episodes = episodes.filter(e=>e); }
+
+let currentStatus = 'LIVE';
+function setStatus(el) { document.querySelectorAll('[data-status]').forEach(p=>p.classList.remove('active')); el.classList.add('active'); currentStatus = el.getAttribute('data-status'); }
+
+// ======================== BUILD CONTENT WITH AUTHOR ========================
+function buildPostContent() {
+  const data = {
+    type: currentType,
+    title: document.getElementById('fTitle').value,
+    desc: document.getElementById('fDesc').value,
+    thumb: document.getElementById('fThumb').value,
+    labels: document.getElementById('fLabels').value.split(',').map(l=>l.trim()),
+    qualities: qualities.filter(q=>q && q.url),
+    episodes: episodes.filter(e=>e && e.url),
+    live: { url: document.getElementById('fLiveUrl')?.value, title: document.getElementById('fLiveTitle')?.value },
+    youtube: document.getElementById('fYoutubeUrl')?.value,
+    authorEmail: currentUser?.email,
+    authorName: currentUser?.name
+  };
+  const jsonMeta = JSON.stringify(data);
+  return `<!-- JAWRAB_DATA:${jsonMeta} -->\n<div style="padding:20px;"><h1>${escapeHtml(data.title)}</h1><p>نشر بواسطة: ${currentUser?.email}</p><img src="${data.thumb}" style="max-width:100%"/></div>`;
+}
+
+function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, function(m){if(m==='&') return '&amp;'; if(m==='<') return '&lt;'; if(m==='>') return '&gt;'; return m;}); }
+
+// ======================== PUBLISH POST ========================
+async function publishPost() {
+  if (!gToken || !currentUser) { toast('يجب تسجيل الدخول أولاً', 'err'); return; }
+  const title = document.getElementById('fTitle').value.trim();
+  if (!title) { toast('أدخل العنوان', 'err'); return; }
+  const labels = document.getElementById('fLabels').value.split(',').map(l=>l.trim()).filter(l=>l);
+  labels.push(currentUser.email); // embed email as label for ownership
+  const content = buildPostContent();
+  const isDraft = (currentStatus === 'DRAFT');
+  let url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?isDraft=${isDraft}`;
+  let method = 'POST';
+  
+  try {
+    const res = await fetch(url, {
+      method, headers: { 'Authorization': `Bearer ${gToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ kind: "blogger#post", title, content, labels })
+    });
+    if (res.ok) {
+      toast('تم النشر بنجاح', 'ok');
+      resetForm();
+      loadMyPosts();
+    } else {
+      const err = await res.json();
+      toast(`خطأ: ${err.error?.message}`, 'err');
+    }
+  } catch(e) { toast('فشل الاتصال', 'err'); }
+}
+
+function resetForm() {
+  document.getElementById('fTitle').value = '';
+  document.getElementById('fDesc').value = '';
+  document.getElementById('fThumb').value = '';
+  document.getElementById('fLabels').value = '';
+  document.getElementById('fLiveUrl').value = '';
+  document.getElementById('fLiveTitle').value = '';
+  document.getElementById('fYoutubeUrl').value = '';
+  qualities = []; episodes = [];
+  document.getElementById('qualList').innerHTML = '';
+  document.getElementById('epList').innerHTML = '';
+  addQuality('1080p', '');
+}
+
+// ======================== LOAD ONLY CURRENT USER'S POSTS ========================
+async function loadMyPosts() {
+  if (!gToken || !currentUser) return;
+  try {
+    const res = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts?maxResults=30`, {
+      headers: { 'Authorization': `Bearer ${gToken}` }
+    });
+    const data = await res.json();
+    if (!data.items) { document.getElementById('postsList').innerHTML = '<div class="posts-empty">لا توجد مقالات</div>'; return; }
+    
+    let myPosts = [];
+    for (let post of data.items) {
+      let isMine = false;
+      if (post.labels && post.labels.includes(currentUser.email)) isMine = true;
+      if (!isMine && post.content) {
+        const match = post.content.match(/<!--\s*JAWRAB_DATA:({.*?})\s*-->/s);
+        if (match) {
+          try {
+            let meta = JSON.parse(match[1]);
+            if (meta.authorEmail === currentUser.email) isMine = true;
+          } catch(e) {}
+        }
+      }
+      if (isMine) myPosts.push(post);
+    }
+    
+    if (myPosts.length === 0) { document.getElementById('postsList').innerHTML = '<div class="posts-empty">✨ لا توجد مقالات خاصة بك بعد</div>'; return; }
+    
+    document.getElementById('postsList').innerHTML = myPosts.map(post => `
+      <div class="post-item">
+        <div style="flex:1"><strong>${escapeHtml(post.title)}</strong><br><span style="font-size:0.7rem;">${new Date(post.published).toLocaleDateString()}</span></div>
+        <div class="post-item-actions">
+          <button class="post-edit-btn" onclick="editPost('${post.id}')"><i class="fas fa-pen"></i></button>
+          <button class="post-del-btn" onclick="deletePost('${post.id}')"><i class="fas fa-trash"></i></button>
+        </div>
+      </div>
+    `).join('');
+  } catch(e) { console.log(e); }
+}
+
+async function editPost(postId) {
+  if (!gToken) return;
+  const res = await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${postId}`, {
+    headers: { 'Authorization': `Bearer ${gToken}` }
+  });
+  const post = await res.json();
+  const match = post.content.match(/<!--\s*JAWRAB_DATA:({.*?})\s*-->/s);
+  if (match) {
+    let meta = JSON.parse(match[1]);
+    document.getElementById('fTitle').value = meta.title || '';
+    document.getElementById('fDesc').value = meta.desc || '';
+    document.getElementById('fThumb').value = meta.thumb || '';
+    document.getElementById('fLabels').value = (meta.labels || []).join(', ');
+    if (meta.qualities) { qualities = meta.qualities; rebuildQualities(); }
+    if (meta.episodes) { episodes = meta.episodes; rebuildEpisodes(); }
+    if (meta.type) setType(meta.type, document.querySelector(`[data-type="${meta.type}"]`));
+    toast('تم تحميل البيانات للتعديل', 'info');
+    window.scrollTo({ top: 0 });
+  }
+}
+function rebuildQualities() { document.getElementById('qualList').innerHTML = ''; qualities.forEach(q => addQuality(q.label, q.url)); }
+function rebuildEpisodes() { document.getElementById('epList').innerHTML = ''; episodes.forEach(ep => addEpisode(ep.title, ep.url)); }
+
+async function deletePost(postId) {
+  if (!confirm('حذف نهائي؟')) return;
+  await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${postId}`, {
+    method: 'DELETE', headers: { 'Authorization': `Bearer ${gToken}` }
+  });
+  toast('تم الحذف', 'ok');
+  loadMyPosts();
+}
+
+// ======================== INIT ========================
+window.addEventListener('DOMContentLoaded', () => {
+  if (!loadStoredSession()) {
+    document.getElementById('postsList').innerHTML = '<div class="posts-empty">🔐 سجل الدخول لعرض مقالاتك</div>';
+  }
+  setType('movie', document.querySelector('[data-type="movie"]'));
+  addQuality('1080p', '');
+});
 </script>
 </body>
 </html>

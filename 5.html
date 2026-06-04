@@ -750,6 +750,36 @@ body::before{
   .btn-draft-save,.btn-drafts-open{flex-shrink:0;}
 }
 
+/* ══ LABELS SUGGESTIONS ══ */
+.labels-suggestions{
+  display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;
+  min-height:0;
+}
+.lbl-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(15,21,17,.85);
+  border:1.5px solid rgba(72,187,120,.2);
+  border-radius:100px;padding:4px 11px;
+  font-size:.72em;font-weight:700;color:var(--text3);
+  cursor:pointer;transition:all .15s;font-family:'Cairo',sans-serif;
+  user-select:none;
+}
+.lbl-chip:hover{border-color:var(--border2);color:var(--text2);}
+.lbl-chip.selected{
+  background:rgba(111,191,76,.15);
+  border-color:#6fbf4c;color:#9bdf7a;
+}
+.lbl-chip.loading-chips{
+  pointer-events:none;opacity:.5;animation:pulse .9s infinite;
+}
+.lbl-chips-wrap{margin-top:7px;}
+.lbl-chips-label{
+  font-size:.64em;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;
+  display:flex;align-items:center;gap:5px;
+}
+.lbl-chips-label i{color:#6fbf4c;}
+
 /* ══ EXTRA FIELDS BUTTON ══ */
 .btn-add-extra{
   width:100%;background:transparent;
@@ -955,7 +985,11 @@ body::before{
       </div>
       <div class="field" id="fieldLabels">
         <label>التصنيفات <span style="color:var(--text3);font-weight:400;text-transform:none;">(labels — مفصولة بفاصلة)</span></label>
-        <input class="inp" id="fLabels" placeholder="مسلسل, مترجم, 2024">
+        <input class="inp" id="fLabels" placeholder="مسلسل, مترجم, 2024" oninput="syncChipsFromInput()">
+        <div class="lbl-chips-wrap" id="labelsChipsWrap" style="display:none;">
+          <div class="lbl-chips-label"><i class="fas fa-tags"></i> تصنيفات البلوج — انقر لإضافة</div>
+          <div class="labels-suggestions" id="labelsChips"></div>
+        </div>
       </div>
       <div class="field" id="fieldGenres">
         <label>تصنيف المحتوى <span style="color:var(--text3);font-weight:400;text-transform:none;">(أنواع — مفصولة بفاصلة)</span></label>
@@ -1239,14 +1273,8 @@ function buildGsiClient(){
         if(isFirstLogin) await fetchAndSaveProfile(res.access_token);
         await onTokenReceived(res.access_token, res.expires_in||3600);
       } else if(res.error === 'interaction_required' || res.error === 'access_denied'){
-        // التجديد الصامت فشل → لا نُظهر زر الدخول إذا كان المستخدم مسجلاً بالفعل
-        // نبقى صامتين — سيُعاد المحاولة تلقائياً لاحقاً
-        _renewPending = false;
-        if(!gToken && !getCookie('jwb_uname')){
-          // فعلاً لا جلسة → أظهر زر الدخول
-          setAuthUI(false);
-        }
-        // إذا كانت هناك جلسة سابقة → لا نفعل شيئاً مرئياً
+        // التجديد الصامت فشل → أظهر زر الدخول مرة أخرى فقط إذا لا يوجد توكن أصلاً
+        if(!gToken) setAuthUI(false);
       }
     }
   });
@@ -1259,31 +1287,28 @@ function initOneTap(){
     client_id:          CLIENT_ID,
     auto_select:        true,           // تجديد تلقائي بدون تفاعل
     cancel_on_tap_outside: false,
-    use_fedcm_for_prompt: true,         // FedCM: أكثر صمتاً على المتصفحات الحديثة
-    itp_support:        true,           // دعم ITP لـ Safari
     callback: async (credRes) => {
+      // credential هو JWT — نحوله لـ access_token عبر exchange
       if(credRes.credential){
-        try{ await exchangeCredential(credRes.credential); }catch(e){}
+        try{
+          await exchangeCredential(credRes.credential);
+        }catch(e){}
       }
     }
   });
   // تشغيل One Tap صامتاً فقط إذا كان هناك جلسة سابقة
   if(getCookie('jwb_uname')){
     google.accounts.id.prompt(notification => {
-      // لا نفعل شيئاً مرئياً — One Tap يعمل في الخلفية فقط
-      // إذا لم يُعرض (مثلاً: المتصفح منع الـ popup) → نفعّل silentRenewGSI
-      if(notification.isNotDisplayed() || notification.isSkippedMoment()){
-        _oneTapFailed = true;
-        silentRenewGSI();
-      }
+      // لا نفعل شيئاً — One Tap يعمل في الخلفية
     });
   }
 }
 
-/* ── تبادل credential JWT → access_token عبر OAuth صامت ── */
+/* ── تبادل credential JWT → access_token عبر Google Token endpoint ── */
 async function exchangeCredential(credential){
+  // One Tap يعطي ID token — نستخدمه لجلب access_token عبر OAuth
+  // الطريقة: requestAccessToken بعد تأكيد الهوية
   if(!gsiClient) buildGsiClient();
-  // prompt='' = صامت تماماً، لا popup
   gsiClient.requestAccessToken({prompt:'', hint: getCookie('jwb_uemail')||''});
 }
 
@@ -1325,12 +1350,115 @@ async function onTokenReceived(tok, exp){
   // جلب الدور في الخلفية
   fetchUserRole().catch(()=>{});
   loadPosts();
+  // تحديث اقتراحات التصنيفات بعد الدخول
+  _blogLabels = null;
+  if(document.getElementById('labelsChipsWrap').style.display !== 'none' ||
+     document.activeElement === document.getElementById('fLabels')){
+    showLabelsChips();
+  }
 }
 
 function doLogin(){
   if(!gsiClient) buildGsiClient();
   if(!gsiClient){ toast('فشل تحميل Google Sign-In، أعد تحميل الصفحة','err'); return; }
-  gsiClient.requestAccessToken({prompt:'consent'});
+  // نحاول أولاً تجديد صامت (بدون نافذة) — إذا فشل نطلب موافقة صريحة
+  const hasPrev = !!getCookie('jwb_uname');
+  if(hasPrev){
+    try{
+      gsiClient.requestAccessToken({prompt:'', hint: getCookie('jwb_uemail')||''});
+      return;
+    }catch(e){}
+  }
+  // أول دخول — prompt بسيط بدون 'consent' لتجنب فتح نافذة إضافية
+  gsiClient.requestAccessToken({prompt:'select_account'});
+}
+
+/* ═════════════════════════════════════════════
+   LABELS CHIPS — جلب تصنيفات البلوج وعرضها كاقتراحات
+═════════════════════════════════════════════ */
+let _blogLabels = null; // cache
+
+async function loadBlogLabels(){
+  if(_blogLabels) return _blogLabels;
+  if(!gToken) return [];
+  try{
+    // نجلب آخر 500 صفحة ونستخرج Labels منها
+    const labels = new Map(); // label → count
+    let pageToken = '';
+    let page = 0;
+    do{
+      const url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`
+        + `?maxResults=50&fetchBodies=false&orderBy=published&status=LIVE`
+        + (pageToken ? '&pageToken='+pageToken : '');
+      const r = await fetch(url,{headers:{'Authorization':'Bearer '+gToken}});
+      const d = await r.json();
+      if(d.error || !d.items) break;
+      for(const p of d.items){
+        if(p.labels) for(const l of p.labels){
+          labels.set(l, (labels.get(l)||0) + 1);
+        }
+      }
+      pageToken = d.nextPageToken || '';
+      page++;
+      if(page > 10) break; // أقصاه 500 صفحة
+    }while(pageToken);
+    // ترتيب بالأكثر استخداماً
+    _blogLabels = [...labels.entries()].sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+    return _blogLabels;
+  }catch(e){ return []; }
+}
+
+async function showLabelsChips(){
+  const wrap = document.getElementById('labelsChipsWrap');
+  const container = document.getElementById('labelsChips');
+  if(!gToken){ wrap.style.display='none'; return; }
+
+  // اعرض الـ wrap وأضف chip تحميل
+  wrap.style.display='block';
+  container.innerHTML='<span class="lbl-chip loading-chips"><i class="fas fa-spinner fa-spin"></i> جاري الجلب...</span>';
+
+  const labels = await loadBlogLabels();
+  if(!labels.length){
+    wrap.style.display='none';
+    return;
+  }
+
+  // الحالي في الحقل
+  const current = getLabelsArray();
+  container.innerHTML = labels.map(l => {
+    const sel = current.includes(l.trim()) ? 'selected' : '';
+    return `<span class="lbl-chip ${sel}" onclick="toggleChip(this,'${l.replace(/'/g,"\\'")}')">${l}</span>`;
+  }).join('');
+}
+
+function getLabelsArray(){
+  return document.getElementById('fLabels').value
+    .split(',').map(s=>s.trim()).filter(Boolean);
+}
+
+function toggleChip(el, label){
+  const current = getLabelsArray();
+  const idx = current.indexOf(label);
+  if(idx > -1){
+    current.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    current.push(label);
+    el.classList.add('selected');
+  }
+  document.getElementById('fLabels').value = current.join(', ');
+  draftDirty = true;
+}
+
+function syncChipsFromInput(){
+  // بعد الكتابة اليدوية نحدّث حالة الـ chips
+  const current = getLabelsArray();
+  document.querySelectorAll('#labelsChips .lbl-chip').forEach(el=>{
+    if(current.includes(el.textContent.trim())) el.classList.add('selected');
+    else el.classList.remove('selected');
+  });
+  draftDirty = true;
+  updateDraftBadgeUnsaved();
 }
 
 function saveToken(tok, exp){ return onTokenReceived(tok, exp); }
@@ -1370,65 +1498,34 @@ function restoreToken(){
 
 function scheduleRenew(expMs){
   if(renewTimer) clearTimeout(renewTimer);
-  // جدّد قبل 4 دقائق من الانتهاء — هامش كافٍ لإتمام التجديد الصامت
-  const delay = Math.max(expMs - Date.now() - 4*60*1000, 10*1000);
+  // جدّد قبل 3 دقائق من الانتهاء
+  const delay = Math.max(expMs - Date.now() - 3*60*1000, 5*1000);
   renewTimer = setTimeout(silentRenew, delay);
 }
 
 let _renewAttempts = 0;
-let _renewPending  = false;
-let _oneTapFailed  = false; // هل فشل One Tap على هذا المتصفح؟
-
-/* ── التجديد الصامت الرئيسي: يحاول One Tap أولاً ── */
+let _renewPending = false;
 function silentRenew(){
-  if(_renewPending) return;
+  if(_renewPending) return; // منع التكرار المتزامن
   _renewPending = true;
-
-  const email = getCookie('jwb_uemail')||'';
-
-  // المسار 1: One Tap prompt (صامت 100% — لا popup)
-  if(!_oneTapFailed && google?.accounts?.id){
-    try{
-      google.accounts.id.prompt(notification => {
-        if(notification.isNotDisplayed() || notification.isSkippedMoment()){
-          // One Tap غير مدعوم أو مُعطَّل → جرّب GSI الصامت
-          _oneTapFailed = true;
-          _renewPending = false;
-          silentRenewGSI();
-        }
-        // إذا عُرض أو نجح → الـ callback سيُطلق onTokenReceived
-      });
-      setTimeout(()=>{ _renewPending=false; }, 2000);
-      return;
-    }catch(e){
-      _oneTapFailed = true;
-    }
-  }
-
-  // المسار 2: GSI requestAccessToken بـ prompt='' (صامت، لا popup)
-  silentRenewGSI();
-}
-
-/* ── تجديد GSI صامت — prompt='' لا يُظهر أي نافذة ── */
-function silentRenewGSI(){
   if(!gsiClient) buildGsiClient();
   try{
     gsiClient.requestAccessToken({
-      prompt: '',             // فارغ = صامت تماماً
+      prompt: '',
       hint:   getCookie('jwb_uemail')||''
     });
     _renewAttempts = 0;
   }catch(e){
     _renewAttempts++;
-    const delay = Math.min(20000 * Math.pow(2, _renewAttempts - 1), 5*60*1000);
-    setTimeout(()=>{ _renewPending=false; silentRenewGSI(); }, delay);
+    const delay = Math.min(15000 * Math.pow(2, _renewAttempts - 1), 5*60*1000);
+    setTimeout(()=>{ _renewPending=false; silentRenew(); }, delay);
     return;
   }
-  // أعد تعيين _renewPending بعد فترة كافية للـ callback
-  setTimeout(()=>{ _renewPending=false; }, 2000);
+  // إعادة تعيين _renewPending بعد ثانية (وقت كافٍ للـ callback)
+  setTimeout(()=>{ _renewPending=false; }, 1000);
 }
 
-// عودة للتبويب → جدّد صامتاً إذا انتهى التوكن أو قارب على الانتهاء
+// عودة للتبويب → جدّد فوراً إذا انتهى التوكن أو قارب على الانتهاء
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState !== 'visible') return;
   if(!getCookie('jwb_uname')) return;
@@ -1774,6 +1871,13 @@ function setType(t, el){
   const needsExtra = !c.desc && !c.year; // يوتيوب، فيديو، بث
   show('btnAddExtra', needsExtra);
   show('extraMenu', false);
+
+  // تحديث حالة chips التصنيفات
+  if(c.labels && gToken && _blogLabels && _blogLabels.length){
+    const wrap = document.getElementById('labelsChipsWrap');
+    wrap.style.display = 'block';
+    syncChipsFromInput();
+  }
 }
 
 /* ═════════════════════════════════════════════
@@ -3204,6 +3308,16 @@ window.addEventListener('DOMContentLoaded',()=>{
   });
   startDraftTimer();
   watchDraftChanges();
+  // جلب اقتراحات التصنيفات عند التركيز على الحقل
+  const fLbl = document.getElementById('fLabels');
+  if(fLbl){
+    fLbl.addEventListener('focus', ()=>{
+      if(!document.getElementById('labelsChips').children.length ||
+         document.querySelector('#labelsChips .loading-chips')){
+        showLabelsChips();
+      }
+    });
+  }
   window.addEventListener('beforeunload', e=>{
     const title = document.getElementById('fTitle')?.value?.trim();
     if(title || draftDirty){

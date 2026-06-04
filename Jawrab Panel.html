@@ -750,6 +750,36 @@ body::before{
   .btn-draft-save,.btn-drafts-open{flex-shrink:0;}
 }
 
+/* ══ LABELS SUGGESTIONS ══ */
+.labels-suggestions{
+  display:flex;flex-wrap:wrap;gap:5px;margin-top:7px;
+  min-height:0;
+}
+.lbl-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  background:rgba(15,21,17,.85);
+  border:1.5px solid rgba(72,187,120,.2);
+  border-radius:100px;padding:4px 11px;
+  font-size:.72em;font-weight:700;color:var(--text3);
+  cursor:pointer;transition:all .15s;font-family:'Cairo',sans-serif;
+  user-select:none;
+}
+.lbl-chip:hover{border-color:var(--border2);color:var(--text2);}
+.lbl-chip.selected{
+  background:rgba(111,191,76,.15);
+  border-color:#6fbf4c;color:#9bdf7a;
+}
+.lbl-chip.loading-chips{
+  pointer-events:none;opacity:.5;animation:pulse .9s infinite;
+}
+.lbl-chips-wrap{margin-top:7px;}
+.lbl-chips-label{
+  font-size:.64em;font-weight:600;color:var(--text3);
+  text-transform:uppercase;letter-spacing:1.2px;margin-bottom:5px;
+  display:flex;align-items:center;gap:5px;
+}
+.lbl-chips-label i{color:#6fbf4c;}
+
 /* ══ EXTRA FIELDS BUTTON ══ */
 .btn-add-extra{
   width:100%;background:transparent;
@@ -955,7 +985,11 @@ body::before{
       </div>
       <div class="field" id="fieldLabels">
         <label>التصنيفات <span style="color:var(--text3);font-weight:400;text-transform:none;">(labels — مفصولة بفاصلة)</span></label>
-        <input class="inp" id="fLabels" placeholder="مسلسل, مترجم, 2024">
+        <input class="inp" id="fLabels" placeholder="مسلسل, مترجم, 2024" oninput="syncChipsFromInput()">
+        <div class="lbl-chips-wrap" id="labelsChipsWrap" style="display:none;">
+          <div class="lbl-chips-label"><i class="fas fa-tags"></i> تصنيفات البلوج — انقر لإضافة</div>
+          <div class="labels-suggestions" id="labelsChips"></div>
+        </div>
       </div>
       <div class="field" id="fieldGenres">
         <label>تصنيف المحتوى <span style="color:var(--text3);font-weight:400;text-transform:none;">(أنواع — مفصولة بفاصلة)</span></label>
@@ -1316,12 +1350,115 @@ async function onTokenReceived(tok, exp){
   // جلب الدور في الخلفية
   fetchUserRole().catch(()=>{});
   loadPosts();
+  // تحديث اقتراحات التصنيفات بعد الدخول
+  _blogLabels = null;
+  if(document.getElementById('labelsChipsWrap').style.display !== 'none' ||
+     document.activeElement === document.getElementById('fLabels')){
+    showLabelsChips();
+  }
 }
 
 function doLogin(){
   if(!gsiClient) buildGsiClient();
   if(!gsiClient){ toast('فشل تحميل Google Sign-In، أعد تحميل الصفحة','err'); return; }
-  gsiClient.requestAccessToken({prompt:'consent'});
+  // نحاول أولاً تجديد صامت (بدون نافذة) — إذا فشل نطلب موافقة صريحة
+  const hasPrev = !!getCookie('jwb_uname');
+  if(hasPrev){
+    try{
+      gsiClient.requestAccessToken({prompt:'', hint: getCookie('jwb_uemail')||''});
+      return;
+    }catch(e){}
+  }
+  // أول دخول — prompt بسيط بدون 'consent' لتجنب فتح نافذة إضافية
+  gsiClient.requestAccessToken({prompt:'select_account'});
+}
+
+/* ═════════════════════════════════════════════
+   LABELS CHIPS — جلب تصنيفات البلوج وعرضها كاقتراحات
+═════════════════════════════════════════════ */
+let _blogLabels = null; // cache
+
+async function loadBlogLabels(){
+  if(_blogLabels) return _blogLabels;
+  if(!gToken) return [];
+  try{
+    // نجلب آخر 500 صفحة ونستخرج Labels منها
+    const labels = new Map(); // label → count
+    let pageToken = '';
+    let page = 0;
+    do{
+      const url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`
+        + `?maxResults=50&fetchBodies=false&orderBy=published&status=LIVE`
+        + (pageToken ? '&pageToken='+pageToken : '');
+      const r = await fetch(url,{headers:{'Authorization':'Bearer '+gToken}});
+      const d = await r.json();
+      if(d.error || !d.items) break;
+      for(const p of d.items){
+        if(p.labels) for(const l of p.labels){
+          labels.set(l, (labels.get(l)||0) + 1);
+        }
+      }
+      pageToken = d.nextPageToken || '';
+      page++;
+      if(page > 10) break; // أقصاه 500 صفحة
+    }while(pageToken);
+    // ترتيب بالأكثر استخداماً
+    _blogLabels = [...labels.entries()].sort((a,b)=>b[1]-a[1]).map(e=>e[0]);
+    return _blogLabels;
+  }catch(e){ return []; }
+}
+
+async function showLabelsChips(){
+  const wrap = document.getElementById('labelsChipsWrap');
+  const container = document.getElementById('labelsChips');
+  if(!gToken){ wrap.style.display='none'; return; }
+
+  // اعرض الـ wrap وأضف chip تحميل
+  wrap.style.display='block';
+  container.innerHTML='<span class="lbl-chip loading-chips"><i class="fas fa-spinner fa-spin"></i> جاري الجلب...</span>';
+
+  const labels = await loadBlogLabels();
+  if(!labels.length){
+    wrap.style.display='none';
+    return;
+  }
+
+  // الحالي في الحقل
+  const current = getLabelsArray();
+  container.innerHTML = labels.map(l => {
+    const sel = current.includes(l.trim()) ? 'selected' : '';
+    return `<span class="lbl-chip ${sel}" onclick="toggleChip(this,'${l.replace(/'/g,"\\'")}')">${l}</span>`;
+  }).join('');
+}
+
+function getLabelsArray(){
+  return document.getElementById('fLabels').value
+    .split(',').map(s=>s.trim()).filter(Boolean);
+}
+
+function toggleChip(el, label){
+  const current = getLabelsArray();
+  const idx = current.indexOf(label);
+  if(idx > -1){
+    current.splice(idx, 1);
+    el.classList.remove('selected');
+  } else {
+    current.push(label);
+    el.classList.add('selected');
+  }
+  document.getElementById('fLabels').value = current.join(', ');
+  draftDirty = true;
+}
+
+function syncChipsFromInput(){
+  // بعد الكتابة اليدوية نحدّث حالة الـ chips
+  const current = getLabelsArray();
+  document.querySelectorAll('#labelsChips .lbl-chip').forEach(el=>{
+    if(current.includes(el.textContent.trim())) el.classList.add('selected');
+    else el.classList.remove('selected');
+  });
+  draftDirty = true;
+  updateDraftBadgeUnsaved();
 }
 
 function saveToken(tok, exp){ return onTokenReceived(tok, exp); }
@@ -1388,10 +1525,23 @@ function silentRenew(){
   setTimeout(()=>{ _renewPending=false; }, 1000);
 }
 
-// عودة للتبويب → جدّد فوراً إذا انتهى التوكن أو قارب على الانتهاء
+// عودة للتبويب → استعد التوكن من الكوكيز أولاً قبل أي قرار
 document.addEventListener('visibilitychange', ()=>{
   if(document.visibilityState !== 'visible') return;
   if(!getCookie('jwb_uname')) return;
+
+  // إذا فُرغ الـ RAM (انتقال لتطبيق آخر) — استعد التوكن من الكوكيز
+  if(!gToken){
+    const saved = getCookie(TOKEN_KEY);
+    const exp   = parseInt(getCookie(EXPIRY_KEY)||'0');
+    if(saved && exp && Date.now() < exp){
+      gToken = saved;
+      scheduleRenew(exp);
+      return; // التوكن صالح، لا داعي لأي شيء
+    }
+  }
+
+  // فقط إذا التوكن فعلاً منتهي أو قارب على الانتهاء
   const exp = parseInt(getCookie(EXPIRY_KEY)||'0');
   if(!gToken || !exp || (exp - Date.now()) < 8*60*1000){
     silentRenew();
@@ -1734,6 +1884,13 @@ function setType(t, el){
   const needsExtra = !c.desc && !c.year; // يوتيوب، فيديو، بث
   show('btnAddExtra', needsExtra);
   show('extraMenu', false);
+
+  // تحديث حالة chips التصنيفات
+  if(c.labels && gToken && _blogLabels && _blogLabels.length){
+    const wrap = document.getElementById('labelsChipsWrap');
+    wrap.style.display = 'block';
+    syncChipsFromInput();
+  }
 }
 
 /* ═════════════════════════════════════════════
@@ -2341,851 +2498,4 @@ async function selectTmdb(id,t){
     if(thumb&&!document.getElementById('fThumb').value){ document.getElementById('fThumb').value=thumb; prevThumb(thumb); }
     document.getElementById('tsPoster').src=poster;
     document.getElementById('tsTitle').textContent=title+(yr?` (${yr})`:'');
-    document.getElementById('tsMeta').innerHTML=`⭐ ${rating} &nbsp;|&nbsp; ${genres}<br><span style="font-size:.9em;">${(d.overview||'').slice(0,120)}${(d.overview||'').length>120?'...':''}</span>`;
-    document.getElementById('tmdbSel').style.display='block';
-    toast('تم جلب بيانات TMDB','ok');
-  }catch(e){ toast('خطأ TMDB','err'); }
-  if(ico) ico.innerHTML='<i class="fas fa-magnifying-glass"></i>';
-}
-function clearTmdb(){ tmdbData=null; document.getElementById('tmdbSel').style.display='none'; }
-
-/* ═════════════════════════════════════════════
-   BUILD CONTENT — صيغة jawrab الحقيقية
-═════════════════════════════════════════════ */
-function buildContent(){
-  const title   = document.getElementById('fTitle').value.trim();
-  const ep      = document.getElementById('fEp').value.trim();
-  const desc    = document.getElementById('fDesc').value.trim();
-  const thumb   = document.getElementById('fThumb').value.trim();
-  const year    = document.getElementById('fYear').value.trim();
-  const rating  = document.getElementById('fRating').value.trim();
-  const genres  = document.getElementById('fGenres').value.trim();
-  const ytVal   = document.getElementById('fYtUrl').value.trim();
-  const subTxt  = document.getElementById('fSubTxt').value.trim();
-  const subLang = getPill('subLangPills');
-  const liveUrl = document.getElementById('fLive').value.trim();
-  const liveNm  = document.getElementById('fLiveName').value.trim();
-  const liveLg  = document.getElementById('fLiveLogo').value.trim();
-  const quals   = getQualities();
-  const eps     = getEpisodes();
-  const ytId    = getYtId(ytVal);
-  const labels  = document.getElementById('fLabels').value.split(',').map(s=>s.trim()).filter(Boolean);
-  const genArr  = genres.split(',').map(s=>s.trim()).filter(Boolean);
-  const status  = getPill('statusPills')||'مستمر';
-
-  let bodyLines = [];
-
-  // ── بث مباشر ──
-  if(curType === 'live'){
-    if(thumb)   bodyLines.push(thumb);
-    if(liveUrl) bodyLines.push(liveUrl);
-    if(liveLg)  bodyLines.push(`#logo|${liveLg}`);
-    bodyLines.push('..live..');
-  }
-
-  // ── يوتيوب: الرابط فقط ──
-  else if(curType === 'youtube'){
-    const ytLink = ytId ? `https://www.youtube.com/watch?v=${ytId}` : ytVal;
-    if(ytLink) bodyLines.push(ytLink);
-  }
-
-  // ── فيديو عادي ──
-  else if(curType === 'video'){
-    if(thumb) bodyLines.push(thumb);
-    if(quals.length > 0){
-      quals.forEach(q => bodyLines.push(`#${q.lbl}|${q.url}`));
-    } else if(liveUrl){
-      bodyLines.push(liveUrl);
-    }
-  }
-
-  // ── فيلم ──
-  else if(curType === 'movie'){
-    bodyLines.push('--movie--');
-    if(desc)   bodyLines.push(`--desc-- ${desc} --desc--`);
-    if(rating) bodyLines.push(`--rating-- ${rating} --rating--`);
-    if(year)   bodyLines.push(`--year-- ${year} --year--`);
-    if(genres) bodyLines.push(`--genre-- ${genres} --genre--`);
-    if(thumb)  bodyLines.push(thumb);
-    if(quals.length > 0) quals.forEach(q => bodyLines.push(`#${q.lbl}|${q.url}`));
-    if(subTxt){
-      bodyLines.push('--subtitle--');
-      bodyLines.push(subTxt);
-      bodyLines.push('--subtitle--');
-    }
-    bodyLines.push('--movie--');
-  }
-
-  // ── مسلسل / أنمي / دراما ──
-  else {
-    const tag = curType;
-    bodyLines.push(`--${tag}--`);
-    if(desc)   bodyLines.push(`--desc-- ${desc} --desc--`);
-    if(rating) bodyLines.push(`--rating-- ${rating} --rating--`);
-    if(year)   bodyLines.push(`--year-- ${year} --year--`);
-    if(genres) bodyLines.push(`--genre-- ${genres} --genre--`);
-    if(curType==='series'||curType==='drama'||curType==='anime')
-      bodyLines.push(`--status-- ${status} --status--`);
-    if(thumb) bodyLines.push(thumb);
-    if(eps.length > 0){
-      eps.forEach(e => {
-        bodyLines.push('--ep--');
-        bodyLines.push(e.title||'');
-        if(e.url)   bodyLines.push(`|${e.url}`);
-        if(e.thumb) bodyLines.push(`|${e.thumb}`);
-        bodyLines.push('--ep--');
-      });
-    }
-    if(subTxt){
-      bodyLines.push('--subtitle--');
-      bodyLines.push(subTxt);
-      bodyLines.push('--subtitle--');
-    }
-    bodyLines.push(`--${tag}--`);
-  }
-
-  // بناء المحتوى النهائي: كل سطر في <p> خاص (الـ subtitle يُعالج بشكل خاص)
-  let htmlLines = [];
-  let inSubtitle = false;
-  let subtitleBlock = [];
-  for(const line of bodyLines){
-    if(line === '--subtitle--'){
-      if(!inSubtitle){
-        inSubtitle = true;
-        subtitleBlock = [];
-      } else {
-        // أغلق الـ subtitle block كاملاً في عنصر واحد
-        htmlLines.push(`--subtitle--${subtitleBlock.join('\n')}--subtitle--`);
-        inSubtitle = false;
-        subtitleBlock = [];
-      }
-    } else if(inSubtitle){
-      subtitleBlock.push(line);
-    } else {
-      htmlLines.push(`${line}`);
-    }
-  }
-  // إضافة النصوص المخصصة (custom_text) في نهاية المحتوى
-  const customTxts = getCustomTexts();
-  if(customTxts.length > 0){
-    htmlLines.push(...customTxts);
-  }
-
-  const content = htmlLines.join('\n');
-  return content;
-}
-
-/* ═════════════════════════════════════════════
-   PUBLISH
-═════════════════════════════════════════════ */
-async function publish(){
-  if(!gToken){ toast('سجل الدخول أولاً','err'); return; }
-  const title=document.getElementById('fTitle').value.trim();
-  if(!title){ toast('أدخل العنوان','err'); document.getElementById('fTitle').focus(); return; }
-  const isLive=getPill('pubPills')==='LIVE';
-  const labels=document.getElementById('fLabels').value.split(',').map(s=>s.trim()).filter(Boolean);
-  showProg(0,'بناء المحتوى...',1);
-  const content=buildContent();
-  showProg(40,'رفع الصفحة...',2);
-  const body={kind:'blogger#post',title,content};
-  if(labels.length) body.labels=labels;
-  let url='', method='';
-  if(editMode&&editId){
-    url=`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${editId}?isDraft=${!isLive}&publish=${isLive}`;
-    method='PUT';
-  } else {
-    url=`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/?isDraft=${!isLive}`;
-    method='POST';
-  }
-  try{
-    const r=await fetch(url,{method,headers:{'Authorization':'Bearer '+gToken,'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(r.ok){
-      showProg(100,'اكتمل','done');
-      toast(editMode?'تم تعديل الصفحة':'تم نشر الصفحة','ok');
-      clearDraftStorage();
-      setTimeout(()=>{ resetForm(); hideProg(); if(isLive) loadPosts(); },1800);
-      editMode=false; editId=null;
-    } else {
-      const e=await r.json(); hideProg();
-      toast(`خطأ: ${e.error?.message||'غير معروف'}`,'err');
-    }
-  }catch(e){ hideProg(); toast('خطأ في الاتصال','err'); }
-}
-function showProg(pct,lbl,step){
-  document.getElementById('pubProg').style.display='block';
-  document.getElementById('progBar').style.width=pct+'%';
-  document.getElementById('progLbl').textContent=lbl;
-  document.querySelectorAll('.prog-step').forEach((el,i)=>{
-    el.classList.remove('act','done');
-    if(step==='done'||i+1<(typeof step==='number'?step:4)) el.classList.add('done');
-    if(i+1===step) el.classList.add('act');
-  });
-  document.getElementById('btnPub').disabled=true;
-}
-function hideProg(){ document.getElementById('pubProg').style.display='none'; document.getElementById('btnPub').disabled=false; }
-
-/* ═════════════════════════════════════════════
-   RESET
-═════════════════════════════════════════════ */
-function resetForm(){
-  ['fTitle','fEp','fLabels','fGenres','fDesc','fThumb','fYtUrl','fYear','fRating','fLive','fLiveName','fLiveLogo','fSubTxt']
-    .forEach(id=>{ const el=document.getElementById(id); if(el) el.value=''; });
-  clearThumb(); clearSub(); clearTmdb(); resetExtras();
-  document.getElementById('ytPrev').style.display='none';
-  document.getElementById('qualList').innerHTML=''; qualities=[];
-  document.getElementById('epList').innerHTML='';   episodes=[];
-  document.getElementById('tmdbQ').value='';
-  tmdbData=null; editMode=false; editId=null;
-  hideProg();
-  document.getElementById('btnPub').innerHTML='<i class="fas fa-paper-plane"></i> نشر الصفحة';
-}
-
-/* ═════════════════════════════════════════════
-   AUTO-DRAFT — حفظ تلقائي كل 30 ثانية
-═════════════════════════════════════════════ */
-const DRAFT_KEY   = 'jwb_draft';
-const DRAFT_LIST  = 'jwb_draft_list';
-let   draftTimer  = null;
-let   draftDirty  = false;   // تغيّر شيء منذ آخر حفظ؟
-let   draftSaving = false;
-
-/* تجميع حالة النموذج الحالية في كائن */
-function captureDraft(){
-  const g = id => { const e=document.getElementById(id); return e?e.value:''; };
-  return {
-    ts:       Date.now(),
-    type:     curType,
-    title:    g('fTitle'),
-    ep:       g('fEp'),
-    labels:   g('fLabels'),
-    desc:     g('fDesc'),
-    thumb:    g('fThumb'),
-    ytUrl:    g('fYtUrl'),
-    year:     g('fYear'),
-    rating:   g('fRating'),
-    genres:   g('fGenres'),
-    live:     g('fLive'),
-    liveName: g('fLiveName'),
-    liveLogo: g('fLiveLogo'),
-    subTxt:   g('fSubTxt'),
-    quals:    qualities.filter(q=>q&&q.url),
-    eps:      episodes.filter(e=>e&&(e.title||e.url)),
-    pubPill:  getPill('pubPills'),
-    statusP:  getPill('statusPills'),
-    subLang:  getPill('subLangPills'),
-    editMode, editId
-  };
-}
-
-/* حفظ المسودة في localStorage */
-function saveDraft(silent=false){
-  const d = captureDraft();
-  if(!d.title && !d.desc && !d.thumb && !d.ytUrl && !d.live && !d.quals.length && !d.eps.length) return;
-  try{
-    // المسودة الحالية
-    localStorage.setItem(DRAFT_KEY, JSON.stringify(d));
-    // قائمة المسودات (آخر 10)
-    let list = [];
-    try{ list = JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]'); }catch(e){}
-    // استبدل إذا نفس العنوان، وإلا أضف
-    const idx = list.findIndex(x => x.title === d.title && x.type === d.type);
-    if(idx >= 0) list[idx] = {id:list[idx].id, ts:d.ts, title:d.title, type:d.type};
-    else list.unshift({id: 'draft_'+Date.now(), ts:d.ts, title:d.title||'(بدون عنوان)', type:d.type});
-    list = list.slice(0, 10);
-    localStorage.setItem(DRAFT_LIST, JSON.stringify(list));
-    draftDirty = false;
-    if(!silent) showDraftToast();
-    updateDraftBadge(d.ts);
-  }catch(e){}
-}
-
-/* استعادة مسودة إلى النموذج */
-function restoreDraft(d){
-  if(!d) return;
-  // اختر النوع أولاً
-  const typeBtn = document.querySelector(`.type-btn[data-t="${d.type}"]`);
-  if(typeBtn){ typeBtn.click(); }
-  setTimeout(()=>{
-    const set = (id,v) => { const e=document.getElementById(id); if(e&&v!==undefined) e.value=v; };
-    set('fTitle',   d.title);
-    set('fEp',      d.ep);
-    set('fLabels',  d.labels);
-    set('fDesc',    d.desc);
-    set('fThumb',   d.thumb);
-    set('fYtUrl',   d.ytUrl);
-    set('fYear',    d.year);
-    set('fRating',  d.rating);
-    set('fGenres',  d.genres);
-    set('fLive',    d.live);
-    set('fLiveName',d.liveName);
-    set('fLiveLogo',d.liveLogo);
-    set('fSubTxt',  d.subTxt);
-    if(d.thumb) prevThumb(d.thumb);
-    if(d.ytUrl) parseYT(d.ytUrl);
-    // جودات
-    document.getElementById('qualList').innerHTML=''; qualities=[];
-    (d.quals||[]).forEach(q=>addQual(q.lbl,q.url));
-    // حلقات
-    document.getElementById('epList').innerHTML=''; episodes=[];
-    (d.eps||[]).forEach(e=>addEp(e.title,e.url,e.thumb));
-    // pills
-    if(d.pubPill){
-      const pb=document.querySelector(`#pubPills .pill[data-v="${d.pubPill}"]`);
-      if(pb) selPill(pb,'pubPills');
-    }
-    if(d.statusP){
-      const sp=document.querySelector(`#statusPills .pill[data-v="${d.statusP}"]`);
-      if(sp) selPill(sp,'statusPills');
-    }
-    editMode = d.editMode||false;
-    editId   = d.editId||null;
-    if(editMode){
-      document.getElementById('btnPub').innerHTML='<i class="fas fa-pen"></i> حفظ تعديلات الصفحة';
-    }
-    updateDraftBadge(d.ts);
-    toast('تم استعادة المسودة ✓','ok');
-  }, 120);
-}
-
-/* تشغيل التايمر التلقائي */
-function startDraftTimer(){
-  if(draftTimer) clearInterval(draftTimer);
-  draftTimer = setInterval(()=>{
-    if(draftDirty) saveDraft(true);
-  }, 30000);
-}
-
-/* مراقبة التغييرات في النموذج */
-function watchDraftChanges(){
-  const ids=['fTitle','fEp','fLabels','fDesc','fThumb','fYtUrl','fYear','fRating','fGenres','fLive','fLiveName','fLiveLogo','fSubTxt'];
-  ids.forEach(id=>{
-    const el=document.getElementById(id);
-    if(el) el.addEventListener('input',()=>{ draftDirty=true; updateDraftBadgeUnsaved(); });
-  });
-}
-
-/* شارة "لم يُحفظ" في الزر */
-function updateDraftBadgeUnsaved(){
-  const btn = document.getElementById('btnDraft');
-  if(btn) btn.setAttribute('data-unsaved','1');
-}
-
-/* تحديث شارة وقت آخر حفظ */
-function updateDraftBadge(ts){
-  const btn = document.getElementById('btnDraft');
-  if(!btn) return;
-  btn.removeAttribute('data-unsaved');
-  const d = new Date(ts);
-  const hm = d.toLocaleTimeString('ar',{hour:'2-digit',minute:'2-digit'});
-  btn.title = `آخر حفظ: ${hm}`;
-  // أنيمشن بسيط
-  btn.classList.add('draft-saved');
-  setTimeout(()=>btn.classList.remove('draft-saved'),1200);
-}
-
-/* Toast المسودة */
-function showDraftToast(){
-  const t = document.createElement('div');
-  t.className = 'draft-toast';
-  t.innerHTML = '<i class="fas fa-floppy-disk"></i> حُفظت مسودةً تلقائياً';
-  document.body.appendChild(t);
-  setTimeout(()=>t.classList.add('show'),10);
-  setTimeout(()=>{ t.classList.remove('show'); setTimeout(()=>t.remove(),400); },2500);
-}
-
-/* حذف المسودة بعد النشر */
-function clearDraftStorage(){
-  try{
-    localStorage.removeItem(DRAFT_KEY);
-    const list = JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]');
-    const title = document.getElementById('fTitle').value.trim();
-    const filtered = list.filter(x=>x.title!==title);
-    localStorage.setItem(DRAFT_LIST, JSON.stringify(filtered));
-  }catch(e){}
-  const btn=document.getElementById('btnDraft');
-  if(btn){ btn.title='لا توجد مسودة محفوظة'; btn.removeAttribute('data-unsaved'); }
-}
-
-/* فتح درج المسودات */
-function openDraftsDrawer(){
-  let list=[];
-  try{ list=JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]'); }catch(e){}
-  const drawer=document.getElementById('draftsDrawer');
-  if(!list.length){
-    drawer.querySelector('.dd-list').innerHTML='<div class="dd-empty"><i class="fas fa-box-open"></i><br>لا توجد مسودات محفوظة</div>';
-  } else {
-    const tmap={movie:'فيلم',series:'مسلسل',drama:'دراما',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث'};
-    drawer.querySelector('.dd-list').innerHTML = list.map((d,i)=>{
-      const dt=new Date(d.ts).toLocaleString('ar',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'});
-      return `<div class="dd-item" onclick="loadDraftByIndex(${i})">
-        <div class="dd-item-icon"><i class="fas fa-file-pen"></i></div>
-        <div class="dd-item-info">
-          <div class="dd-item-title">${d.title||'(بدون عنوان)'}</div>
-          <div class="dd-item-meta">${tmap[d.type]||d.type} · ${dt}</div>
-        </div>
-        <button class="dd-item-del" onclick="event.stopPropagation();deleteDraftByIndex(${i})" title="حذف"><i class="fas fa-trash"></i></button>
-      </div>`;
-    }).join('');
-  }
-  drawer.classList.add('open');
-  document.getElementById('ddOverlay').style.display='block';
-}
-function closeDraftsDrawer(){
-  document.getElementById('draftsDrawer').classList.remove('open');
-  document.getElementById('ddOverlay').style.display='none';
-}
-
-function loadDraftByIndex(i){
-  try{
-    const list=JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]');
-    const item=list[i]; if(!item) return;
-    // نحاول تحميل آخر مسودة محفوظة إذا تطابق العنوان
-    const cur = JSON.parse(localStorage.getItem(DRAFT_KEY)||'null');
-    if(cur && cur.title===item.title && cur.type===item.type){
-      closeDraftsDrawer(); restoreDraft(cur);
-    } else {
-      closeDraftsDrawer(); restoreDraft(item);
-    }
-  }catch(e){}
-}
-function deleteDraftByIndex(i){
-  try{
-    let list=JSON.parse(localStorage.getItem(DRAFT_LIST)||'[]');
-    list.splice(i,1);
-    localStorage.setItem(DRAFT_LIST,JSON.stringify(list));
-    openDraftsDrawer(); // تحديث الدرج
-  }catch(e){}
-}
-
-function openPreview(){
-  const title  = document.getElementById('fTitle').value.trim()||'(بدون عنوان)';
-  const ep     = document.getElementById('fEp').value.trim();
-  const desc   = document.getElementById('fDesc').value.trim();
-  const thumb  = document.getElementById('fThumb').value.trim();
-  const year   = document.getElementById('fYear').value.trim();
-  const rating = document.getElementById('fRating').value.trim();
-  const genres = document.getElementById('fGenres').value.trim();
-  const quals  = getQualities();
-  const subTxt = document.getElementById('fSubTxt').value.trim();
-  const ytVal  = document.getElementById('fYtUrl').value.trim();
-  const ytId   = getYtId(ytVal);
-  const liveUrl= document.getElementById('fLive').value.trim();
-  const typeNames={movie:'فيلم',drama:'مسلسل',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث مباشر'};
-  const heroSrc= thumb||(ytId?`https://img.youtube.com/vi/${ytId}/maxresdefault.jpg`:'');
-
-  let html=`
-  <div class="prev-hero">
-    ${heroSrc?`<img src="${heroSrc}" alt="" onerror="this.style.display='none'">`:'<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:.85em;">لا توجد صورة</div>'}
-    <div class="prev-hero-badge">${typeNames[curType]||curType}</div>
-  </div>
-  <div class="prev-title">${title}</div>
-  ${ep?`<div class="prev-sub">${ep}</div>`:''}
-  <div class="prev-meta">
-    ${year?`<div class="prev-chip"><i class="fas fa-calendar" style="margin-left:4px;color:var(--text3);"></i>${year}</div>`:''}
-    ${rating?`<div class="prev-chip"><i class="fas fa-star" style="margin-left:4px;color:var(--yellow);"></i>${rating}</div>`:''}
-    ${genres.split(',').filter(Boolean).map(g=>`<div class="prev-chip">${g.trim()}</div>`).join('')}
-  </div>
-  ${desc?`<div class="prev-desc">${desc.replace(/\n/g,'<br>')}</div>`:''}`;
-
-  if(quals.length>0){
-    html+=`<div class="prev-sec-title"><i class="fas fa-play-circle" style="margin-left:4px;color:#6fbf4c;"></i>جودات الفيديو</div>
-    <div class="prev-quals">${quals.map(q=>`<div class="prev-qual">${q.lbl}</div>`).join('')}</div>`;
-  }
-  const eps = getEpisodes();
-  if(eps.length>0){
-    html+=`<div class="prev-sec-title"><i class="fas fa-list-ol" style="margin-left:4px;color:#6fbf4c;"></i>${eps.length} حلقة</div>
-    <div style="display:flex;flex-direction:column;gap:5px;margin-top:4px;">
-      ${eps.map((e,i)=>`<div style="display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:8px;">
-        <span style="font-size:.7em;color:#6fbf4c;font-weight:700;background:rgba(111,191,76,.1);border-radius:5px;padding:2px 7px;">ح ${i+1}</span>
-        <span style="font-size:.8em;color:var(--text2);">${e.title||'—'}</span>
-        ${e.url?`<span style="margin-right:auto;font-size:.65em;color:var(--text3);">${e.url.slice(0,35)}...</span>`:''}
-      </div>`).join('')}
-    </div>`;
-  }
-  if(ytId){ html+=`<div class="prev-sec-title"><i class="fab fa-youtube" style="color:#ff4444;margin-left:4px;"></i>يوتيوب</div><div class="prev-chip" style="display:inline-block;">ID: ${ytId}</div>`; }
-  if(liveUrl){ html+=`<div class="prev-sec-title"><i class="fas fa-satellite-dish" style="color:var(--yellow);margin-left:4px;"></i>بث مباشر</div><div class="prev-chip" style="display:inline-block;">${liveUrl.slice(0,55)}${liveUrl.length>55?'...':''}</div>`; }
-  if(subTxt){
-    const lines=subTxt.split('\n').slice(0,6).join('\n');
-    html+=`<div class="prev-sec-title"><i class="fas fa-closed-captioning" style="margin-left:4px;"></i>ترجمة</div>
-    <div class="prev-sub-txt">${lines}${subTxt.split('\n').length>6?'\n...':''}</div>`;
-  }
-  document.getElementById('previewBody').innerHTML=html;
-  document.getElementById('previewModal').classList.add('open');
-}
-function closePreview(){ document.getElementById('previewModal').classList.remove('open'); }
-document.addEventListener('DOMContentLoaded',()=>{
-  document.getElementById('previewModal').addEventListener('click',e=>{
-    if(e.target===e.currentTarget) closePreview();
-  });
-});
-
-/* ═════════════════════════════════════════════
-   LOAD POSTS (الصفحات) — full pagination + author filter
-═════════════════════════════════════════════ */
-let allPosts        = [];
-let currentUserEmail= '';
-let currentUserId   = '';   // المعرّف الفريد لحساب المستخدم (blogger user ID)
-let isAdmin         = false;
-
-/* ═══════════════════════════════════════════
-   جلب معرّف المستخدم ودوره من blogUserInfos
-═══════════════════════════════════════════ */
-async function fetchUserRole(){
-  try{
-    // 1. جلب الاسم والصورة والـ ID من Blogger users.self
-    const ur = await fetch(
-      'https://www.googleapis.com/blogger/v3/users/self',
-      {headers:{'Authorization':'Bearer '+gToken}}
-    );
-    const ud = await ur.json();
-    currentUserId = ud.id || '';
-
-    // تحديث الاسم والصورة من Blogger دائماً (هذا هو المصدر الصحيح)
-    if(ud.displayName){
-      const bName = ud.displayName;
-      const bPic  = fixImgUrl(ud.image?.url || '');
-      document.getElementById('profileName').textContent = bName;
-      setCookie('jwb_uname', bName, 3650);
-      if(bPic){
-        const av = document.getElementById('profileAv');
-        if(av){
-          const img = new Image();
-          img.referrerPolicy = 'no-referrer';
-          img.onload  = () => { av.innerHTML = `<img src="${bPic}" alt="${bName}" referrerpolicy="no-referrer">`; };
-          img.onerror = () => { av.textContent = (bName||'J')[0].toUpperCase(); };
-          img.src = bPic;
-        }
-        setCookie('jwb_upic', bPic, 3650);
-      }
-      if(currentUserId) setCookie('jwb_uid', currentUserId, 3650);
-    }
-
-    // 2. الدور من permissions endpoint (الأدق)
-    let role = '';
-    try{
-      const pr = await fetch(
-        `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/permissions`,
-        {headers:{'Authorization':'Bearer '+gToken}}
-      );
-      if(pr.ok){
-        const pd = await pr.json();
-        const me = (pd.items||[]).find(p => p.user?.id === currentUserId || p.id === currentUserId);
-        if(me?.role) role = me.role.toUpperCase();
-      }
-    }catch(e){}
-
-    // 3. fallback: blogUserInfos.get
-    if(!role){
-      try{
-        const br = await fetch(
-          `https://www.googleapis.com/blogger/v3/users/self/blogs/${BLOG_ID}`,
-          {headers:{'Authorization':'Bearer '+gToken}}
-        );
-        if(br.ok){
-          const bd = await br.json();
-          role = bd?.blogUserInfo?.role || bd?.role || '';
-        }
-      }catch(e){}
-    }
-
-    // 4. آخر حل: إذا يمكنه جلب المدونة الكاملة → مشرف
-    if(!role){
-      try{
-        const tr = await fetch(
-          `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}`,
-          {headers:{'Authorization':'Bearer '+gToken}}
-        );
-        role = tr.ok ? 'ADMIN' : 'AUTHOR';
-      }catch(e){ role = 'AUTHOR'; }
-    }
-
-    role = role.toUpperCase();
-    isAdmin = (role === 'ADMIN');
-    setCookie('jwb_role', role, 3650);
-    applyRoleBadge(role);
-    return role;
-
-  }catch(e){
-    isAdmin = false;
-    const cached = getCookie('jwb_role');
-    applyRoleBadge(cached || '');
-    return cached || '';
-  }
-}
-
-/* ═══════════════════════════════════════════
-   تحميل الصفحات (كل الصفحات عبر pagination)
-═══════════════════════════════════════════ */
-async function loadPosts(){
-  if(!gToken){ toast('سجل الدخول أولاً','warn'); return; }
-  const list = document.getElementById('postsList');
-  list.innerHTML = '<div class="posts-empty"><i class="fas fa-spinner fa-spin"></i> جاري التحميل...</div>';
-  allPosts = [];
-
-  // استعادة البريد من الكوكيز إن كان فارغاً
-  if(!currentUserEmail) currentUserEmail = getCookie('jwb_uemail')||'';
-
-  try{
-    // تحديد الدور أولاً
-    await fetchUserRole();
-
-    // جلب الصفحات — AUTHOR يرى LIVE فقط؛ ADMIN يرى كل الحالات
-    const statuses = isAdmin ? ['LIVE','DRAFT','SCHEDULED'] : ['LIVE'];
-
-    for(const status of statuses){
-      let pageToken = '';
-      let page = 0;
-      do{
-        const url = `https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts`
-          + `?maxResults=50&fetchBodies=false&orderBy=published&status=${status}`
-          + (pageToken ? '&pageToken='+pageToken : '');
-        const r = await fetch(url, {headers:{'Authorization':'Bearer '+gToken}});
-        const d = await r.json();
-        if(d.error) throw new Error(d.error.message);
-        if(d.items) allPosts = allPosts.concat(d.items);
-        pageToken = d.nextPageToken || '';
-        page++;
-        if(page > 20) break;
-      }while(pageToken);
-    }
-
-    // إزالة التكرار (نفس الصفحة قد تأتي في أكثر من status)
-    const seen = new Set();
-    allPosts = allPosts.filter(p=>{ if(seen.has(p.id)) return false; seen.add(p.id); return true; });
-
-    renderPosts(allPosts);
-  }catch(e){
-    list.innerHTML = `<div class="posts-empty" style="color:#f87171;">خطأ في التحميل: ${e.message}</div>`;
-  }
-}
-
-/* ═══════════════════════════════════════════
-   عرض الصفحات مع فلترة بـ author.id
-═══════════════════════════════════════════ */
-function renderPosts(posts){
-  const list = document.getElementById('postsList');
-  if(!posts||!posts.length){ list.innerHTML='<div class="posts-empty">لا توجد صفحات</div>'; return; }
-
-  const imap={movie:'fa-film',series:'fa-film',drama:'fa-tv',anime:'fa-wand-sparkles',youtube:'fa-youtube fab',video:'fa-video',live:'fa-satellite-dish'};
-  const lmap={movie:'فيلم',series:'مسلسل',drama:'دراما',anime:'أنمي',youtube:'يوتيوب',video:'فيديو',live:'بث'};
-  const smap={LIVE:'',DRAFT:'مسودة',SCHEDULED:'مجدول'};
-  const scol={LIVE:'',DRAFT:'#f59e0b',SCHEDULED:'#3b82f6'};
-
-  // فلترة بـ author.id (الأدق من البريد)
-  let filtered = posts;
-  if(!isAdmin){
-    if(currentUserId){
-      // فلترة صارمة بالـ ID
-      filtered = posts.filter(p => p.author && p.author.id === currentUserId);
-    } else if(currentUserEmail){
-      // fallback على البريد
-      filtered = posts.filter(p => p.author && p.author.email === currentUserEmail);
-    }
-    if(!filtered.length){
-      list.innerHTML='<div class="posts-empty">لا توجد صفحات منشورة باسمك</div>';
-      return;
-    }
-  }
-
-  list.innerHTML = filtered.map(p=>{
-    const date = new Date(p.published).toLocaleDateString('ar-SA',{year:'numeric',month:'short',day:'numeric'});
-    let ico = 'fa-file-lines';
-    if(p.labels){ for(const[t] of Object.entries(lmap)){
-      if(p.labels.some(l=>l.toLowerCase().includes(t))){ ico=imap[t]||ico; break; }
-    }}
-    const st   = p.status||'LIVE';
-    const stLbl= smap[st]||'';
-    const stClr= scol[st]||'';
-    return `<div class="post-item" data-title="${(p.title||'').toLowerCase()}">
-      <div class="pi-icon"><i class="fas ${ico}"></i></div>
-      <div class="pi-title" title="${p.title}">${p.title}${stLbl?`<span style="font-size:.65em;margin-right:6px;color:${stClr};background:${stClr}22;padding:1px 7px;border-radius:20px;">${stLbl}</span>`:''}</div>
-      <div class="pi-date">${date}</div>
-      <div class="pi-acts">
-        <button class="pi-btn edit" onclick="startEdit('${p.id}')" title="تعديل"><i class="fas fa-pen"></i></button>
-        <button class="pi-btn del"  onclick="delPost('${p.id}')"  title="حذف"><i class="fas fa-trash"></i></button>
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function filterPosts(q){
-  const items = document.querySelectorAll('#postsList .post-item');
-  const term = (q||'').trim().toLowerCase();
-  items.forEach(item=>{
-    const title = (item.dataset.title||'');
-    item.style.display = (!term || title.includes(term)) ? '' : 'none';
-  });
-}
-
-
-/* ═════════════════════════════════════════════
-   EDIT
-═════════════════════════════════════════════ */
-async function startEdit(id){
-  if(!gToken) return;
-  toast('جاري جلب الصفحة...','info');
-  try{
-    const r=await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,{headers:{'Authorization':'Bearer '+gToken}});
-    const d=await r.json();
-    editMode=true; editId=id;
-    document.getElementById('fTitle').value=d.title||'';
-    const m=d.content?.match(/<!--\s*JAWRAB_DATA:(.*?)-->/s);
-    if(m){
-      try{
-        const data=JSON.parse(m[1]);
-        if(data.description) document.getElementById('fDesc').value=data.description;
-        if(data.thumbnailUrl){ document.getElementById('fThumb').value=data.thumbnailUrl; prevThumb(data.thumbnailUrl); }
-        if(data.year) document.getElementById('fYear').value=data.year;
-        if(data.rating) document.getElementById('fRating').value=data.rating;
-        if(data.subtitleContent) document.getElementById('fSubTxt').value=data.subtitleContent;
-        if(data.ytVideoId){ document.getElementById('fYtUrl').value=data.ytVideoId; parseYT(data.ytVideoId); }
-        if(data.liveUrl) document.getElementById('fLive').value=data.liveUrl;
-        if(data.subtitle) document.getElementById('fEp').value=data.subtitle;
-        if(data.categories) document.getElementById('fGenres').value=data.categories.join(', ');
-        const t=data.type||'movie';
-        const tab=document.querySelector(`[data-t="${t}"]`);
-        if(tab) setType(t,tab);
-        document.getElementById('qualList').innerHTML=''; qualities=[];
-        document.getElementById('epList').innerHTML='';   episodes=[];
-        (data.qualities||[]).forEach(q=>addQual(q.lbl,q.url));
-        (data.episodes||[]).forEach(e=>addEp(e.title,e.url,e.thumb||''));
-        if(data.status){ const sp=document.querySelector(`#statusPills [data-v="${data.status}"]`); if(sp) selPill(sp,'statusPills'); }
-      }catch(e){}
-    }
-    if(d.labels) document.getElementById('fLabels').value=d.labels.join(', ');
-    document.getElementById('btnPub').innerHTML='<i class="fas fa-pen"></i> حفظ تعديلات الصفحة';
-    window.scrollTo({top:0,behavior:'smooth'});
-    toast('وضع تعديل الصفحة','warn');
-  }catch(e){ toast('خطأ في جلب الصفحة','err'); }
-}
-
-/* ═════════════════════════════════════════════
-   DELETE
-═════════════════════════════════════════════ */
-async function delPost(id){
-  if(!confirm('حذف هذه الصفحة نهائياً؟')) return;
-  try{
-    const r=await fetch(`https://www.googleapis.com/blogger/v3/blogs/${BLOG_ID}/posts/${id}`,{method:'DELETE',headers:{'Authorization':'Bearer '+gToken}});
-    if(r.ok){ toast('تم الحذف','ok'); loadPosts(); }
-    else toast('فشل الحذف','err');
-  }catch(e){ toast('خطأ','err'); }
-}
-
-/* ═════════════════════════════════════════════
-   TOAST
-═════════════════════════════════════════════ */
-function toast(msg,type='info'){
-  const ic={ok:'fa-circle-check',err:'fa-circle-xmark',info:'fa-circle-info',warn:'fa-triangle-exclamation'};
-  const w=document.getElementById('toastW');
-  const el=document.createElement('div');
-  el.className=`toast ${type}`;
-  el.innerHTML=`<i class="fas ${ic[type]||ic.info}"></i> ${msg}`;
-  w.appendChild(el);
-  setTimeout(()=>{ el.classList.add('out'); setTimeout(()=>el.remove(),280); },3000);
-}
-
-/* ═════════════════════════════════════════════
-   PWA
-═════════════════════════════════════════════ */
-(()=>{
-  // Manifest — الصورة الترحيبية تُعيَّن أوتوماتيكياً من Android عبر screenshot
-  const manifest={
-    name:'Jawrab Panel',short_name:'Jawrab Panel',
-    start_url:'.',
-    display:'standalone',
-    display_override:['window-controls-overlay','standalone'],
-    background_color:'#0b1a0e',theme_color:'#0b1a0e',
-    orientation:'portrait',
-    icons:[
-      {src:'https://i.suar.me/7nGWd/m',sizes:'512x512',type:'image/png',purpose:'any maskable'},
-      {src:'https://i.suar.me/e9M10/h',sizes:'512x512',type:'image/png',purpose:'any'}
-    ],
-    screenshots:[
-      {src:'https://i.suar.me/e9M10/l',sizes:'1080x2340',type:'image/jpeg',form_factor:'narrow'}
-    ]
-  };
-  const blob=new Blob([JSON.stringify(manifest)],{type:'application/json'});
-  document.getElementById('pwaManifest').href=URL.createObjectURL(blob);
-
-  const atl=document.createElement('link');
-  atl.rel='apple-touch-icon'; atl.href=ICON_URL;
-  document.head.appendChild(atl);
-
-  // Service Worker
-  if('serviceWorker' in navigator){
-    const sw=`
-self.addEventListener('install',e=>self.skipWaiting());
-self.addEventListener('activate',e=>e.waitUntil(clients.claim()));
-self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>new Response('offline'))));`;
-    navigator.serviceWorker.register(URL.createObjectURL(new Blob([sw],{type:'text/javascript'})));
-  }
-
-  // ── طبقة تحميل عند العودة للتطبيق ──
-  let wasHidden = false;
-  document.addEventListener('visibilitychange', ()=>{
-    if(document.hidden){ wasHidden = true; }
-    else if(wasHidden){ wasHidden = false; showReloadOverlay(); }
-  });
-})();
-
-function showReloadOverlay(){
-  const ex = document.getElementById('reloadOverlay');
-  if(ex) return;
-  const ov = document.createElement('div');
-  ov.id = 'reloadOverlay';
-  ov.innerHTML = `
-    <div class="rov-box">
-      <div class="rov-spinner"><div></div><div></div><div></div><div></div></div>
-      <div class="rov-title">جاري تحديث البيانات...</div>
-      <div class="rov-sub">مرحباً بعودتك</div>
-    </div>`;
-  document.body.appendChild(ov);
-  // شغّل التحديث الفعلي
-  loadPosts().finally(()=>{
-    ov.classList.add('rov-done');
-    setTimeout(()=>ov.remove(), 400);
-  });
-}
-
-/* ═════════════════════════════════════════════
-   INIT
-═════════════════════════════════════════════ */
-window.addEventListener('DOMContentLoaded',()=>{
-  const firstTab = document.querySelector('[data-t="movie"]');
-  setType('movie', firstTab);
-  addQual('1080p','');
-  const sf = document.getElementById('fieldStatus');
-  if(sf) sf.style.display='none';
-  setAuthUI(false);
-  waitGSI().then(()=>{
-    buildGsiClient();   // Token Client للدخول الأول
-    initOneTap();       // One Tap للتجديد الصامت
-    restoreToken();     // استعادة الجلسة السابقة
-  });
-  startDraftTimer();
-  watchDraftChanges();
-  window.addEventListener('beforeunload', e=>{
-    const title = document.getElementById('fTitle')?.value?.trim();
-    if(title || draftDirty){
-      saveDraft(true);
-      e.preventDefault();
-      e.returnValue = '';
-    }
-  });
-});
-</script>
-<!-- DRAFTS DRAWER -->
-<div class="dd-overlay" id="ddOverlay" onclick="closeDraftsDrawer()"></div>
-<div class="drafts-drawer" id="draftsDrawer">
-  <div class="dd-head">
-    <div class="dd-head-title"><i class="fas fa-clock-rotate-left"></i> المسودات المحفوظة</div>
-    <button class="dd-close" onclick="closeDraftsDrawer()"><i class="fas fa-times"></i></button>
-  </div>
-  <div class="dd-list"></div>
-  <div class="dd-foot">
-    <div class="dd-foot-note"><i class="fas fa-info-circle"></i> تُحفظ تلقائياً كل 30 ثانية · آخر 10 مسودات</div>
-  </div>
-</div>
-
-</body>
-</html>
+    document.getElementById('tsMeta').innerHTML=`⭐ ${rating} &nbsp;|&nbsp; ${genres}<br><span style="font-size:.9em;">${(d.overview||''

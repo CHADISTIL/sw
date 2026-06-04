@@ -3281,7 +3281,7 @@ self.addEventListener('fetch',e=>e.respondWith(fetch(e.request).catch(()=>new Re
   let wasHidden = false;
   document.addEventListener('visibilitychange', ()=>{
     if(document.hidden){ wasHidden = true; }
-    else if(wasHidden){ wasHidden = false; showReloadOverlay(); }
+    else if(wasHidden){ wasHidden = false; /* تم إزالة overlay التحميل */ }
   });
 })();
 
@@ -3313,11 +3313,22 @@ window.addEventListener('DOMContentLoaded',()=>{
   addQual('1080p','');
   const sf = document.getElementById('fieldStatus');
   if(sf) sf.style.display='none';
-  setAuthUI(false);
+
+  // استعادة بيانات الجلسة أولاً — إذا كان هناك اسم محفوظ نُظهر الـ UI فوراً
+  const cachedName = getCookie('jwb_uname');
+  const cachedPic  = getCookie('jwb_upic');
+  const cachedEmail= getCookie('jwb_uemail');
+  if(cachedName){
+    setProfileUI(cachedName, cachedEmail, cachedPic);
+    setAuthUI(true);
+  } else {
+    setAuthUI(false);
+  }
+
   waitGSI().then(()=>{
-    buildGsiClient();   // Token Client للدخول الأول
-    initOneTap();       // One Tap للتجديد الصامت
-    restoreToken();     // استعادة الجلسة السابقة
+    buildGsiClient();
+    initOneTap();
+    restoreToken();
   });
   startDraftTimer();
   watchDraftChanges();

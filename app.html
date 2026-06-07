@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>جواب — حمّل التطبيق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red: #e50914;
+    --red2: #ff2d3b;
+    --bg: #06060f;
+    --bg2: #0d0d1f;
+    --glass: rgba(255,255,255,0.04);
+    --border: rgba(255,255,255,0.08);
+    --text: #fff;
+    --muted: rgba(255,255,255,0.45);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html, body {
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Cairo', sans-serif;
+    overflow-x: hidden;
+  }
+
+  /* ── خلفية ── */
+  body::before {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 50% -10%, rgba(229,9,20,0.18) 0%, transparent 70%),
+      radial-gradient(ellipse 40% 40% at 80% 80%, rgba(229,9,20,0.07) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  /* شبكة دقيقة */
+  body::after {
+    content: '';
+    position: fixed; inset: 0; z-index: 0;
+    background-image:
+      linear-gradient(rgba(255,255,255,0.025) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,0.025) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+  }
+
+  .page {
+    position: relative; z-index: 1;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 40px 24px 60px;
+    gap: 0;
+  }
+
+  /* ── شعار ── */
+  .logo-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 32px;
+    animation: fadeDown 0.7s cubic-bezier(.16,1,.3,1) both;
+  }
+
+  .logo-icon {
+    width: 80px; height: 80px;
+    background: linear-gradient(135deg, var(--red), #7b0008);
+    border-radius: 22px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2.2em;
+    box-shadow: 0 8px 40px rgba(229,9,20,0.45), 0 0 0 1px rgba(229,9,20,0.3);
+    position: relative;
+    overflow: hidden;
+  }
+  .logo-icon::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(rgba(255,255,255,0.15), transparent);
+    border-radius: 22px 22px 0 0;
+  }
+
+  .logo-name {
+    font-size: 2.2em;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #fff;
+  }
+  .logo-name span { color: var(--red); }
+
+  .logo-tagline {
+    font-size: 0.88em;
+    color: var(--muted);
+    font-weight: 400;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── بطاقة رئيسية ── */
+  .card {
+    width: 100%;
+    max-width: 400px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 32px 28px;
+    backdrop-filter: blur(20px);
+    animation: fadeUp 0.8s 0.1s cubic-bezier(.16,1,.3,1) both;
+  }
+
+  .card-title {
+    font-size: 1.25em;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+  .card-sub {
+    font-size: 0.83em;
+    color: var(--muted);
+    text-align: center;
+    margin-bottom: 28px;
+    line-height: 1.6;
+  }
+
+  /* ── زر التثبيت ── */
+  .install-btn {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--red), #b50710);
+    border: none;
+    border-radius: 14px;
+    color: #fff;
+    font-family: 'Cairo', sans-serif;
+    font-size: 1.05em;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
+    box-shadow: 0 4px 24px rgba(229,9,20,0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .install-btn::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 50%;
+    background: linear-gradient(rgba(255,255,255,0.12), transparent);
+  }
+  .install-btn:hover  { transform: translateY(-1px); box-shadow: 0 8px 32px rgba(229,9,20,0.5); }
+  .install-btn:active { transform: translateY(1px);  box-shadow: 0 2px 12px rgba(229,9,20,0.3); }
+  .install-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  .install-btn .btn-icon { font-size: 1.3em; }
+
+  /* زر ثانوي: فتح في المتصفح */
+  .open-btn {
+    width: 100%;
+    margin-top: 12px;
+    padding: 13px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    color: rgba(255,255,255,0.7);
+    font-family: 'Cairo', sans-serif;
+    font-size: 0.92em;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: background 0.2s, color 0.2s, border-color 0.2s;
+  }
+  .open-btn:hover { background: var(--glass); color: #fff; border-color: rgba(255,255,255,0.18); }
+
+  /* ── مميزات ── */
+  .features {
+    width: 100%;
+    max-width: 400px;
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    animation: fadeUp 0.8s 0.25s cubic-bezier(.16,1,.3,1) both;
+  }
+
+  .feat {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.82em;
+    font-weight: 600;
+    color: rgba(255,255,255,0.8);
+  }
+  .feat-icon {
+    font-size: 1.3em;
+    flex-shrink: 0;
+  }
+
+  /* ── حالات ── */
+  .state { display: none; }
+  .state.active { display: block; }
+
+  /* رسالة الحالة */
+  .status-msg {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    font-size: 0.85em;
+    font-weight: 600;
+    text-align: center;
+    display: none;
+  }
+  .status-msg.success { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); color: #4ade80; display: block; }
+  .status-msg.info    { background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.25); color: #7dd3fc; display: block; }
+  .status-msg.warn    { background: rgba(251,191,36,0.1);  border: 1px solid rgba(251,191,36,0.25); color: #fcd34d; display: block; }
+
+  /* ── تعليمات iOS ── */
+  .ios-steps {
+    display: none;
+    margin-top: 20px;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 20px;
+    width: 100%;
+    max-width: 400px;
+    animation: fadeUp 0.5s cubic-bezier(.16,1,.3,1) both;
+  }
+  .ios-steps.show { display: block; }
+  .ios-steps h3 { font-size: 0.95em; font-weight: 700; margin-bottom: 16px; color: #fff; }
+  .ios-step {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    margin-bottom: 14px;
+    font-size: 0.83em;
+    color: rgba(255,255,255,0.75);
+    line-height: 1.5;
+  }
+  .ios-step:last-child { margin-bottom: 0; }
+  .step-num {
+    width: 24px; height: 24px;
+    background: var(--red);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78em; font-weight: 700;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  /* ── animations ── */
+  @keyframes fadeDown {
+    from { opacity: 0; transform: translateY(-20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- شعار -->
+  <div class="logo-wrap">
+    <div class="logo-icon">📺</div>
+    <div class="logo-name">جو<span>اب</span></div>
+    <div class="logo-tagline">تطبيق المحتوى العربي</div>
+  </div>
+
+  <!-- بطاقة التثبيت -->
+  <div class="card">
+    <div class="card-title">ثبّت التطبيق</div>
+    <div class="card-sub">احصل على تجربة كاملة بدون متصفح — يعمل مثل تطبيق حقيقي</div>
+
+    <button class="install-btn" id="installBtn" onclick="handleInstall()">
+      <span class="btn-icon">⬇️</span>
+      <span id="installBtnText">تثبيت التطبيق</span>
+    </button>
+
+    <button class="open-btn" id="openBtn" onclick="openApp()">
+      🌐 فتح في المتصفح
+    </button>
+
+    <div class="status-msg" id="statusMsg"></div>
+  </div>
+
+  <!-- تعليمات iOS -->
+  <div class="ios-steps" id="iosSteps">
+    <h3>📱 كيف تثبّت على iPhone / iPad</h3>
+    <div class="ios-step">
+      <div class="step-num">1</div>
+      <div>اضغط على زر <strong>المشاركة</strong> <span style="font-size:1.2em">⬆️</span> في أسفل Safari</div>
+    </div>
+    <div class="ios-step">
+      <div class="step-num">2</div>
+      <div>اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong></div>
+    </div>
+    <div class="ios-step">
+      <div class="step-num">3</div>
+      <div>اضغط <strong>إضافة</strong> في الأعلى ← يظهر التطبيق على شاشتك</div>
+    </div>
+  </div>
+
+  <!-- مميزات -->
+  <div class="features">
+    <div class="feat"><span class="feat-icon">⚡</span> سريع وخفيف</div>
+    <div class="feat"><span class="feat-icon">📴</span> يعمل بدون إنترنت</div>
+    <div class="feat"><span class="feat-icon">🔔</span> إشعارات فورية</div>
+    <div class="feat"><span class="feat-icon">🔒</span> خصوصية تامة</div>
+  </div>
+
+</div>
+
+<script>
+// ══ الرابط الرئيسي للتطبيق ══
+const APP_URL = 'https://chadistil.github.io/jawrab/666gf_v17.html';
+
+// ══ كشف البيئة ══
+const isIOS     = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isAndroid = /android/i.test(navigator.userAgent);
+const isSafari  = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
+const isPWA     = window.navigator.standalone === true ||
+                  window.matchMedia('(display-mode: standalone)').matches;
+
+let deferredPrompt = null;
+
+// ── استقبال حدث beforeinstallprompt (Android/Desktop Chrome) ──
+window.addEventListener('beforeinstallprompt', function(e){
+  e.preventDefault();
+  deferredPrompt = e;
+  // حدّث الزر
+  document.getElementById('installBtnText').textContent = 'تثبيت التطبيق';
+  document.getElementById('installBtn').disabled = false;
+});
+
+// ── عند تثبيت ناجح ──
+window.addEventListener('appinstalled', function(){
+  showStatus('تم التثبيت بنجاح! 🎉 ابحث عن الأيقونة على شاشتك', 'success');
+  document.getElementById('installBtn').disabled = true;
+  document.getElementById('installBtnText').textContent = 'تم التثبيت ✓';
+});
+
+// ── عند تحميل الصفحة ──
+window.addEventListener('load', function(){
+  if(isPWA){
+    // مفتوح كـ PWA → انتقل للتطبيق مباشرة
+    window.location.replace(APP_URL);
+    return;
+  }
+
+  if(isIOS && isSafari){
+    // iOS Safari: اعرض التعليمات اليدوية
+    document.getElementById('installBtnText').textContent = 'كيف أثبّت؟';
+    document.getElementById('iosSteps').classList.add('show');
+  } else if(isIOS){
+    // iOS لكن ليس Safari
+    showStatus('يُنصح بفتح هذه الصفحة في Safari لتثبيت التطبيق', 'warn');
+    document.getElementById('installBtnText').textContent = 'افتح في Safari';
+  } else if(!deferredPrompt){
+    // Chrome/Android لكن الحدث لم يصل بعد → انتظر
+    setTimeout(function(){
+      if(!deferredPrompt){
+        showStatus('قد يكون التطبيق مثبتاً مسبقاً، أو جرّب فتح الصفحة في Chrome', 'info');
+      }
+    }, 2000);
+  }
+});
+
+// ══ زر التثبيت ══
+function handleInstall(){
+  if(isIOS && isSafari){
+    // iOS: أظهر/أخفِ التعليمات
+    const steps = document.getElementById('iosSteps');
+    steps.classList.toggle('show');
+    return;
+  }
+  if(isIOS){
+    // iOS غير Safari: افتح في Safari
+    window.open('x-web-search://?q=' + encodeURIComponent(location.href));
+    showStatus('انسخ الرابط وافتحه في Safari', 'info');
+    return;
+  }
+  if(deferredPrompt){
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(function(result){
+      if(result.outcome === 'accepted'){
+        showStatus('جاري التثبيت...', 'success');
+      } else {
+        showStatus('يمكنك التثبيت لاحقاً من قائمة المتصفح', 'info');
+      }
+      deferredPrompt = null;
+    });
+  } else {
+    // fallback: افتح التطبيق مباشرة
+    openApp();
+  }
+}
+
+// ══ فتح في المتصفح ══
+function openApp(){
+  window.open(APP_URL, '_blank');
+}
+
+// ══ رسالة الحالة ══
+function showStatus(msg, type){
+  var el = document.getElementById('statusMsg');
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+}
+</script>
+</body>
+</html>

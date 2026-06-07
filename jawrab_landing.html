@@ -1,0 +1,421 @@
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;600;800&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css" />
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Tajawal',sans-serif; text-decoration:none; }
+  body { background-color:#ffffff; color:#1f2937; line-height:1.7; overflow-x:hidden; user-select:none; -webkit-user-select:none; }
+  .reveal { opacity:0; transform:translateY(20px); transition:opacity 0.8s cubic-bezier(0.2,0.8,0.2,1),transform 0.8s cubic-bezier(0.2,0.8,0.2,1); }
+  .reveal.visible { opacity:1; transform:translateY(0); }
+  header { text-align:center; padding:60px 20px 50px; background-color:#ffffff; }
+  header h1 { font-size:3.8rem; color:#1f2937; font-weight:800; margin-top:10px; padding:10px 0; display:block; line-height:1.3; }
+  header h1 span { color:#00bcd4; font-weight:900; position:relative; }
+  header p { font-size:1.25rem; color:#5d6d7e; max-width:800px; margin:30px auto 0; }
+  section { padding:80px 20px; text-align:center; }
+  h2 { font-size:2.6rem; color:#1f2937; margin-bottom:20px; font-weight:800; display:flex; align-items:center; justify-content:center; flex-direction:row-reverse; }
+  h2 i.heading-icon { color:#00bcd4; font-size:1.8rem; margin-right:15px; }
+  h2 span { color:#00bcd4; }
+  .subtitle { font-size:1.2rem; color:#7f8c9a; margin-bottom:50px; max-width:800px; margin-left:auto; margin-right:auto; }
+  .app-preview { display:flex; justify-content:center; align-items:center; height:550px; position:relative; margin-bottom:50px; perspective:1000px; cursor:grab; touch-action:pan-y; }
+  .app-preview:active { cursor:grabbing; }
+  .mockup-frame { position:absolute; width:280px; height:550px; background-color:#ffffff; border:1px solid #eee; border-radius:30px; box-shadow:0 15px 35px rgba(0,0,0,0.08); overflow:hidden; background-position:center center; background-repeat:no-repeat; background-size:100% 100%; transition:transform 0.8s cubic-bezier(0.68,-0.55,0.27,1.55),box-shadow 0.6s ease,opacity 0.6s ease,z-index 0s ease 0.4s; opacity:0; transform:scale(0.9) translateY(0px) rotateY(0deg); pointer-events:none; backface-visibility:hidden; }
+  .mockup-frame.active { opacity:1; transform:scale(1) translateY(0px) rotateY(0deg); box-shadow:0 25px 50px rgba(0,0,0,0.15); z-index:3; pointer-events:auto; }
+  .features-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(320px,1fr)); gap:30px; max-width:1200px; margin:0 auto; text-align:right; }
+  .feature-card { background:#ffffff; padding:30px; border-radius:15px; border-right:4px solid #00bcd4; box-shadow:0 5px 20px rgba(0,0,0,0.05); transition:box-shadow 0.3s ease,transform 0.3s ease; }
+  .feature-card:hover { transform:translateY(-5px); box-shadow:0 10px 30px rgba(0,0,0,0.1); }
+  .download { text-align:center; padding:100px 0; background:linear-gradient(145deg,#f0f8ff 0%,#e8f5fe 100%); }
+  .download h2 { max-width:800px; margin-left:auto; margin-right:auto; }
+  .download-content { display:flex; justify-content:center; align-items:center; gap:50px; margin-top:50px; }
+  .download-qr { background-color:#ffffff; padding:15px; border-radius:10px; box-shadow:0 5px 15px rgba(0,0,0,0.1); display:flex; flex-direction:column; align-items:center; gap:10px; transition:transform 0.3s ease; }
+  .download-qr:hover { transform:translateY(-5px); }
+  .download-qr img { width:130px; height:130px; }
+  .download a { padding:18px 50px; font-size:1.3rem; font-weight:700; color:#ffffff; border-radius:10px; background-image:linear-gradient(45deg,#00bcd4 0%,#0097a7 100%); box-shadow:0 8px 20px rgba(0,188,212,0.3); transition:all 0.3s ease; display:inline-flex; align-items:center; gap:5px; border:none; height:auto; margin:0; align-self:center; }
+  .download a:hover { transform:translateY(-3px) scale(1.02); box-shadow:0 12px 30px rgba(0,188,212,0.5); }
+  .download a:active { transform:translateY(0) scale(0.99); }
+  .download a .app-icon-small { width:28px; height:28px; object-fit:contain; margin-left:5px; vertical-align:middle; }
+
+  /* ══════════════════════════════════════
+     قسم تثبيت PWA
+  ══════════════════════════════════════ */
+  .pwa-section {
+    padding: 90px 20px;
+    background: linear-gradient(160deg, #0a0f2e 0%, #0d2761 60%, #0097a7 100%);
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  /* نجوم خلفية زخرفية */
+  .pwa-section::before {
+    content: '';
+    position: absolute; inset: 0;
+    background-image:
+      radial-gradient(1.5px 1.5px at 15% 20%, rgba(255,255,255,0.35) 0%, transparent 100%),
+      radial-gradient(1px 1px at 75% 15%, rgba(255,255,255,0.25) 0%, transparent 100%),
+      radial-gradient(2px 2px at 40% 70%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 85% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
+      radial-gradient(1.5px 1.5px at 25% 85%, rgba(255,255,255,0.2) 0%, transparent 100%),
+      radial-gradient(1px 1px at 60% 40%, rgba(255,255,255,0.15) 0%, transparent 100%);
+    pointer-events: none;
+  }
+  .pwa-section h2 {
+    color: #fff;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    font-size: 2.4rem;
+    position: relative;
+  }
+  .pwa-section h2 span { color: #00e5ff; }
+  .pwa-section .subtitle { color: rgba(255,255,255,0.65); margin-bottom: 50px; }
+
+  /* بطاقات الطرق */
+  .pwa-cards {
+    display: flex;
+    justify-content: center;
+    gap: 28px;
+    flex-wrap: wrap;
+    max-width: 780px;
+    margin: 0 auto 50px;
+    position: relative;
+  }
+  .pwa-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.13);
+    backdrop-filter: blur(12px);
+    border-radius: 20px;
+    padding: 32px 28px;
+    width: 220px;
+    transition: transform 0.3s ease, background 0.3s ease;
+    cursor: default;
+  }
+  .pwa-card:hover { transform: translateY(-6px); background: rgba(255,255,255,0.12); }
+  .pwa-card .pwa-card-icon {
+    font-size: 2.4rem;
+    margin-bottom: 14px;
+    display: block;
+  }
+  .pwa-card .pwa-card-title {
+    font-size: 1.05em; font-weight: 800; color: #fff;
+    margin-bottom: 8px; direction: rtl;
+  }
+  .pwa-card .pwa-card-desc {
+    font-size: 0.82em; color: rgba(255,255,255,0.55);
+    line-height: 1.6; direction: rtl;
+  }
+  .pwa-card.android .pwa-card-icon { color: #4caf50; }
+  .pwa-card.ios     .pwa-card-icon { color: #a0c4ff; }
+
+  /* الزر الرئيسي */
+  .pwa-main-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: linear-gradient(135deg, #00bcd4, #0097a7);
+    color: #fff;
+    font-size: 1.2rem;
+    font-weight: 800;
+    padding: 18px 48px;
+    border-radius: 50px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 8px 32px rgba(0,188,212,0.4), 0 0 0 0 rgba(0,229,255,0.3);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    position: relative;
+    animation: pwaGlow 2.5s ease-in-out infinite;
+    text-decoration: none;
+  }
+  .pwa-main-btn:hover {
+    transform: translateY(-3px) scale(1.03);
+    box-shadow: 0 14px 40px rgba(0,188,212,0.55), 0 0 0 6px rgba(0,229,255,0.15);
+  }
+  .pwa-main-btn i { font-size: 1.3em; }
+  @keyframes pwaGlow {
+    0%,100% { box-shadow: 0 8px 32px rgba(0,188,212,0.4), 0 0 0 0 rgba(0,229,255,0.25); }
+    50%      { box-shadow: 0 8px 32px rgba(0,188,212,0.5), 0 0 0 10px rgba(0,229,255,0); }
+  }
+
+  /* تعليمات iOS (مخفية بالافتراضي) */
+  .ios-instructions {
+    display: none;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 16px;
+    padding: 24px 28px;
+    max-width: 400px;
+    margin: 28px auto 0;
+    direction: rtl;
+    text-align: right;
+  }
+  .ios-instructions.show { display: block; animation: fadeIn 0.4s ease; }
+  .ios-instructions .ios-step {
+    display: flex; align-items: flex-start; gap: 12px;
+    margin-bottom: 14px; color: rgba(255,255,255,0.85); font-size: 0.92em;
+  }
+  .ios-instructions .ios-step:last-child { margin-bottom: 0; }
+  .ios-instructions .step-num {
+    background: #00bcd4; color: #fff;
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.78em; font-weight: 800; flex-shrink: 0; margin-top: 2px;
+  }
+  .ios-instructions .step-icon { font-size: 1.1em; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+
+  /* بادج "تم التثبيت" */
+  .pwa-installed-badge {
+    display: none;
+    align-items: center; gap: 10px;
+    background: rgba(76,175,80,0.15);
+    border: 1px solid rgba(76,175,80,0.35);
+    border-radius: 50px;
+    padding: 12px 28px;
+    color: #81c784; font-weight: 700; font-size: 1em;
+    margin-top: 20px;
+  }
+  .pwa-installed-badge.show { display: inline-flex; animation: fadeIn 0.4s ease; }
+
+  @media (max-width: 768px) {
+    header h1 { font-size:2.8rem; }
+    header p { font-size:1.1rem; margin-top:20px; }
+    h2 { font-size:2rem; }
+    .app-preview { height:450px; }
+    .mockup-frame { width:220px; height:430px; }
+    .download-content { flex-direction:column; align-items:center; gap:30px; }
+    .download a { font-size:1.1rem; padding:12px 35px; }
+    .pwa-cards { gap: 16px; }
+    .pwa-card { width: 160px; padding: 22px 16px; }
+    .pwa-section h2 { font-size: 1.9rem; }
+    .pwa-main-btn { font-size: 1.05rem; padding: 15px 32px; }
+  }
+</style>
+
+<header>
+  <h1 class="reveal header-title">Jawrab: <span>الترفيه المتكامل</span> بأناقة وسرعة</h1>
+  <p class="reveal header-text">تجربة مشاهدة صُممت للمستقبل. دمج سلس لـ القنوات المباشرة، مكتبة الفيديو، والمقاطع القصيرة الديناميكية في منصة واحدة فائقة الأداء والتصميم.</p>
+</header>
+
+<section>
+  <h2 class="reveal"><i class="heading-icon fa-solid fa-gem"></i> القيمة المطلقة: <span>ثلاثية Jawrab</span></h2>
+  <p class="subtitle reveal">نحن لا نقدم تطبيقًا، بل نقدم أسلوب حياة جديد في المشاهدة الرقمية.</p>
+  <div class="features-grid">
+    <div class="feature-card reveal" data-delay="0.1"><h3 dir="rtl"><i class="icon-fa fa-solid fa-bolt-lightning"></i> أداء صاروخي</h3><p>سرعة فائقة في التشغيل والتنقل. استمتع بمشاهدة بدون تأخير أو انقطاع مزعج.</p></div>
+    <div class="feature-card reveal" data-delay="0.2"><h3 dir="rtl"><i class="icon-fa fa-solid fa-wand-magic-sparkles"></i> إتقان التصميم</h3><p>واجهة مستخدم جمالية ونظيفة، صُممت بعناية لتوفر أقصى راحة للعين وسهولة في الاستخدام.</p></div>
+    <div class="feature-card reveal" data-delay="0.3"><h3 dir="rtl"><i class="icon-fa fa-solid fa-layer-group"></i> تكامل المحتوى</h3><p>منصة واحدة تغنيك عن الكل: بث مباشر عالي الجودة، فيديوهات منظمة، ومقاطع قصيرة ممتعة.</p></div>
+    <div class="feature-card reveal" data-delay="0.4"><h3 dir="rtl"><i class="icon-fa fa-solid fa-shield-halved"></i> جودة المحتوى</h3><p>نظام إبلاغ فوري لضمان أن كل ما تراه يعمل بأعلى جودة ممكنة وخالٍ من المشاكل.</p></div>
+  </div>
+</section>
+
+<section class="app-section channels" style="background-color:#f7f9fc;">
+  <h2 class="reveal"><i class="heading-icon fa-solid fa-tv"></i> القنوات المباشرة: <span>تجربة فورية</span></h2>
+  <p class="subtitle reveal">شاهد قنواتك المفضلة مباشرة. سجل مشاهدة دقيق يضمن لك عدم تفويت أي شيء.</p>
+  <div class="app-preview" id="channels-preview">
+    <div class="mockup-frame" data-src="https://i.suar.me/np6mE/l"></div>
+    <div class="mockup-frame" data-src="https://i.suar.me/OznNB/l"></div>
+    <div class="mockup-frame" data-src="https://i.suar.me/qn6QV/l"></div>
+  </div>
+</section>
+
+<section class="app-section videos">
+  <h2 class="reveal"><i class="heading-icon fa-solid fa-film"></i> مكتبة الفيديو: <span>اكتشف شغفك</span></h2>
+  <p class="subtitle reveal">محتوى مُنظم ومتجدد يوميًا. واجهة بسيطة تركز على المشاهدة فقط.</p>
+  <div class="app-preview" id="videos-preview">
+    <div class="mockup-frame" data-src="https://i.suar.me/op6Qx/l"></div>
+    <div class="mockup-frame" data-src="https://i.suar.me/xp6Qo/l"></div>
+    <div class="mockup-frame" data-src="https://i.suar.me/rp6Ql/l"></div>
+  </div>
+</section>
+
+<section class="app-section reels" style="background-color:#f7f9fc;">
+  <h2 class="reveal"><i class="heading-icon fa-solid fa-fire"></i> المقاطع القصيرة: <span>ديناميكية لا تتوقف</span></h2>
+  <p class="subtitle reveal">انتقالات ناعمة ومقاطع قصيرة وممتعة. متعة التمرير بلا حواجز.</p>
+  <div class="app-preview" id="reels-preview">
+    <div class="mockup-frame" data-src="https://i.suar.me/7aoKG/l"></div>
+    <div class="mockup-frame" data-src="https://i.suar.me/dpn5l/l"></div>
+    <div class="mockup-frame" data-src="https://i.suar.me/wpEQp/l"></div>
+  </div>
+</section>
+
+<!-- ══ قسم تثبيت PWA ══ -->
+<section class="pwa-section">
+  <h2 class="reveal">
+    ثبّت <span>Jawrab</span> على جهازك
+  </h2>
+  <p class="subtitle reveal">بدون متجر تطبيقات — مباشرة على شاشتك الرئيسية</p>
+
+  <div class="pwa-cards reveal" data-delay="0.1">
+    <div class="pwa-card android">
+      <span class="pwa-card-icon"><i class="fa-brands fa-android"></i></span>
+      <div class="pwa-card-title">Android وChrome</div>
+      <div class="pwa-card-desc">اضغط الزر أدناه وسيظهر مربع التثبيت تلقائياً من المتصفح</div>
+    </div>
+    <div class="pwa-card ios">
+      <span class="pwa-card-icon"><i class="fa-brands fa-apple"></i></span>
+      <div class="pwa-card-title">iPhone وiPad</div>
+      <div class="pwa-card-desc">افتح الرابط في Safari ثم اضغط الزر — ستظهر لك خطوات بسيطة</div>
+    </div>
+  </div>
+
+  <!-- الزر الرئيسي -->
+  <div style="position:relative; display:inline-block;">
+    <a class="pwa-main-btn reveal" id="pwaLandingBtn" data-delay="0.2"
+       href="https://chadistil.github.io/sw/666gf_v17.html" target="_blank">
+      <i class="fa-solid fa-mobile-screen-button"></i>
+      تثبيت التطبيق الآن
+    </a>
+  </div>
+
+  <!-- تعليمات iOS -->
+  <div class="ios-instructions" id="iosInstructions">
+    <div class="ios-step">
+      <span class="step-num">1</span>
+      <div>افتح هذا الرابط في متصفح <strong>Safari</strong> على جهازك</div>
+    </div>
+    <div class="ios-step">
+      <span class="step-num">2</span>
+      <div>اضغط على زر المشاركة <span class="step-icon">⬆️</span> في أسفل الشاشة</div>
+    </div>
+    <div class="ios-step">
+      <span class="step-num">3</span>
+      <div>اختر <strong>"إضافة إلى الشاشة الرئيسية"</strong> <span class="step-icon">➕</span></div>
+    </div>
+    <div class="ios-step">
+      <span class="step-num">4</span>
+      <div>اضغط <strong>"إضافة"</strong> وستجد أيقونة Jawrab على شاشتك</div>
+    </div>
+  </div>
+
+  <!-- بادج بعد التثبيت -->
+  <div class="pwa-installed-badge" id="pwaInstalledBadge">
+    <i class="fa-solid fa-circle-check"></i> تم تثبيت التطبيق بنجاح!
+  </div>
+</section>
+
+<div class="download">
+  <h2 class="reveal" style="flex-direction:column;">جاهز للترقية؟ <span>ابدأ تجربة Jawrab الآن!</span></h2>
+  <div class="download-content reveal" data-delay="0.2">
+    <div class="download-qr">
+      <img src="https://i.suar.me/A3Vn0/l" alt="QR Code" />
+      <p>امسح الكود ضوئيًا للتحميل المباشر</p>
+    </div>
+    <a href="https://www.dropbox.com/scl/fi/vqp3oykgw7yxaqe1hyedh/Jawrab.apk?rlkey=r9bq4o7nlbhzm0wiqrl3wg1lb&dl=1" download>
+      <img style="display:none" src="" alt="" class="app-icon-small" />
+      تحميل التطبيق (ملف APK)
+    </a>
+  </div>
+</div>
+
+<div class='jwrb-footer'>
+  <span class='jwrb-copy'>2026 © Jawrab</span>
+  <a class='jwrb-contact' href='mailto:contact@jawrab.com'>CONTACT</a>
+</div>
+<style>
+  .jwrb-footer { direction:rtl; background:#111; color:#f1f1f1; text-align:center; padding:14px 10px; font-size:15px; font-family:Arial,Helvetica,sans-serif; border-top:1px solid #222; }
+  .jwrb-footer .jwrb-copy { color:#bbb; }
+  .jwrb-footer .jwrb-contact { display:inline-block; margin-right:10px; background:#ff4b2b; color:#fff; padding:5px 16px 2px; border-radius:25px; font-weight:600; transition:all 0.3s ease; }
+  .jwrb-footer .jwrb-contact:hover { background:#ff6b4a; transform:scale(1.05); }
+  .jwrb-footer .jwrb-contact:focus { outline:none; box-shadow:none; }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Reveal Observer ──
+  const revealObs = new IntersectionObserver((entries, obs) => {
+    entries.forEach(entry => {
+      if(entry.isIntersecting){
+        const delay = parseFloat(entry.target.getAttribute('data-delay')) || 0;
+        entry.target.style.transitionDelay = delay + 's';
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.15 });
+  document.querySelectorAll('.reveal').forEach(el => {
+    if(!el.hasAttribute('data-delay')) el.setAttribute('data-delay','0');
+    revealObs.observe(el);
+  });
+
+  // ── Mockup Slider ──
+  function setupMockupSlider(previewId) {
+    const container = document.getElementById(previewId);
+    if(!container) return;
+    const frames = Array.from(container.querySelectorAll('.mockup-frame'));
+    let current = 0, intervalId, startX = 0, startY = 0, isDragging = false, isH = false;
+    frames.forEach(f => { const u = f.getAttribute('data-src'); f.style.backgroundImage = `url('${u}')`; new Image().src = u; });
+    function update() {
+      frames.forEach((f, i) => {
+        f.classList.remove('active'); f.style.pointerEvents = 'none';
+        f.style.zIndex = frames.length - Math.abs(i - current);
+        let x = 0, s = 1, o = 1, ry = 0;
+        if(i !== current){
+          let d = i - current;
+          if(d > frames.length/2) d -= frames.length;
+          if(d < -frames.length/2) d += frames.length;
+          x = (d < 0 ? '-' : '') + (20 + (Math.abs(d)-1)*15) + '%';
+          s = 0.9 - Math.abs(d)*0.1; o = 0.7 - Math.abs(d)*0.3; ry = 8*d;
+        } else { f.classList.add('active'); }
+        f.style.transform = `translateX(${x}) scale(${s}) rotateY(${ry}deg)`;
+        f.style.opacity = o;
+      });
+    }
+    function cycle(dir=1){ current=(current+dir+frames.length)%frames.length; update(); reset(); }
+    function reset(){ clearInterval(intervalId); if(container.classList.contains('in-viewport')) intervalId=setInterval(()=>cycle(1),3000); }
+    function onStart(e){ isDragging=true; isH=false; startX=(e.touches?e.touches[0].clientX:e.clientX); startY=(e.touches?e.touches[0].clientY:e.clientY); clearInterval(intervalId); container.style.cursor='grabbing'; }
+    function onMove(e){ if(!isDragging) return; const cx=e.touches?e.touches[0].clientX:e.clientX, cy=e.touches?e.touches[0].clientY:e.clientY; if(!isH&&Math.abs(cx-startX)>Math.abs(cy-startY)&&Math.abs(cx-startX)>15) isH=true; if(isH) e.preventDefault(); }
+    function onEnd(e){ if(!isDragging) return; isDragging=false; container.style.cursor='grab'; const ex=e.changedTouches?e.changedTouches[0].clientX:e.clientX, d=startX-ex; if(isH&&Math.abs(d)>50) cycle(d<0?-1:1); else reset(); isH=false; }
+    container.addEventListener('mousedown',onStart); document.addEventListener('mousemove',onMove); document.addEventListener('mouseup',onEnd);
+    container.addEventListener('touchstart',onStart); container.addEventListener('touchmove',onMove,{passive:false}); container.addEventListener('touchend',onEnd);
+    new IntersectionObserver(entries=>{ entries.forEach(e=>{ if(e.isIntersecting){container.classList.add('in-viewport');update();reset();}else{container.classList.remove('in-viewport');clearInterval(intervalId);intervalId=null;} }); },{threshold:0.5}).observe(container);
+  }
+  setupMockupSlider('channels-preview');
+  setupMockupSlider('videos-preview');
+  setupMockupSlider('reels-preview');
+
+  // ══ منطق زر PWA ══
+  const btn = document.getElementById('pwaLandingBtn');
+  const iosBox = document.getElementById('iosInstructions');
+  const badge = document.getElementById('pwaInstalledBadge');
+  const PWA_URL = 'https://chadistil.github.io/sw/666gf_v17.html';
+
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+  const isAndroid = /android/i.test(navigator.userAgent);
+  let deferredPrompt = null;
+
+  // Android: التقط حدث التثبيت
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredPrompt = e;
+    // غيّر الزر ليشغّل التثبيت مباشرة بدل فتح رابط
+    btn.removeAttribute('href');
+    btn.removeAttribute('target');
+    btn.style.cursor = 'pointer';
+  });
+
+  btn.addEventListener('click', async function(e) {
+    if(deferredPrompt) {
+      // Android مع PWA prompt
+      e.preventDefault();
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      deferredPrompt = null;
+      if(outcome === 'accepted'){
+        btn.style.display = 'none';
+        badge.classList.add('show');
+      }
+    } else if(isIOS) {
+      // iOS: أظهر التعليمات
+      e.preventDefault();
+      // أولاً افتح الرابط في Safari
+      window.open(PWA_URL, '_blank');
+      // ثم أظهر التعليمات
+      setTimeout(() => iosBox.classList.add('show'), 600);
+    }
+    // غير ذلك: يفتح الرابط كما هو (href عادي)
+  });
+
+  // إذا تم التثبيت
+  window.addEventListener('appinstalled', () => {
+    btn.style.display = 'none';
+    badge.classList.add('show');
+    iosBox.classList.remove('show');
+  });
+});
+</script>

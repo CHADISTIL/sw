@@ -304,7 +304,7 @@ if('serviceWorker' in navigator){
   <!-- الزر الرئيسي -->
   <div style="position:relative; display:inline-block;">
     <a class="pwa-main-btn reveal" id="pwaLandingBtn" data-delay="0.2"
-       href="https://chadistil.github.io/sw/666gf_v17.html" target="_blank">
+       href="https://chadistil.github.io/sw/666gf_v17.html?install=1" target="_blank">
       <i class="fa-solid fa-mobile-screen-button"></i>
       تثبيت التطبيق الآن
     </a>
@@ -421,7 +421,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const btn = document.getElementById('pwaLandingBtn');
   const iosBox = document.getElementById('iosInstructions');
   const badge = document.getElementById('pwaInstalledBadge');
-  const PWA_URL = 'https://chadistil.github.io/sw/666gf_v17.html';
+  const PWA_URL = 'https://chadistil.github.io/sw/666gf_v17.html?install=1';
 
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
   const isAndroid = /android/i.test(navigator.userAgent);

@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>محوّل الصوت والفيديو</title>
+<style>
+* { box-sizing: border-box; }
+body { margin:0; padding:20px; background:#0b1220; color:#fff; font-family:Arial,sans-serif; }
+.box { max-width:560px; margin:20px auto; padding:22px; background:#142035; border:1px solid #263751; border-radius:18px; }
+h2 { text-align:center; color:#00d9ff; margin:0 0 14px; }
+.tabs { display:flex; gap:8px; margin-bottom:14px; }
+.tab { flex:1; padding:12px; background:#0b1424; color:#c4d0e2; border:1px solid #263751; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; }
+.tab.on { background:#00c8d9; color:#00131b; border-color:#00c8d9; }
+p { color:#c4d0e2; line-height:1.8; font-size:15px; margin:8px 0; }
+input[type=file], select { width:100%; padding:14px; background:#0b1424; color:#fff; border:1px solid #263751; border-radius:10px; margin:10px 0; font-size:15px; }
+button.main { width:100%; padding:15px; background:#00c8d9; color:#00131b; border:0; border-radius:10px; font-size:17px; font-weight:bold; cursor:pointer; }
+button:disabled { opacity:.5; cursor:not-allowed; }
+progress { width:100%; height:14px; margin-top:16px; }
+.status { font-size:14px; overflow-wrap:anywhere; }
+.dl { display:none; margin-top:12px; padding:15px; background:#164c3a; color:#fff; text-align:center; text-decoration:none; border-radius:10px; font-weight:bold; }
+.panel { display:none; }
+.panel.on { display:block; }
+#install { display:none; margin:0 auto 10px; max-width:560px; width:100%; padding:12px; background:#263751; color:#fff; border:0; border-radius:10px; cursor:pointer; font-size:15px; }
+small { color:#8fa3bf; display:block; line-height:1.7; margin-top:10px; }
+</style>
+</head>
+<body>
+
+<button id="install">📲 تثبيت التطبيق على جهازك</button>
+
+<div class="box">
+  <h2>⚡ محوّل الصوت والفيديو</h2>
+
+  <div class="tabs">
+    <button class="tab on" data-t="a2v">صوت ← فيديو</button>
+    <button class="tab" data-t="v2a">فيديو ← صوت</button>
+  </div>
+
+  <!-- صوت إلى فيديو -->
+  <div class="panel on" id="a2v">
+    <p>يحوّل الملف الصوتي إلى فيديو MP4 أسود بسرعة، جاهز للرفع إلى YouTube.</p>
+    <input type="file" id="a2vFile" accept="audio/*">
+    <button class="main" id="a2vGo" disabled>إنشاء الفيديو</button>
+    <progress id="a2vBar" value="0" max="100"></progress>
+    <p class="status" id="a2vStatus">اختر ملفاً صوتياً للبدء.</p>
+    <a class="dl" id="a2vDl">تحميل</a>
+  </div>
+
+  <!-- فيديو إلى صوت -->
+  <div class="panel" id="v2a">
+    <p>يسحب الصوت من أي فيديو ويحفظه بصيغة M4A (AAC) بسرعة كبيرة.</p>
+    <input type="file" id="v2aFile" accept="video/*,audio/*">
+    <select id="v2aRate">
+      <option value="128000">جودة عادية (128 kbps)</option>
+      <option value="192000" selected>جودة جيدة (192 kbps)</option>
+      <option value="256000">جودة عالية (256 kbps)</option>
+    </select>
+    <button class="main" id="v2aGo" disabled>سحب الصوت</button>
+    <progress id="v2aBar" value="0" max="100"></progress>
+    <p class="status" id="v2aStatus">اختر فيديو للبدء.</p>
+    <a class="dl" id="v2aDl">تحميل</a>
+  </div>
+
+  <small>
+    ✅ كل المعالجة تتم داخل جهازك، ولا يُرفع أي ملف.<br>
+    💾 لا يُحفظ شيء على الجهاز إلا الملف الناتج الذي تنزّله.<br>
+    ⚠ الفيديوهات الضخمة جداً قد تستهلك ذاكرة مؤقتة أثناء المعالجة.
+  </small>
+</div>
+
+<script type="module">
+import { Muxer, ArrayBufferTarget } from "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.mjs";
+
+const $ = id => document.getElementById(id);
+const tick = () => new Promise(r => setTimeout(r, 0));
+const waitQueue = async (enc, max) => { while (enc.encodeQueueSize > max) await tick(); };
+const SR = 48000;
+
+/* ---------- تبويبات ---------- */
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === b));
+  document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === b.dataset.t));
+}));
+
+/* ---------- تثبيت PWA ---------- */
+let deferred = null;
+window.addEventListener("beforeinstallprompt", e => {
+  e.preventDefault(); deferred = e; $("install").style.display = "block";
+});
+$("install").addEventListener("click", async () => {
+  if (!deferred) return;
+  deferred.prompt(); await deferred.userChoice; deferred = null; $("install").style.display = "none";
+});
+if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(console.warn);
+
+/* ---------- أدوات مشتركة ---------- */
+function supported() {
+  return "VideoEncoder" in window && "AudioEncoder" in window && "AudioData" in window;
+}
+
+async function decodeFile(file) {
+  const ctx = new AudioContext({ sampleRate: SR });
+  try {
+    return await ctx.decodeAudioData(await file.arrayBuffer());
+  } finally {
+    ctx.close();
+  }
+}
+
+// يرمّز AudioBuffer إلى AAC ويرسله إلى الـ muxer
+async function encodeAudio(audioBuf, muxer, bitrate, onProgress, errRef) {
+  const channels = Math.min(2, audioBuf.numberOfChannels);
+  const cfg = { codec: "mp4a.40.2", sampleRate: SR, numberOfChannels: channels, bitrate };
+  const sup = await AudioEncoder.isConfigSupported(cfg);
+  if (!sup.supported) throw new Error("ترميز AAC غير مدعوم في هذا المتصفح");
+
+  const enc = new AudioEncoder({
+    output: (c, m) => muxer.addAudioChunk(c, m),
+    error: e => errRef.err = e
+  });
+  enc.configure(cfg);
+
+  const total = audioBuf.length;
+  const planes = [];
+  for (let c = 0; c < channels; c++) planes.push(audioBuf.getChannelData(c));
+
+  let pos = 0, n = 0;
+  while (pos < total) {
+    if (errRef.err) throw errRef.err;
+    const len = Math.min(SR, total - pos);
+    const data = new Float32Array(len * channels);
+    for (let c = 0; c < channels; c++) data.set(planes[c].subarray(pos, pos + len), c * len);
+    const ad = new AudioData({
+      format: "f32-planar", sampleRate: SR, numberOfFrames: len,
+      numberOfChannels: channels, timestamp: Math.round(pos / SR * 1e6), data
+    });
+    enc.encode(ad); ad.close();
+    pos += len;
+    if (++n % 10 === 0) { onProgress(pos / total); await waitQueue(enc, 20); await tick(); }
+  }
+  await enc.flush();
+  enc.close();
+  if (errRef.err) throw errRef.err;
+  return channels;
+}
+
+function showResult(a, blob, name, label) {
+  const url = URL.createObjectURL(blob);
+  if (a._url) URL.revokeObjectURL(a._url);
+  a._url = url;
+  a.href = url; a.download = name;
+  a.textContent = label + " (" + (blob.size / 1048576).toFixed(2) + " MB)";
+  a.style.display = "block";
+}
+
+function wire(prefix, onRun) {
+  const fileEl = $(prefix + "File"), go = $(prefix + "Go"), st = $(prefix + "Status"),
+        bar = $(prefix + "Bar"), dl = $(prefix + "Dl");
+  let file = null;
+  fileEl.addEventListener("change", () => {
+    file = fileEl.files[0] || null;
+    go.disabled = !file; dl.style.display = "none"; bar.value = 0;
+    if (file) st.textContent = "تم اختيار: " + file.name;
+  });
+  go.addEventListener("click", async () => {
+    if (!file) return;
+    if (!supported()) { st.textContent = "المتصفح لا يدعم WebCodecs. استخدم Chrome أو Edge حديثاً."; return; }
+    go.disabled = true; fileEl.disabled = true; dl.style.display = "none"; bar.value = 0;
+    const t0 = performance.now();
+    try {
+      await onRun(file, { st, bar, dl });
+      st.textContent = "تم في " + ((performance.now() - t0) / 1000).toFixed(1) + " ثانية فقط!";
+      bar.value = 100;
+    } catch (e) {
+      console.error(e);
+      st.textContent = "تعذر التحويل: " + (e.message || e);
+    } finally {
+      go.disabled = false; fileEl.disabled = false;
+    }
+  });
+}
+
+/* ---------- صوت ← فيديو ---------- */
+wire("a2v", async (file, { st, bar, dl }) => {
+  st.textContent = "جاري قراءة الصوت...";
+  const audioBuf = await decodeFile(file);
+  const duration = audioBuf.duration;
+  const W = 640, H = 360;
+
+  const vCfg = { codec: "avc1.42001f", width: W, height: H, bitrate: 30000, framerate: 1 };
+  const vSup = await VideoEncoder.isConfigSupported(vCfg);
+  if (!vSup.supported) throw new Error("ترميز H.264 غير مدعوم في هذا المتصفح");
+
+  const channels = Math.min(2, audioBuf.numberOfChannels);
+  const muxer = new Muxer({
+    target: new ArrayBufferTarget(),
+    video: { codec: "avc", width: W, height: H },
+    audio: { codec: "aac", sampleRate: SR, numberOfChannels: channels },
+    fastStart: "in-memory"
+  });
+
+  const errRef = { err: null };
+  st.textContent = "جاري ترميز الصوت...";
+  await encodeAudio(audioBuf, muxer, 128000, p => bar.value = p * 70, errRef);
+
+  st.textContent = "جاري إنشاء الفيديو...";
+  const vEnc = new VideoEncoder({
+    output: (c, m) => muxer.addVideoChunk(c, m),
+    error: e => errRef.err = e
+  });
+  vEnc.configure(vCfg);
+
+  const cv = new OffscreenCanvas(W, H);
+  const g = cv.getContext("2d");
+  g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+
+  const frames = Math.max(1, Math.ceil(duration));
+  for (let i = 0; i < frames; i++) {
+    if (errRef.err) throw errRef.err;
+    const vf = new VideoFrame(cv, { timestamp: i * 1e6, duration: 1e6 });
+    vEnc.encode(vf, { keyFrame: i % 10 === 0 });
+    vf.close();
+    if (i % 50 === 0) { bar.value = 70 + (i / frames) * 25; await waitQueue(vEnc, 30); await tick(); }
+  }
+  await vEnc.flush();
+  vEnc.close();
+  if (errRef.err) throw errRef.err;
+  muxer.finalize();
+
+  showResult(dl, new Blob([muxer.target.buffer], { type: "video/mp4" }), "audio-video.mp4", "تحميل الفيديو MP4");
+});
+
+/* ---------- فيديو ← صوت ---------- */
+wire("v2a", async (file, { st, bar, dl }) => {
+  st.textContent = "جاري قراءة الصوت من الملف...";
+  let audioBuf;
+  try {
+    audioBuf = await decodeFile(file);
+  } catch (e) {
+    throw new Error("تعذر استخراج الصوت. قد يكون الملف بلا صوت أو بصيغة غير مدعومة في المتصفح.");
+  }
+  const channels = Math.min(2, audioBuf.numberOfChannels);
+  const muxer = new Muxer({
+    target: new ArrayBufferTarget(),
+    audio: { codec: "aac", sampleRate: SR, numberOfChannels: channels },
+    fastStart: "in-memory"
+  });
+
+  st.textContent = "جاري ترميز الصوت...";
+  const errRef = { err: null };
+  await encodeAudio(audioBuf, muxer, parseInt($("v2aRate").value, 10), p => bar.value = p * 95, errRef);
+  muxer.finalize();
+
+  const base = file.name.replace(/\.[^.]+$/, "") || "audio";
+  showResult(dl, new Blob([muxer.target.buffer], { type: "audio/mp4" }), base + ".m4a", "تحميل الصوت M4A");
+});
+</script>
+</body>
+</html>

@@ -259,25 +259,51 @@ function loadMP4Box() {
   return mp4boxPromise;
 }
 
-const READ_CHUNK = 8 * 1024 * 1024;
+// قراءة رأس صندوق MP4 دون تحميل الملف
+async function readHeader(file, off) {
+  const dv = new DataView(await file.slice(off, off + 16).arrayBuffer());
+  if (dv.byteLength < 8) return null;
+  let size = dv.getUint32(0);
+  const type = String.fromCharCode(dv.getUint8(4), dv.getUint8(5), dv.getUint8(6), dv.getUint8(7));
+  if (size === 1 && dv.byteLength >= 16) size = Number(dv.getBigUint64(8));
+  else if (size === 0) size = file.size - off;
+  return { type, size };
+}
 
-// يقرأ بنية الملف ويعيد قائمة المسارات الصوتية
+// يقفز فوق mdat الضخم ويقرأ ftyp + moov فقط (بضعة ميغابايت)
+async function loadMoov(file) {
+  let off = 0, ftyp = null, moov = null;
+  while (off < file.size) {
+    const h = await readHeader(file, off);
+    if (!h || h.size < 8) break;
+    if (h.type === "ftyp") ftyp = await file.slice(off, off + h.size).arrayBuffer();
+    if (h.type === "moov") { moov = await file.slice(off, off + h.size).arrayBuffer(); break; }
+    off += h.size;
+  }
+  if (!moov) return null;
+  const fl = ftyp ? ftyp.byteLength : 0;
+  const out = new Uint8Array(fl + moov.byteLength);
+  if (ftyp) out.set(new Uint8Array(ftyp), 0);
+  out.set(new Uint8Array(moov), fl);
+  return out.buffer;
+}
+
 async function probeTracks(file) {
   const MP4Box = await loadMP4Box();
+  const buf = await loadMoov(file);
+  if (!buf) return null;
   const mp4 = MP4Box.createFile();
-  let info = null, failed = null;
+  let info = null;
   mp4.onReady = i => { info = i; };
-  mp4.onError = e => { failed = e; };
-  let off = 0;
-  while (!info && !failed && off < file.size) {
-    const buf = await file.slice(off, off + READ_CHUNK).arrayBuffer();
-    buf.fileStart = off;
-    const next = mp4.appendBuffer(buf);
-    off = (typeof next === "number" && next > off) ? next : off + buf.byteLength;
-  }
-  if (!info) { try { mp4.flush(); } catch (e) {} }
+  buf.fileStart = 0;
+  mp4.appendBuffer(buf);
+  try { mp4.flush(); } catch (e) {}
   if (!info || !info.audioTracks || !info.audioTracks.length) return null;
-  return info.audioTracks;
+  const tracks = info.audioTracks.filter(t => {
+    const trak = mp4.getTrackById(t.id);
+    return trak && trak.samples && trak.samples.length;
+  });
+  return tracks.length ? { mp4, tracks } : null;
 }
 
 function langName(code) {
@@ -292,13 +318,14 @@ async function onPickV2A(file, st) {
   trackSel.innerHTML = "";
   if (!file) return;
   st.textContent = "جاري فحص المسارات الصوتية...";
-  let tracks = null;
-  try { tracks = await probeTracks(file); } catch (e) { console.warn(e); }
+  let pr = null;
+  try { pr = await probeTracks(file); } catch (e) { console.warn(e); }
+  const tracks = pr && pr.tracks;
   if (!tracks) {
     st.textContent = "تم اختيار: " + file.name + " — لم يتم التعرف على مسارات متعددة، سيُستخرج المسار الافتراضي.";
     return;
   }
-  probe = { tracks };
+  probe = pr;
   tracks.forEach((t, i) => {
     const o = document.createElement("option");
     o.value = t.id;
@@ -338,123 +365,86 @@ function mixTo2(ad) {
   });
 }
 
-// استخراج مسار محدد من MP4/MOV/M4A
-async function extractTrack(file, trackId, rateVal, { st, bar }) {
-  const MP4Box = await loadMP4Box();
-  const mp4 = MP4Box.createFile();
-  const errRef = { err: null };
-  let track = null, muxer = null, passthrough = false, decoder = null, encoder = null;
-  let firstChunk = true, t0 = null, outCh = 2, outSR = SR, processed = 0, readyFired = false;
+// استخراج مسار محدد: نقرأ بايتات الصوت فقط من الملف، لا الفيديو
+async function extractTrack(file, pr, trackId, rateVal, { bar }) {
+  const track = pr.tracks.find(t => String(t.id) === String(trackId)) || pr.tracks[0];
+  const trak = pr.mp4.getTrackById(track.id);
+  const samples = trak.samples;
+  const sr = track.audio.sample_rate, nch = track.audio.channel_count;
+  const isAAC = /^mp4a\.40\.(2|5|29)$/.test(track.codec);
 
-  mp4.onError = e => errRef.err = new Error("خطأ في قراءة الملف: " + e);
-
-  const getDesc = trak => {
+  let desc = null;
+  try {
     const entry = trak.mdia.minf.stbl.stsd.entries[0];
-    const box = entry.esds || entry.dfLa || entry.dOps;
     if (entry.esds) {
       const d = entry.esds.esd.descs[0] && entry.esds.esd.descs[0].descs[0];
-      return d ? new Uint8Array(d.data) : null;
+      if (d) desc = new Uint8Array(d.data);
     }
-    return null;
-  };
+  } catch (e) {}
 
-  const ready = new Promise((res, rej) => {
-    mp4.onReady = async info => {
-      readyFired = true;
-      try {
-        track = info.audioTracks.find(t => String(t.id) === String(trackId)) || info.audioTracks[0];
-        const trak = mp4.getTrackById(track.id);
-        const sr = track.audio.sample_rate, nch = track.audio.channel_count;
-        const isAAC = /^mp4a\.40\.(2|5|29)$/.test(track.codec);
-        const desc = isAAC ? getDesc(trak) : null;
-        passthrough = rateVal === "copy" && isAAC && !!desc && nch <= 2;
-        outCh = Math.min(2, nch);
-        outSR = Math.round(sr);
+  const passthrough = rateVal === "copy" && isAAC && !!desc && nch <= 2;
+  const outCh = Math.min(2, nch), outSR = Math.round(sr);
+  const errRef = { err: null };
 
-        muxer = new Muxer({
-          target: new ArrayBufferTarget(),
-          audio: { codec: "aac", sampleRate: outSR, numberOfChannels: outCh },
-          fastStart: "in-memory"
-        });
-
-        if (passthrough) {
-          track._desc = desc;
-        } else {
-          const dcfg = { codec: track.codec, sampleRate: sr, numberOfChannels: nch };
-          if (desc) dcfg.description = desc;
-          const dsup = await AudioDecoder.isConfigSupported(dcfg);
-          if (!dsup.supported) throw new Error("صيغة هذا المسار (" + track.codec + ") غير مدعومة للفك في المتصفح");
-          const bitrate = rateVal === "copy" ? 192000 : parseInt(rateVal, 10);
-          const ecfg = { codec: "mp4a.40.2", sampleRate: outSR, numberOfChannels: outCh, bitrate };
-          const esup = await AudioEncoder.isConfigSupported(ecfg);
-          if (!esup.supported) throw new Error("ترميز AAC غير مدعوم في هذا المتصفح");
-          encoder = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => errRef.err = e });
-          encoder.configure(ecfg);
-          decoder = new AudioDecoder({
-            output: ad => {
-              try { encoder.encode(ad.numberOfChannels > 2 ? mixTo2(ad) : ad); } finally { ad.close(); }
-            },
-            error: e => errRef.err = e
-          });
-          decoder.configure(dcfg);
-        }
-
-        mp4.onSamples = (id, user, samples) => {
-          processed += samples.length;
-          for (const s of samples) {
-            if (t0 === null) t0 = s.cts;
-            const chunk = new EncodedAudioChunk({
-              type: s.is_sync ? "key" : "delta",
-              timestamp: Math.max(0, Math.round((s.cts - t0) * 1e6 / s.timescale)),
-              duration: Math.round(s.duration * 1e6 / s.timescale),
-              data: s.data
-            });
-            if (passthrough) {
-              if (firstChunk) {
-                muxer.addAudioChunk(chunk, { decoderConfig: { codec: "mp4a.40.2", sampleRate: outSR, numberOfChannels: outCh, description: track._desc } });
-                firstChunk = false;
-              } else muxer.addAudioChunk(chunk);
-            } else decoder.decode(chunk);
-          }
-          mp4.releaseUsedSamples(id, samples[samples.length - 1].number + 1);
-        };
-        mp4.setExtractionOptions(track.id, null, { nbSamples: 500 });
-        mp4.start();
-        res();
-      } catch (e) { rej(e); }
-    };
+  const muxer = new Muxer({
+    target: new ArrayBufferTarget(),
+    audio: { codec: "aac", sampleRate: outSR, numberOfChannels: outCh },
+    fastStart: "in-memory"
   });
 
-  let started = false;
-  ready.then(() => { started = true; }, () => {});
-
-  const pump = async from => {
-    let off = from;
-    while (off < file.size) {
-      if (errRef.err) throw errRef.err;
-      const buf = await file.slice(off, off + READ_CHUNK).arrayBuffer();
-      buf.fileStart = off;
-      const next = mp4.appendBuffer(buf);
-      off = (typeof next === "number" && next > off) ? next : off + buf.byteLength;
-      if (readyFired) await ready;      // يرمي الخطأ إن فشلت التهيئة
-      await tick();
-      if (started) {
-        bar.value = Math.min(95, (off / file.size) * 95);
-        if (decoder) { await waitQueue(decoder, 200); await waitQueue(encoder, 50); }
-      }
-    }
-  };
-
-  await pump(0);
-  await ready;
-  mp4.flush();
-  // ملفات moov في النهاية: نعيد القراءة من بداية البيانات
-  if (processed < track.nb_samples && !errRef.err) {
-    const sk = mp4.seek(0, true);
-    await pump(sk && typeof sk.offset === "number" ? sk.offset : 0);
-    mp4.flush();
+  let decoder = null, encoder = null;
+  if (!passthrough) {
+    const dcfg = { codec: track.codec, sampleRate: sr, numberOfChannels: nch };
+    if (desc) dcfg.description = desc;
+    const dsup = await AudioDecoder.isConfigSupported(dcfg);
+    if (!dsup.supported) throw new Error("صيغة هذا المسار (" + track.codec + ") غير مدعومة للفك في المتصفح");
+    const bitrate = rateVal === "copy" ? 192000 : parseInt(rateVal, 10);
+    const ecfg = { codec: "mp4a.40.2", sampleRate: outSR, numberOfChannels: outCh, bitrate };
+    const esup = await AudioEncoder.isConfigSupported(ecfg);
+    if (!esup.supported) throw new Error("ترميز AAC غير مدعوم في هذا المتصفح");
+    encoder = new AudioEncoder({ output: (c, m) => muxer.addAudioChunk(c, m), error: e => errRef.err = e });
+    encoder.configure(ecfg);
+    decoder = new AudioDecoder({
+      output: ad => { try { encoder.encode(ad.numberOfChannels > 2 ? mixTo2(ad) : ad); } finally { ad.close(); } },
+      error: e => errRef.err = e
+    });
+    decoder.configure(dcfg);
   }
-  if (errRef.err) throw errRef.err;
+
+  const t0 = samples[0].cts;
+  const n = samples.length;
+  let first = true, i = 0, batches = 0;
+  const MAXB = 4 * 1024 * 1024;
+
+  while (i < n) {
+    if (errRef.err) throw errRef.err;
+    // دمج العينات المتجاورة في الملف بقراءة واحدة
+    let j = i, start = samples[i].offset, end = start + samples[i].size;
+    while (j + 1 < n && samples[j + 1].offset === end && end - start < MAXB) { j++; end += samples[j].size; }
+    const buf = await file.slice(start, end).arrayBuffer();
+    for (let k = i; k <= j; k++) {
+      const s = samples[k];
+      const chunk = new EncodedAudioChunk({
+        type: s.is_sync === false ? "delta" : "key",
+        timestamp: Math.max(0, Math.round((s.cts - t0) * 1e6 / s.timescale)),
+        duration: Math.round(s.duration * 1e6 / s.timescale),
+        data: new Uint8Array(buf, s.offset - start, s.size)
+      });
+      if (passthrough) {
+        if (first) {
+          muxer.addAudioChunk(chunk, { decoderConfig: { codec: "mp4a.40.2", sampleRate: outSR, numberOfChannels: outCh, description: desc } });
+          first = false;
+        } else muxer.addAudioChunk(chunk);
+      } else decoder.decode(chunk);
+    }
+    i = j + 1;
+    if (++batches % 20 === 0) {
+      bar.value = (i / n) * 95;
+      if (decoder) { await waitQueue(decoder, 200); await waitQueue(encoder, 50); }
+      await tick();
+    }
+  }
+
   if (decoder) { await decoder.flush(); decoder.close(); }
   if (encoder) { await encoder.flush(); encoder.close(); }
   if (errRef.err) throw errRef.err;
@@ -471,10 +461,13 @@ wire("v2a", async (file, { st, bar, dl }) => {
     const tid = trackSel.value;
     const idx = probe.tracks.findIndex(t => String(t.id) === String(tid));
     st.textContent = "جاري استخراج المسار " + (idx + 1) + "...";
-    blob = await extractTrack(file, tid, rateVal, { st, bar });
+    blob = await extractTrack(file, probe, tid, rateVal, { bar });
     if (probe.tracks.length > 1) suffix = "-track" + (idx + 1);
   } else {
     // احتياطي: المسار الافتراضي للمتصفح (MKV/WebM وغيرها)
+    if (file.size > 400 * 1024 * 1024) {
+      throw new Error("هذه الصيغة غير MP4 والملف كبير، ولا يمكن فكّه كاملاً في الذاكرة. حوّله أولاً إلى MP4 (أو استخدم ملف MP4/MOV).");
+    }
     st.textContent = "جاري قراءة الصوت من الملف...";
     let audioBuf;
     try { audioBuf = await decodeFile(file); }

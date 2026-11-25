@@ -1,4 +1,4 @@
-const CACHE = "av-converter-v4";
+const CACHE = "av-converter-v5";
 const ASSETS = ["./", "./index.html", "./manifest.webmanifest", "./icon-192.png", "./icon-512.png"];
 
 self.addEventListener("install", e => {
@@ -17,7 +17,7 @@ self.addEventListener("fetch", e => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  const ok = url.origin === location.origin || url.hostname === "cdn.jsdelivr.net";
+  const ok = url.origin === location.origin || url.hostname === "cdn.jsdelivr.net" || url.hostname === "fonts.googleapis.com" || url.hostname === "fonts.gstatic.com";
   if (!ok) return;
 
   e.respondWith(

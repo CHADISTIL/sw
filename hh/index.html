@@ -11,24 +11,36 @@
 <style>
 * { box-sizing: border-box; }
 body { margin:0; padding:20px; background:#0b1220; color:#fff; font-family:Arial,sans-serif; }
-.box { max-width:560px; margin:20px auto; padding:22px; background:#142035; border:1px solid #263751; border-radius:18px; }
+.box { max-width:600px; margin:20px auto; padding:22px; background:#142035; border:1px solid #263751; border-radius:18px; }
 h2 { text-align:center; color:#00d9ff; margin:0 0 14px; }
 .tabs { display:flex; gap:8px; margin-bottom:14px; }
 .tab { flex:1; padding:12px; background:#0b1424; color:#c4d0e2; border:1px solid #263751; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; }
 .tab.on { background:#00c8d9; color:#00131b; border-color:#00c8d9; }
 p { color:#c4d0e2; line-height:1.8; font-size:15px; margin:8px 0; }
 label.lbl { display:block; color:#8fa3bf; font-size:13px; margin-top:10px; }
-input[type=file], select { width:100%; padding:14px; background:#0b1424; color:#fff; border:1px solid #263751; border-radius:10px; margin:6px 0; font-size:15px; }
+input[type=file], input[type=number], select, textarea { width:100%; padding:12px; background:#0b1424; color:#fff; border:1px solid #263751; border-radius:10px; margin:6px 0; font-size:15px; font-family:inherit; }
+textarea { min-height:110px; resize:vertical; line-height:1.7; }
+input[type=color] { width:100%; height:42px; padding:2px; background:#0b1424; border:1px solid #263751; border-radius:10px; margin:6px 0; }
+input[type=range] { width:100%; margin:8px 0; accent-color:#00c8d9; }
 button.main { width:100%; padding:15px; margin-top:8px; background:#00c8d9; color:#00131b; border:0; border-radius:10px; font-size:17px; font-weight:bold; cursor:pointer; }
+button.cancel { background:#7a2b36; color:#fff; display:none; }
 button:disabled { opacity:.5; cursor:not-allowed; }
 progress { width:100%; height:14px; margin-top:16px; }
 .status { font-size:14px; overflow-wrap:anywhere; }
 .dl { display:none; margin-top:12px; padding:15px; background:#164c3a; color:#fff; text-align:center; text-decoration:none; border-radius:10px; font-weight:bold; }
 .panel { display:none; }
 .panel.on { display:block; }
-#install { display:none; margin:0 auto 10px; max-width:560px; width:100%; padding:12px; background:#263751; color:#fff; border:0; border-radius:10px; cursor:pointer; font-size:15px; }
-#a2vPrev { display:none; max-width:100%; max-height:140px; margin:8px auto; border-radius:8px; border:1px solid #263751; }
+#install { display:none; margin:0 auto 10px; max-width:600px; width:100%; padding:12px; background:#263751; color:#fff; border:0; border-radius:10px; cursor:pointer; font-size:15px; }
 small { color:#8fa3bf; display:block; line-height:1.7; margin-top:10px; }
+details { background:#0f1a2d; border:1px solid #263751; border-radius:12px; margin:10px 0; padding:0 12px; }
+summary { padding:13px 0; cursor:pointer; font-weight:bold; color:#00d9ff; font-size:15px; }
+details[open] { padding-bottom:12px; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+.chk { display:flex; align-items:center; gap:8px; color:#e6eefb; margin:9px 0; font-size:15px; }
+.chk input { width:20px; height:20px; accent-color:#00c8d9; }
+.chk.main { background:#16283f; padding:10px 12px; border-radius:10px; font-weight:bold; }
+.hint { color:#8fa3bf; font-size:12.5px; line-height:1.7; margin:4px 0; }
+#pv { width:100%; aspect-ratio:16/9; background:#000; border:1px solid #263751; border-radius:10px; display:block; margin:8px 0; }
 </style>
 </head>
 <body>
@@ -43,33 +55,167 @@ small { color:#8fa3bf; display:block; line-height:1.7; margin-top:10px; }
     <button class="tab" data-t="v2a">فيديو ← صوت</button>
   </div>
 
-  <!-- صوت إلى فيديو -->
+  <!-- ===================== صوت إلى فيديو ===================== -->
   <div class="panel on" id="a2v">
-    <p>يحوّل الملف الصوتي إلى فيديو MP4 بخلفية سوداء أو بصورة تختارها، جاهز للرفع إلى YouTube.</p>
     <label class="lbl">الملف الصوتي</label>
     <input type="file" id="a2vFile" accept="audio/*,.m4a,.mp3,.wav,.aac,.ogg,.flac,.opus">
-    <label class="lbl">صورة الخلفية (اختياري، وإلا تكون سوداء)</label>
-    <input type="file" id="a2vImg" accept="image/*">
-    <img id="a2vPrev" alt="">
-    <label class="lbl">ملاءمة الصورة</label>
-    <select id="a2vFit">
-      <option value="contain" selected>كاملة داخل الإطار (مع حواف سوداء)</option>
-      <option value="cover">ملء الإطار (قد يُقصّ جزء منها)</option>
-    </select>
-    <label class="lbl">جودة الفيديو</label>
-    <select id="a2vQuality">
-      <option value="640,360,150000">منخفضة - 360p (أصغر حجم)</option>
-      <option value="854,480,250000">متوسطة - 480p</option>
-      <option value="1280,720,450000" selected>عالية - 720p</option>
-      <option value="1920,1080,800000">عالية جداً - 1080p</option>
-    </select>
+
+    <canvas id="pv" width="640" height="360"></canvas>
+    <div class="hint">↑ معاينة حيّة بإعداداتك الحالية (بيانات إيقاع تجريبية). تتحدث تلقائياً عند أي تغيير.</div>
+
+    <details open>
+      <summary>🎬 الفيديو والخلفية</summary>
+      <label class="lbl">صورة الخلفية (اختياري)</label>
+      <input type="file" id="a2vImg" accept="image/*">
+      <div class="row">
+        <div><label class="lbl">لون الخلفية</label><input type="color" id="a2vBg" value="#000000"></div>
+        <div><label class="lbl">ملاءمة الصورة</label>
+          <select id="a2vFit">
+            <option value="contain">كاملة (مع حواف)</option>
+            <option value="cover" selected>ملء الإطار</option>
+          </select></div>
+      </div>
+      <label class="lbl">تعتيم الصورة: <span id="a2vDimV">25</span>%</label>
+      <input type="range" id="a2vDim" min="0" max="85" value="25">
+      <div class="row">
+        <div><label class="lbl">جودة الفيديو</label>
+          <select id="a2vQuality">
+            <option value="640,360">360p (أخف)</option>
+            <option value="854,480">480p</option>
+            <option value="1280,720" selected>720p</option>
+            <option value="1920,1080">1080p (أثقل)</option>
+          </select></div>
+        <div><label class="lbl">عدد الإطارات/ثانية</label>
+          <select id="a2vFps">
+            <option value="10">10</option>
+            <option value="15" selected>15</option>
+            <option value="24">24</option>
+            <option value="30">30 (أنعم)</option>
+          </select></div>
+      </div>
+      <div class="hint">عند عدم تفعيل أي مؤثر أو كلمات يُنشأ فيديو ثابت بإطار واحد في الثانية، وهو الأسرع والأصغر حجماً.</div>
+    </details>
+
+    <details>
+      <summary>📝 الكلمات / الترجمة (للأغاني)</summary>
+      <label class="chk main"><input type="checkbox" id="lyrOn"> تفعيل عرض الكلمات</label>
+      <label class="lbl">ملف كلمات (LRC أو SRT أو VTT أو TXT)</label>
+      <input type="file" id="lyrFile" accept=".lrc,.srt,.vtt,.txt,text/plain">
+      <label class="lbl">أو الصق/عدّل الكلمات هنا</label>
+      <textarea id="lyrText" placeholder="[00:12.50]كلمات السطر الأول&#10;[00:17.00]كلمات السطر الثاني&#10;&#10;أو نص عادي بدون أوقات (يُوزَّع تلقائياً على مدة الأغنية)"></textarea>
+      <div class="hint">للتزامن الدقيق استخدم LRC أو SRT. النص العادي يُوزَّع تقريباً حسب طول الأسطر.</div>
+      <div class="row">
+        <div><label class="lbl">أسلوب العرض</label>
+          <select id="lyrMode">
+            <option value="fill" selected>كاريوكي (تلوين تدريجي)</option>
+            <option value="single">سطر واحد بحركة ظهور</option>
+            <option value="scroll">ثلاثة أسطر متحركة</option>
+          </select></div>
+        <div><label class="lbl">الخط</label>
+          <select id="lyrFont">
+            <option value="Cairo" selected>Cairo (عربي)</option>
+            <option value="Tajawal">Tajawal (عربي)</option>
+            <option value="Amiri">Amiri (نسخ)</option>
+            <option value="Lalezar">Lalezar (عريض)</option>
+            <option value="Changa">Changa</option>
+            <option value="Aref Ruqaa">Aref Ruqaa (رقعة)</option>
+            <option value="Reem Kufi">Reem Kufi (كوفي)</option>
+            <option value="Arial">Arial</option>
+            <option value="Tahoma">Tahoma</option>
+            <option value="Georgia">Georgia</option>
+            <option value="Impact">Impact</option>
+            <option value="Courier New">Courier New</option>
+          </select></div>
+      </div>
+      <div class="hint">خطوط Google (Cairo وغيرها) تُحمَّل من الإنترنت؛ دون اتصال يُستبدل بخط النظام.</div>
+      <label class="lbl">حجم الخط: <span id="lyrSizeV">7</span>% من ارتفاع الفيديو</label>
+      <input type="range" id="lyrSize" min="3" max="14" step="0.5" value="7">
+      <div class="row">
+        <div><label class="lbl">لون النص</label><input type="color" id="lyrColor" value="#ffffff"></div>
+        <div><label class="lbl">لون التلوين (المُغنّى)</label><input type="color" id="lyrHi" value="#ffd23f"></div>
+      </div>
+      <div class="row">
+        <div><label class="lbl">حواف النص</label>
+          <select id="lyrEdge">
+            <option value="outline" selected>إطار أسود</option>
+            <option value="shadow">ظل</option>
+            <option value="box">مربع خلفية</option>
+            <option value="none">بدون</option>
+          </select></div>
+        <div><label class="lbl">موضع النص</label>
+          <select id="lyrPos">
+            <option value="bottom" selected>أسفل</option>
+            <option value="center">وسط</option>
+            <option value="top">أعلى</option>
+          </select></div>
+      </div>
+      <label class="lbl">تقديم/تأخير الكلمات (ثانية): <span id="lyrOffV">0</span></label>
+      <input type="range" id="lyrOffset" min="-10" max="10" step="0.1" value="0">
+    </details>
+
+    <details>
+      <summary>📊 مؤثر الإيقاع (موجات الصوت)</summary>
+      <label class="chk main"><input type="checkbox" id="vizOn"> تفعيل مؤثر الإيقاع</label>
+      <div class="row">
+        <div><label class="lbl">الشكل</label>
+          <select id="vizShape">
+            <option value="bars" selected>أعمدة</option>
+            <option value="mirror">أعمدة متماثلة</option>
+            <option value="wave">موجة خطية</option>
+            <option value="circle">أعمدة دائرية</option>
+            <option value="ring">حلقة موجية</option>
+            <option value="dots">نقاط</option>
+          </select></div>
+        <div><label class="lbl">الموضع</label>
+          <select id="vizPos">
+            <option value="bottom">أسفل</option>
+            <option value="center" selected>وسط</option>
+            <option value="top">أعلى</option>
+          </select></div>
+      </div>
+      <div class="row">
+        <div><label class="lbl">اللون الأول</label><input type="color" id="vizC1" value="#00e5ff"></div>
+        <div><label class="lbl">اللون الثاني</label><input type="color" id="vizC2" value="#ff2d95"></div>
+      </div>
+      <label class="chk"><input type="checkbox" id="vizRainbow"> ألوان قوس قزح</label>
+      <label class="chk"><input type="checkbox" id="vizGlow"> توهج</label>
+      <div class="row">
+        <div><label class="lbl">عدد الأعمدة</label>
+          <select id="vizCount">
+            <option value="24">24</option>
+            <option value="32">32</option>
+            <option value="48" selected>48</option>
+            <option value="64">64</option>
+          </select></div>
+        <div><label class="lbl">السُّمك: <span id="vizThickV">5</span></label>
+          <input type="range" id="vizThick" min="1" max="10" step="1" value="5"></div>
+      </div>
+      <label class="lbl">الحساسية: <span id="vizSensV">100</span>%</label>
+      <input type="range" id="vizSens" min="30" max="250" step="5" value="100">
+      <label class="lbl">الحجم: <span id="vizSizeV">100</span>%</label>
+      <input type="range" id="vizSize" min="40" max="160" step="5" value="100">
+    </details>
+
+    <details>
+      <summary>🖼 تفاعل الصورة مع الإيقاع</summary>
+      <label class="chk main"><input type="checkbox" id="beatOn"> تفعيل تفاعل الصورة</label>
+      <label class="chk"><input type="checkbox" id="beatZoom" checked> نبض (تكبير مع الإيقاع)</label>
+      <label class="chk"><input type="checkbox" id="beatShake"> اهتزاز</label>
+      <label class="chk"><input type="checkbox" id="beatFlash"> وميض</label>
+      <label class="chk"><input type="checkbox" id="beatSway"> ميلان/دوران خفيف</label>
+      <label class="lbl">قوة التفاعل: <span id="beatSensV">100</span>%</label>
+      <input type="range" id="beatSens" min="20" max="250" step="5" value="100">
+      <div class="hint">يعتمد على قوة الجهير (الطبل). بدون صورة يؤثر الوميض على لون الخلفية فقط.</div>
+    </details>
+
     <button class="main" id="a2vGo" disabled>إنشاء الفيديو</button>
+    <button class="main cancel" id="a2vCancel">إلغاء</button>
     <progress id="a2vBar" value="0" max="100"></progress>
     <p class="status" id="a2vStatus">اختر ملفاً صوتياً للبدء.</p>
     <a class="dl" id="a2vDl">تحميل</a>
   </div>
 
-  <!-- فيديو إلى صوت -->
+  <!-- ===================== فيديو إلى صوت ===================== -->
   <div class="panel" id="v2a">
     <p>يسحب الصوت من أي فيديو ويحفظه بصيغة M4A (AAC) بسرعة كبيرة.</p>
     <input type="file" id="v2aFile" accept="video/*,audio/*">
@@ -81,6 +227,7 @@ small { color:#8fa3bf; display:block; line-height:1.7; margin-top:10px; }
       <option value="256000">جودة عالية (256 kbps)</option>
     </select>
     <button class="main" id="v2aGo" disabled>سحب الصوت</button>
+    <button class="main cancel" id="v2aCancel">إلغاء</button>
     <progress id="v2aBar" value="0" max="100"></progress>
     <p class="status" id="v2aStatus">اختر فيديو للبدء.</p>
     <a class="dl" id="v2aDl">تحميل</a>
@@ -88,13 +235,13 @@ small { color:#8fa3bf; display:block; line-height:1.7; margin-top:10px; }
 
   <small>
     ✅ كل المعالجة تتم داخل جهازك، ولا يُرفع أي ملف.<br>
-    🧠 الملف يُقرأ على دفعات صغيرة، فلا يُحمَّل كاملاً في الذاكرة (MP4 / M4A / MP3 / WAV).<br>
+    🧠 الملف يُقرأ على دفعات صغيرة (MP4 / M4A / MP3 / WAV)، والفيديو الطويل يُكتب على القرص لا في الذاكرة.<br>
     ⚠ صيغ أخرى (OGG / FLAC / WebM...) تُفكّ كاملة في الذاكرة، ويُرفض الملف الطويل جداً منها حمايةً من الإغلاق المفاجئ.
   </small>
 </div>
 
 <script type="module">
-import { Muxer, ArrayBufferTarget } from "https://cdn.jsdelivr.net/npm/mp4-muxer@5.1.3/build/mp4-muxer.mjs";
+import { Muxer, ArrayBufferTarget, FileSystemWritableFileStreamTarget } from "https://cdn.jsdelivr.net/npm/mp4-muxer@5.2.2/build/mp4-muxer.mjs";
 
 const $ = id => document.getElementById(id);
 
@@ -104,13 +251,250 @@ let waiting = [];
 mc.port1.onmessage = () => { const w = waiting; waiting = []; w.forEach(f => f()); };
 const tick = () => new Promise(r => { waiting.push(r); mc.port2.postMessage(0); });
 const waitQ = async (obj, key, max) => { while (obj[key] > max) await tick(); };
-
 const MB = 1024 * 1024;
+
+/*PURE-START*/
+/* ======================================================
+   أجزاء نقية (بدون واجهة): تحليل الإيقاع + تحليل الكلمات
+   ====================================================== */
+const NB = 64, WN = 128, FFT_N = 2048;
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+
+function makeFFT(n) {
+  const rev = new Uint32Array(n), bits = Math.log2(n);
+  for (let i = 0; i < n; i++) { let r = 0, x = i; for (let b = 0; b < bits; b++) { r = (r << 1) | (x & 1); x >>= 1; } rev[i] = r; }
+  const cs = new Float32Array(n / 2), sn = new Float32Array(n / 2);
+  for (let i = 0; i < n / 2; i++) { cs[i] = Math.cos(2 * Math.PI * i / n); sn[i] = Math.sin(2 * Math.PI * i / n); }
+  return (re, im) => {
+    for (let i = 0; i < n; i++) { const j = rev[i]; if (j > i) { let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; } }
+    for (let size = 2; size <= n; size <<= 1) {
+      const half = size >> 1, step = n / size;
+      for (let i = 0; i < n; i += size) {
+        for (let j = i, k = 0; j < i + half; j++, k += step) {
+          const l = j + half;
+          const tr = re[l] * cs[k] + im[l] * sn[k];
+          const ti = -re[l] * sn[k] + im[l] * cs[k];
+          re[l] = re[j] - tr; im[l] = im[j] - ti;
+          re[j] += tr; im[j] += ti;
+        }
+      }
+    }
+  };
+}
+
+/* محلّل الإيقاع: يستقبل عينات أحادية متتابعة ويخزّن لكل إطار فيديو: 64 نطاقاً + شكل الموجة + قوة الجهير */
+class Analyzer {
+  constructor(sr, fps) {
+    this.sr = sr; this.fps = fps; this.k = 0;
+    this.pend = new Float32Array(1 << 18); this.pLen = 0; this.pBase = 0;
+    this.re = new Float32Array(FFT_N); this.im = new Float32Array(FFT_N);
+    this.hann = new Float32Array(FFT_N);
+    for (let i = 0; i < FFT_N; i++) this.hann[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (FFT_N - 1));
+    this.fft = makeFFT(FFT_N);
+    const fmin = 40, fmax = Math.min(16000, sr / 2 * 0.95), binHz = sr / FFT_N;
+    this.edges = new Int32Array(NB + 1);
+    this.tilt = new Float32Array(NB);
+    this.bassN = 0;
+    for (let b = 0; b <= NB; b++) {
+      const f = fmin * Math.pow(fmax / fmin, b / NB);
+      this.edges[b] = Math.max(1, Math.round(f / binHz));
+    }
+    for (let b = 0; b < NB; b++) {
+      if (this.edges[b + 1] <= this.edges[b]) this.edges[b + 1] = this.edges[b] + 1;
+      const fc = fmin * Math.pow(fmax / fmin, (b + 0.5) / NB);
+      this.tilt[b] = 3 * Math.log2(fc / 200);
+      if (fc < 200) this.bassN++;
+    }
+    this.bassN = Math.max(3, this.bassN);
+    this.CH = 1024;
+    this.bands = []; this.waves = []; this.bass = [];
+    this.zeroBands = new Uint8Array(NB); this.zeroWave = new Int8Array(WN);
+  }
+
+  feed(m) {
+    const need = this.pLen + m.length;
+    if (need > this.pend.length) {
+      const nb = new Float32Array(Math.max(need, this.pend.length * 2));
+      nb.set(this.pend.subarray(0, this.pLen)); this.pend = nb;
+    }
+    this.pend.set(m, this.pLen); this.pLen += m.length;
+    this._drain();
+  }
+
+  _drain() {
+    while (true) {
+      const center = Math.round(this.k / this.fps * this.sr);
+      const start = center - FFT_N / 2;
+      if (start + FFT_N > this.pBase + this.pLen) break;
+      this._frame(start);
+      this.k++;
+    }
+    const nextStart = Math.round(this.k / this.fps * this.sr) - FFT_N / 2;
+    const drop = nextStart - this.pBase;
+    if (drop > 0) {
+      if (drop >= this.pLen) { this.pBase += drop; this.pLen = 0; }
+      else { this.pend.copyWithin(0, drop, this.pLen); this.pBase += drop; this.pLen -= drop; }
+    }
+  }
+
+  _frame(start) {
+    const N = FFT_N, re = this.re, im = this.im, pend = this.pend, off = start - this.pBase, L = this.pLen;
+    const k = this.k, ci = (k / this.CH) | 0, fi = k % this.CH;
+    while (this.bands.length <= ci) {
+      this.bands.push(new Uint8Array(this.CH * NB));
+      this.waves.push(new Int8Array(this.CH * WN));
+      this.bass.push(new Uint8Array(this.CH));
+    }
+    for (let i = 0; i < N; i++) { const idx = off + i; const v = (idx >= 0 && idx < L) ? pend[idx] : 0; re[i] = v * this.hann[i]; im[i] = 0; }
+    const wv = this.waves[ci], wb = fi * WN, gs = 8, w0 = off + N / 2 - (WN * gs) / 2;   // نافذة ≈ 23ms حول مركز الإطار
+    for (let j = 0; j < WN; j++) {
+      let sum = 0;
+      for (let q = 0; q < gs; q++) { const idx = w0 + j * gs + q; sum += (idx >= 0 && idx < L) ? pend[idx] : 0; }
+      wv[wb + j] = clamp(Math.round(sum / gs * 127 * 1.2), -127, 127);
+    }
+    this.fft(re, im);
+    const bd = this.bands[ci], bb = fi * NB, norm = 4 / N;
+    let bsum = 0;
+    for (let b = 0; b < NB; b++) {
+      let s = 0; const lo = this.edges[b], hi = Math.min(this.edges[b + 1], N / 2);
+      for (let i = lo; i < hi; i++) s += Math.sqrt(re[i] * re[i] + im[i] * im[i]);
+      const avg = s / Math.max(1, hi - lo) * norm;
+      const db = 20 * Math.log10(avg + 1e-9) + this.tilt[b];
+      const v = Math.round(clamp((db + 72) / 60, 0, 1) * 255);
+      bd[bb + b] = v;
+      if (b < this.bassN) bsum += v;
+    }
+    this.bass[ci][fi] = Math.round(bsum / this.bassN);
+  }
+
+  finish(totalFrames) {
+    let guard = 0;
+    while (this.k < totalFrames && guard++ < 100000) this.feed(new Float32Array(FFT_N));
+  }
+
+  get(k) {
+    const ci = (k / this.CH) | 0, fi = k % this.CH;
+    if (ci >= this.bands.length) return { bands: this.zeroBands, wave: this.zeroWave, bass: 0 };
+    return {
+      bands: this.bands[ci].subarray(fi * NB, fi * NB + NB),
+      wave: this.waves[ci].subarray(fi * WN, fi * WN + WN),
+      bass: this.bass[ci][fi]
+    };
+  }
+}
+
+/* ---------- تحليل الكلمات: LRC / SRT / VTT / نص عادي ---------- */
+const RTL_RE = /[֐-ࣿﭐ-﷿ﹰ-﻿]/;
+
+function parseLyrics(raw) {
+  const text = String(raw || "").replace(/\r/g, "").replace(/^﻿/, "");
+  if (!text.trim()) return { entries: [], timed: false };
+
+  // SRT / VTT
+  if (/-->/.test(text)) {
+    const tm = s => { const m = s.match(/(?:(\d+):)?(\d+):(\d+)[.,](\d+)/); return m ? (+(m[1] || 0)) * 3600 + (+m[2]) * 60 + (+m[3]) + (+("0." + m[4])) : null; };
+    const entries = [];
+    for (const block of text.split(/\n\s*\n/)) {
+      const ls = block.split("\n");
+      const ti = ls.findIndex(l => l.includes("-->"));
+      if (ti < 0) continue;
+      const [a, b] = ls[ti].split("-->");
+      const t = tm(a), e = tm(b);
+      if (t === null) continue;
+      const body = ls.slice(ti + 1).join(" ").replace(/<[^>]+>/g, "").replace(/\{[^}]*\}/g, "").replace(/\s+/g, " ").trim();
+      entries.push({ t, end: e, text: body, words: null });
+    }
+    return { entries: entries.sort((x, y) => x.t - y.t), timed: true };
+  }
+
+  // LRC
+  if (/\[\d+:\d+(?:[.:]\d+)?\]/.test(text)) {
+    const entries = [];
+    const tagRe = /\[(\d+):(\d+(?:[.:]\d+)?)\]/g;
+    for (const line of text.split("\n")) {
+      const tags = []; let m, last = 0;
+      tagRe.lastIndex = 0;
+      while ((m = tagRe.exec(line))) { tags.push(+m[1] * 60 + parseFloat(m[2].replace(":", "."))); last = tagRe.lastIndex; }
+      if (!tags.length) continue;
+      let body = line.slice(last);
+      let words = null;
+      if (/<\d+:\d+(?:\.\d+)?>/.test(body)) {
+        words = [];
+        const parts = body.split(/<(\d+):(\d+(?:\.\d+)?)>/);
+        // parts: [pre, mm, ss, text, mm, ss, text...]
+        for (let i = 1; i + 2 < parts.length; i += 3) {
+          const wt = +parts[i] * 60 + parseFloat(parts[i + 1]);
+          const wtxt = parts[i + 2];
+          if (wtxt && wtxt.length) words.push({ t: wt, text: wtxt, len: wtxt.length });
+        }
+        body = (parts[0] || "") + words.map(w => w.text).join("");
+        if (!words.length) words = null;
+      }
+      const clean = body.replace(/\s+/g, " ").trim();
+      for (const t of tags) entries.push({ t, end: null, text: clean, words });
+    }
+    entries.sort((x, y) => x.t - y.t);
+    return { entries, timed: true };
+  }
+
+  // نص عادي
+  const entries = text.split("\n").map(s => s.trim()).filter(Boolean).map(s => ({ t: 0, end: null, text: s, words: null }));
+  return { entries, timed: false };
+}
+
+/* يجهّز الأسطر النهائية: التوزيع التلقائي، الأزمنة، نهاية العرض، إزاحة */
+function prepareLyrics(parsed, duration, offset) {
+  const ents = parsed.entries.map(e => ({ ...e, words: e.words ? e.words.map(w => ({ ...w })) : null }));
+  if (!parsed.timed && ents.length) {
+    const W = ents.map(e => Math.max(8, e.text.length));
+    const tot = W.reduce((a, b) => a + b, 0);
+    let c = 0;
+    const span = Math.max(1, duration - 1);
+    ents.forEach((e, i) => { e.t = 0.5 + span * c / tot; c += W[i]; });
+  }
+  for (let i = 0; i < ents.length; i++) {
+    const nxt = i + 1 < ents.length ? ents[i + 1].t : ents[i].t + 6;
+    if (ents[i].end == null || !(ents[i].end > ents[i].t)) ents[i].end = nxt;
+  }
+  const out = [];
+  for (const e of ents) {
+    if (!e.text) continue;
+    const t = e.t + offset;
+    const end = e.end + offset;
+    const show = Math.min(end, t + 12);
+    const fillEnd = Math.min(end, t + 2 + e.text.length * 0.12);
+    const words = e.words ? e.words.map(w => ({ ...w, t: w.t + offset })) : null;
+    out.push({ t, end: show, fillEnd: Math.max(t + 0.3, fillEnd), text: e.text, words, rtl: RTL_RE.test(e.text) });
+  }
+  return out;
+}
+
+function lineProgress(line, t) {
+  if (line.words && line.words.length) {
+    const ws = line.words;
+    if (t < ws[0].t) return 0;
+    let i = ws.length - 1; while (i > 0 && ws[i].t > t) i--;
+    const nextT = i + 1 < ws.length ? ws[i + 1].t : line.fillEnd;
+    const f = clamp((t - ws[i].t) / Math.max(0.05, nextT - ws[i].t), 0, 1);
+    let before = 0, total = 0;
+    ws.forEach((w, j) => { total += w.len; if (j < i) before += w.len; });
+    return (before + f * ws[i].len) / Math.max(1, total);
+  }
+  return clamp((t - line.t) / Math.max(0.1, line.fillEnd - line.t), 0, 1);
+}
+
+function findLine(lines, t) {
+  let lo = 0, hi = lines.length - 1, ans = -1;
+  while (lo <= hi) { const mid = (lo + hi) >> 1; if (lines[mid].t <= t) { ans = mid; lo = mid + 1; } else hi = mid - 1; }
+  return ans;
+}
+/*PURE-END*/
 
 /* ---------- تبويبات ---------- */
 document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
   document.querySelectorAll(".tab").forEach(x => x.classList.toggle("on", x === b));
   document.querySelectorAll(".panel").forEach(p => p.classList.toggle("on", p.id === b.dataset.t));
+  if (b.dataset.t === "a2v") schedulePreview();
 }));
 
 /* ---------- تثبيت PWA ---------- */
@@ -140,7 +524,7 @@ function showResult(a, blob, name, label) {
 
 function wire(prefix, onRun, onPick) {
   const fileEl = $(prefix + "File"), go = $(prefix + "Go"), st = $(prefix + "Status"),
-        bar = $(prefix + "Bar"), dl = $(prefix + "Dl");
+        bar = $(prefix + "Bar"), dl = $(prefix + "Dl"), cancel = $(prefix + "Cancel");
   let file = null;
   fileEl.addEventListener("change", async () => {
     file = fileEl.files[0] || null;
@@ -156,18 +540,33 @@ function wire(prefix, onRun, onPick) {
     if (!file) return;
     if (!supported()) { st.textContent = "المتصفح لا يدعم WebCodecs. استخدم Chrome أو Edge حديثاً."; return; }
     go.disabled = true; fileEl.disabled = true; dl.style.display = "none"; bar.value = 0;
+    const errRef = { err: null };
+    cancel.style.display = "block";
+    cancel.onclick = () => { if (!errRef.err) errRef.err = new Error("تم الإلغاء"); };
     const t0 = performance.now();
     try {
-      await onRun(file, { st, bar, dl });
+      await onRun(file, { st, bar, dl, errRef });
       st.textContent = "تم في " + ((performance.now() - t0) / 1000).toFixed(1) + " ثانية فقط!";
       bar.value = 100;
     } catch (e) {
       console.error(e);
-      st.textContent = "تعذر التحويل: " + (e.message || e);
+      st.textContent = (e && e.message === "تم الإلغاء") ? "تم الإلغاء." : "تعذر التحويل: " + (e.message || e);
     } finally {
+      cancel.style.display = "none";
       go.disabled = false; fileEl.disabled = false;
     }
   });
+}
+
+function monoOf(ad) {
+  const n = ad.numberOfFrames, a = new Float32Array(n);
+  ad.copyTo(a, { planeIndex: 0, format: "f32-planar" });
+  if (ad.numberOfChannels > 1) {
+    const b = new Float32Array(n);
+    ad.copyTo(b, { planeIndex: 1, format: "f32-planar" });
+    for (let i = 0; i < n; i++) a[i] = (a[i] + b[i]) * 0.5;
+  }
+  return a;
 }
 
 // تحويل متعدد القنوات إلى ستيريو (ترتيب 5.1: L R C LFE Ls Rs)
@@ -207,13 +606,13 @@ async function makeEncoder(muxer, sr, ch, bitrate, errRef) {
   return enc;
 }
 
-// فك مضغوط ← ترميز AAC، بدفعات صغيرة
-async function createDecodePipe(muxer, dcfg, outSR, outCh, bitrate, errRef) {
+// فك مضغوط ← ترميز AAC، بدفعات صغيرة (مع تمرير اختياري للعينات لمحلّل الإيقاع)
+async function createDecodePipe(muxer, dcfg, outSR, outCh, bitrate, errRef, tap) {
   const dsup = await AudioDecoder.isConfigSupported(dcfg);
   if (!dsup.supported) throw new Error("صيغة الصوت (" + dcfg.codec + ") غير مدعومة للفك في هذا المتصفح");
   const enc = await makeEncoder(muxer, outSR, outCh, bitrate, errRef);
   const dec = new AudioDecoder({
-    output: ad => { try { encodeAD(enc, ad); } finally { ad.close(); } },
+    output: ad => { try { if (tap) tap(monoOf(ad), ad.sampleRate); encodeAD(enc, ad); } finally { ad.close(); } },
     error: e => errRef.err = e
   });
   dec.configure(dcfg);
@@ -224,9 +623,25 @@ async function createDecodePipe(muxer, dcfg, outSR, outCh, bitrate, errRef) {
   };
 }
 
+// فاك للتحليل فقط (عند نسخ AAC مباشرة نحتاج العينات للمؤثرات)
+async function createAnalysisDecoder(dcfg, tap, errRef) {
+  const sup = await AudioDecoder.isConfigSupported(dcfg);
+  if (!sup.supported) throw new Error("تعذر فك الصوت لتحليل الإيقاع (" + dcfg.codec + ")");
+  const dec = new AudioDecoder({
+    output: ad => { try { tap(monoOf(ad), ad.sampleRate); } finally { ad.close(); } },
+    error: e => errRef.err = e
+  });
+  dec.configure(dcfg);
+  return {
+    decode: c => dec.decode(c),
+    async drain() { await waitQ(dec, "decodeQueueSize", 150); },
+    async finish() { await dec.flush(); dec.close(); }
+  };
+}
+
 /* ======================================================
    مصادر الصوت: كلها تقرأ الملف على دفعات (بدون تحميله كاملاً)
-   كل مصدر: { sampleRate, channels, run(muxer, {copy, bitrate}, onProgress, errRef) → المدة بالثواني }
+   كل مصدر: { sampleRate, channels, run(muxer, {copy, bitrate, tap}, onProgress, errRef) → المدة بالثواني }
    ====================================================== */
 
 /* ---------- MP4 / M4A / MOV ---------- */
@@ -313,14 +728,14 @@ function mp4Source(file, pr, trackId) {
 
   return {
     sampleRate: outSR, channels: outCh,
-    async run(muxer, { copy, bitrate }, onProgress, errRef) {
+    async run(muxer, { copy, bitrate, tap }, onProgress, errRef) {
       const passthrough = copy && isAAC && !!desc && nch <= 2;
-      let pipe = null;
-      if (!passthrough) {
-        const dcfg = { codec: track.codec, sampleRate: sr, numberOfChannels: nch };
-        if (desc) dcfg.description = desc;
-        pipe = await createDecodePipe(muxer, dcfg, outSR, outCh, bitrate, errRef);
-      }
+      const dcfg = { codec: track.codec, sampleRate: sr, numberOfChannels: nch };
+      if (desc) dcfg.description = desc;
+      let pipe = null, an = null;
+      if (!passthrough) pipe = await createDecodePipe(muxer, dcfg, outSR, outCh, bitrate, errRef, tap);
+      else if (tap) an = await createAnalysisDecoder(dcfg, tap, errRef);
+
       const n = samples.length, t0 = samples[0].cts;
       let first = true, i = 0, batches = 0;
       const MAXB = 4 * MB;
@@ -343,12 +758,14 @@ function mp4Source(file, pr, trackId) {
               muxer.addAudioChunk(chunk, { decoderConfig: { codec: "mp4a.40.2", sampleRate: outSR, numberOfChannels: outCh, description: desc } });
               first = false;
             } else muxer.addAudioChunk(chunk);
+            if (an) an.decode(chunk);
           } else pipe.decode(chunk);
         }
         i = j + 1;
-        if (++batches % 20 === 0) { onProgress(i / n); if (pipe) await pipe.drain(); await tick(); }
+        if (++batches % 20 === 0) { onProgress(i / n); if (pipe) await pipe.drain(); if (an) await an.drain(); await tick(); }
       }
       if (pipe) await pipe.finish();
+      if (an) await an.finish();
       if (errRef.err) throw errRef.err;
       const last = samples[n - 1];
       return (last.cts - t0 + last.duration) / last.timescale;
@@ -393,8 +810,8 @@ async function mp3Source(file) {
   const { hd } = st;
   return {
     sampleRate: hd.sr, channels: hd.ch,
-    async run(muxer, { bitrate }, onProgress, errRef) {
-      const pipe = await createDecodePipe(muxer, { codec: "mp3", sampleRate: hd.sr, numberOfChannels: hd.ch }, hd.sr, hd.ch, bitrate, errRef);
+    async run(muxer, { bitrate, tap }, onProgress, errRef) {
+      const pipe = await createDecodePipe(muxer, { codec: "mp3", sampleRate: hd.sr, numberOfChannels: hd.ch }, hd.sr, hd.ch, bitrate, errRef, tap);
       let off = st.off, carry = new Uint8Array(0), frames = 0, skippedInfo = false;
       while (true) {
         if (errRef.err) throw errRef.err;
@@ -462,7 +879,7 @@ async function wavSource(file) {
 
   return {
     sampleRate: sr, channels: outCh,
-    async run(muxer, { bitrate }, onProgress, errRef) {
+    async run(muxer, { bitrate, tap }, onProgress, errRef) {
       const enc = await makeEncoder(muxer, sr, outCh, bitrate, errRef);
       const FR = Math.max(8000, Math.min(sr, 48000));
       for (let pos = 0; pos < total; pos += FR) {
@@ -481,6 +898,11 @@ async function wavSource(file) {
             else v = d.getInt32(o, true) / 2147483648;
             pl[c * n + f] = v;
           }
+        }
+        if (tap) {
+          const m = new Float32Array(n);
+          if (ch > 1) for (let f = 0; f < n; f++) m[f] = (pl[f] + pl[n + f]) * 0.5; else m.set(pl.subarray(0, n));
+          tap(m, sr);
         }
         const ad = new AudioData({ format: "f32-planar", sampleRate: sr, numberOfFrames: n, numberOfChannels: ch, timestamp: Math.round(pos / sr * 1e6), data: pl });
         encodeAD(enc, ad); ad.close();
@@ -522,7 +944,7 @@ async function decodeSource(file) {
   const ch = Math.min(2, audioBuf.numberOfChannels);
   return {
     sampleRate: SR, channels: ch,
-    async run(muxer, { bitrate }, onProgress, errRef) {
+    async run(muxer, { bitrate, tap }, onProgress, errRef) {
       const enc = await makeEncoder(muxer, SR, ch, bitrate, errRef);
       const total = audioBuf.length;
       const planes = [];
@@ -532,6 +954,11 @@ async function decodeSource(file) {
         const len = Math.min(SR, total - pos);
         const data = new Float32Array(len * ch);
         for (let c = 0; c < ch; c++) data.set(planes[c].subarray(pos, pos + len), c * len);
+        if (tap) {
+          const m = new Float32Array(len);
+          for (let f = 0; f < len; f++) m[f] = ch > 1 ? (data[f] + data[len + f]) * 0.5 : data[f];
+          tap(m, SR);
+        }
         const ad = new AudioData({ format: "f32-planar", sampleRate: SR, numberOfFrames: len, numberOfChannels: ch, timestamp: Math.round(pos / SR * 1e6), data });
         enc.encode(ad); ad.close();
         pos += len;
@@ -561,35 +988,500 @@ async function openSource(file, trackId, pr) {
 }
 
 /* ======================================================
-   الفيديو: إطار ثابت (أسود أو صورة) بمعدل إطار/ثانية
+   الخطوط
    ====================================================== */
-async function pickVideoCodec(w, h, bitrate) {
-  const list = h > 720
+const GOOGLE_FONTS = { "Cairo": "400;700", "Tajawal": "400;700", "Amiri": "400;700", "Lalezar": "", "Changa": "400;700", "Aref Ruqaa": "400;700", "Reem Kufi": "400;700" };
+const fontWeight = f => f === "Lalezar" ? 400 : 700;
+const fontReady = {};
+async function ensureFont(family) {
+  if (!(family in GOOGLE_FONTS)) return;
+  if (!fontReady[family]) {
+    fontReady[family] = (async () => {
+      try {
+        const link = document.createElement("link");
+        link.rel = "stylesheet";
+        const w = GOOGLE_FONTS[family];
+        link.href = "https://fonts.googleapis.com/css2?family=" + encodeURIComponent(family).replace(/%20/g, "+") + (w ? ":wght@" + w : "") + "&display=swap";
+        document.head.appendChild(link);
+        await Promise.race([
+          document.fonts.load(fontWeight(family) + ' 32px "' + family + '"', "أبجد هوز abc"),
+          new Promise(r => setTimeout(r, 8000))
+        ]);
+      } catch (e) { console.warn("font", e); }
+    })();
+  }
+  await fontReady[family];
+}
+
+/* ======================================================
+   المُصيِّر: يرسم إطار الفيديو (خلفية + تفاعل + مؤثر + كلمات)
+   يُستخدم للمعاينة وللتصدير بنفس الكود
+   ====================================================== */
+function lerpColor(a, b, t) {
+  const pa = parseInt(a.slice(1), 16), pb = parseInt(b.slice(1), 16);
+  const r = Math.round(((pa >> 16) & 255) * (1 - t) + ((pb >> 16) & 255) * t);
+  const g = Math.round(((pa >> 8) & 255) * (1 - t) + ((pb >> 8) & 255) * t);
+  const bl = Math.round((pa & 255) * (1 - t) + (pb & 255) * t);
+  return "rgb(" + r + "," + g + "," + bl + ")";
+}
+
+function createRenderer(cfg, w, h, bitmap, lines) {
+  const fps = cfg.fps, dt = 1 / fps, sc = h / 360;
+  const prev = new Float32Array(NB);
+  const vals = new Float32Array(NB);
+  let beat = 0, slow = null;
+  const decay = Math.exp(-dt / 0.18), bDecay = Math.exp(-dt / 0.14), slowK = 1 - Math.exp(-dt / 0.8);
+  const wrapCache = new Map();
+  const L = cfg.lyr, V = cfg.viz, B = cfg.beat, BG = cfg.bg;
+
+  const fontStr = px => fontWeight(L.font) + " " + px + 'px "' + L.font + '", Tahoma, Arial, sans-serif';
+
+  function rr(ctx, x, y, wd, ht, r) {
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, wd, ht, r); else ctx.rect(x, y, wd, ht);
+  }
+
+  /* ----- الخلفية ----- */
+  function drawBackground(ctx, t, bt) {
+    ctx.globalCompositeOperation = "source-over";
+    ctx.fillStyle = BG.color; ctx.fillRect(0, 0, w, h);
+    if (bitmap) {
+      const sw = bitmap.width, sh = bitmap.height;
+      const k0 = BG.fit === "cover" ? Math.max(w / sw, h / sh) : Math.min(w / sw, h / sh);
+      let zoom = 1, rot = 0, dx = 0, dy = 0;
+      if (B.on) {
+        if (B.zoom) zoom += 0.08 * bt;
+        if (B.sway) rot = Math.sin(t * 3.1) * 0.035 * bt;
+        if (B.shake) { dx = Math.sin(t * 91.7) * Math.cos(t * 47.3) * w * 0.012 * bt; dy = Math.cos(t * 83.1) * Math.sin(t * 59.9) * h * 0.012 * bt; }
+      }
+      // إن كان الدوران/الاهتزاز يكشف حوافاً مع contain نكبّر قليلاً
+      if (B.on && (B.sway || B.shake) && BG.fit === "cover") zoom *= 1.04;
+      ctx.save();
+      ctx.translate(w / 2 + dx, h / 2 + dy);
+      ctx.rotate(rot);
+      ctx.scale(zoom * k0, zoom * k0);
+      ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(bitmap, -sw / 2, -sh / 2);
+      ctx.restore();
+    }
+    if (BG.dim > 0 && bitmap) { ctx.fillStyle = "rgba(0,0,0," + BG.dim + ")"; ctx.fillRect(0, 0, w, h); }
+    if (B.on && B.flash && bt > 0.01) {
+      ctx.globalCompositeOperation = "lighter";
+      ctx.fillStyle = "rgba(255,255,255," + (0.22 * bt).toFixed(3) + ")";
+      ctx.fillRect(0, 0, w, h);
+      ctx.globalCompositeOperation = "source-over";
+    }
+  }
+
+  /* ----- مؤثر الإيقاع ----- */
+  function colorAt(i, n) {
+    if (V.rainbow) return "hsl(" + Math.round(i / Math.max(1, n - 1) * 300) + ",90%,60%)";
+    return lerpColor(V.c1, V.c2, i / Math.max(1, n - 1));
+  }
+  function gradientX(ctx, x0, x1) {
+    const g = ctx.createLinearGradient(x0, 0, x1, 0);
+    if (V.rainbow) { for (let s = 0; s <= 6; s++) g.addColorStop(s / 6, "hsl(" + Math.round(s / 6 * 300) + ",90%,60%)"); }
+    else { g.addColorStop(0, V.c1); g.addColorStop(1, V.c2); }
+    return g;
+  }
+
+  function drawViz(ctx, feat) {
+    const n = V.count;
+    // إعادة تشكيل 64 نطاقاً إلى n مع تنعيم السقوط
+    for (let i = 0; i < NB; i++) {
+      const v = feat.bands[i] / 255;
+      prev[i] = v > prev[i] ? v : prev[i] * decay;
+    }
+    for (let i = 0; i < n; i++) {
+      const a = Math.floor(i * NB / n), b = Math.max(a + 1, Math.floor((i + 1) * NB / n));
+      let s = 0; for (let j = a; j < b; j++) s += prev[j];
+      vals[i] = clamp(Math.pow(s / (b - a), 1.25) * V.sens, 0, 1.4);
+    }
+    const Hh = h * 0.36 * V.size;
+    const sym = V.shape === "mirror" || V.shape === "wave";   // أشكال متماثلة حول خط وسطي
+    const base = sym
+      ? (V.pos === "bottom" ? h * 0.8 : V.pos === "top" ? h * 0.2 : h * 0.5)
+      : (V.pos === "bottom" ? h * 0.93 : V.pos === "top" ? h * 0.07 : h * 0.5);
+    const dir = V.pos === "top" ? 1 : -1;               // اتجاه نمو الأعمدة
+    const totalW = w * 0.86, x0 = (w - totalW) / 2, step = totalW / n;
+    const bw = Math.max(1.5, step * (0.25 + V.thick * 0.07));
+    const lw = V.thick * sc * 0.9 + 1;
+
+    ctx.save();
+    ctx.globalAlpha = 0.96;
+    if (V.glow) { ctx.shadowColor = V.rainbow ? "#ffffff" : V.c1; ctx.shadowBlur = 14 * sc; }
+
+    if (V.shape === "bars" || V.shape === "mirror") {
+      for (let i = 0; i < n; i++) {
+        const bh = Math.max(2 * sc, vals[i] * Hh * (V.shape === "mirror" ? 0.5 : 1));
+        const x = x0 + i * step + (step - bw) / 2;
+        ctx.fillStyle = colorAt(i, n);
+        if (V.shape === "mirror") { rr(ctx, x, base - bh, bw, bh * 2, bw / 2); ctx.fill(); }
+        else if (dir < 0) { rr(ctx, x, base - bh, bw, bh, bw / 2); ctx.fill(); }
+        else { rr(ctx, x, base, bw, bh, bw / 2); ctx.fill(); }
+      }
+    } else if (V.shape === "dots") {
+      const r = Math.max(1.5, bw / 2), gap = r * 2.7;
+      for (let i = 0; i < n; i++) {
+        const cx = x0 + i * step + step / 2, cnt = Math.max(1, Math.round(vals[i] * Hh / gap));
+        ctx.fillStyle = colorAt(i, n);
+        for (let q = 0; q < cnt; q++) { ctx.beginPath(); ctx.arc(cx, base + dir * (q * gap + r), r, 0, Math.PI * 2); ctx.fill(); }
+      }
+    } else if (V.shape === "wave") {
+      ctx.strokeStyle = gradientX(ctx, x0, x0 + totalW);
+      ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.lineCap = "round";
+      ctx.beginPath();
+      for (let j = 0; j < WN; j++) {
+        const x = x0 + j / (WN - 1) * totalW;
+        const y = base + (feat.wave[j] / 127) * Hh * 0.45 * V.sens;
+        if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+    } else {
+      // circle / ring: في وسط الإطار
+      const cx = w / 2, cy = h / 2, m = Math.min(w, h);
+      const r0 = m * 0.2 * V.size;
+      if (V.shape === "circle") {
+        const tot = n * 2;
+        ctx.lineWidth = Math.max(1.5, lw * 0.9); ctx.lineCap = "round";
+        for (let i = 0; i < tot; i++) {
+          const idx = i < n ? i : tot - 1 - i;
+          const ang = (i / tot) * Math.PI * 2 - Math.PI / 2;
+          const len = Math.max(2 * sc, vals[idx] * m * 0.22 * V.size);
+          ctx.strokeStyle = colorAt(idx, n);
+          ctx.beginPath();
+          ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0);
+          ctx.lineTo(cx + Math.cos(ang) * (r0 + len), cy + Math.sin(ang) * (r0 + len));
+          ctx.stroke();
+        }
+      } else {
+        ctx.strokeStyle = gradientX(ctx, cx - r0 * 1.4, cx + r0 * 1.4);
+        ctx.lineWidth = lw; ctx.lineJoin = "round";
+        ctx.beginPath();
+        for (let j = 0; j <= WN; j++) {
+          const jj = j % WN, ang = (j / WN) * Math.PI * 2 - Math.PI / 2;
+          const r = r0 + (feat.wave[jj] / 127) * m * 0.14 * V.size * V.sens;
+          const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r;
+          if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        }
+        ctx.closePath(); ctx.stroke();
+      }
+    }
+    ctx.restore();
+  }
+
+  /* ----- الكلمات ----- */
+  function wrap(ctx, text, px, maxW) {
+    const key = text + "|" + px + "|" + maxW;
+    let r = wrapCache.get(key);
+    if (r) return r;
+    ctx.font = fontStr(px);
+    const words = text.split(" "), out = []; let cur = "";
+    for (const wd of words) {
+      const test = cur ? cur + " " + wd : wd;
+      if (cur && ctx.measureText(test).width > maxW) { out.push(cur); cur = wd; } else cur = test;
+    }
+    if (cur) out.push(cur);
+    r = out.map(s => ({ s, w: ctx.measureText(s).width }));
+    if (wrapCache.size > 500) wrapCache.clear();
+    wrapCache.set(key, r);
+    return r;
+  }
+
+  function paintText(ctx, s, x, y, color, px, rtl, withBox) {
+    ctx.direction = rtl ? "rtl" : "ltr";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    ctx.font = fontStr(px);
+    ctx.lineJoin = "round";
+    if (L.edge === "outline") {
+      ctx.lineWidth = Math.max(2, px * 0.16); ctx.strokeStyle = "rgba(0,0,0,0.92)";
+      ctx.strokeText(s, x, y);
+    } else if (L.edge === "shadow") {
+      ctx.shadowColor = "rgba(0,0,0,0.85)"; ctx.shadowBlur = px * 0.28; ctx.shadowOffsetX = px * 0.05; ctx.shadowOffsetY = px * 0.07;
+    }
+    ctx.fillStyle = color;
+    ctx.fillText(s, x, y);
+    ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
+  }
+
+  // يرسم كتلة أسطر مع تلوين تدريجي اختياري
+  function drawBlock(ctx, line, cy, px, progress, alpha, scale) {
+    const maxW = w * 0.88;
+    const rows = wrap(ctx, line.text, px, maxW);
+    const lh = px * 1.4, tot = rows.length * lh, cx = w / 2;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (scale !== 1) { ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.translate(-cx, -cy); }
+    if (L.edge === "box") {
+      const mw = Math.max(...rows.map(r => r.w)) + px * 1.2;
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      rr(ctx, cx - mw / 2, cy - tot / 2 - px * 0.15, mw, tot + px * 0.3, px * 0.4); ctx.fill();
+    }
+    const y0 = cy - tot / 2 + lh / 2;
+    rows.forEach((r, i) => paintText(ctx, r.s, cx, y0 + i * lh, L.color, px, line.rtl));
+    if (progress != null && progress > 0) {
+      const totalW = rows.reduce((a, r) => a + r.w, 0);
+      let filled = progress * totalW;
+      rows.forEach((r, i) => {
+        const fw = clamp(filled, 0, r.w); filled -= r.w;
+        if (fw <= 0) return;
+        const left = cx - r.w / 2;
+        ctx.save();
+        ctx.beginPath();
+        if (line.rtl) ctx.rect(left + r.w - fw, y0 + i * lh - lh / 2 - 2, fw, lh + 4);
+        else ctx.rect(left, y0 + i * lh - lh / 2 - 2, fw, lh + 4);
+        ctx.clip();
+        paintText(ctx, r.s, cx, y0 + i * lh, L.hi, px, line.rtl);
+        ctx.restore();
+      });
+    }
+    ctx.restore();
+  }
+
+  function drawLyrics(ctx, t) {
+    if (!lines || !lines.length) return;
+    const px = L.size / 100 * h;
+    const cy = L.pos === "bottom" ? h * 0.82 : L.pos === "top" ? h * 0.17 : h * 0.5;
+    const idx = findLine(lines, t);
+
+    if (L.mode === "scroll") {
+      if (idx < 0 && lines[0].t - t > 4) return;
+      const cur = Math.max(0, idx);
+      const since = idx >= 0 ? t - lines[idx].t : 0;
+      const e = clamp(since / 0.3, 0, 1), ease = e * e * (3 - 2 * e);
+      const s = idx < 0 ? -1 : (cur - 1) + ease;   // الموضع المركزي العائم
+      const lh = px * 1.75;
+      for (let j = Math.floor(s) - 2; j <= Math.ceil(s) + 2; j++) {
+        if (j < 0 || j >= lines.length) continue;
+        const d = Math.abs(j - s), near = clamp(1 - d, 0, 1);
+        const alpha = clamp(1 - d * 0.6, 0.12, 1);
+        const ln = lines[j];
+        const y = cy + (j - s) * lh;
+        if (y < -px || y > h + px) continue;
+        // تصغير السطر الطويل ليتسع في سطر واحد
+        ctx.font = fontStr(px);
+        const mw = ctx.measureText(ln.text).width;
+        const fit = Math.min(1, (w * 0.9) / Math.max(1, mw));
+        const isCur = j === idx && t < ln.end;
+        const prog = isCur ? lineProgress(ln, t) : (j < idx ? 1 : 0);
+        const one = { ...ln };
+        drawBlockOne(ctx, one, y, px * fit, prog, alpha, 0.86 + near * 0.14);
+      }
+      return;
+    }
+
+    if (idx < 0) return;
+    const ln = lines[idx];
+    if (t >= ln.end) return;
+    if (L.mode === "single") {
+      const e = clamp((t - ln.t) / 0.28, 0, 1), ease = 1 - Math.pow(1 - e, 3);
+      drawBlock(ctx, ln, cy + (1 - ease) * px * 0.6, px, null, ease, 0.9 + 0.1 * ease);
+    } else {
+      const fadeOut = clamp((ln.end - t) / 0.2, 0, 1);
+      drawBlock(ctx, ln, cy, px, lineProgress(ln, t), fadeOut, 1);
+    }
+  }
+
+  // سطر واحد غير ملفوف (لوضع الثلاثة أسطر)
+  function drawBlockOne(ctx, line, cy, px, progress, alpha, scale) {
+    const cx = w / 2;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    if (scale !== 1) { ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.translate(-cx, -cy); }
+    ctx.font = fontStr(px);
+    const tw = ctx.measureText(line.text).width;
+    if (L.edge === "box") {
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      rr(ctx, cx - tw / 2 - px * 0.6, cy - px * 0.78, tw + px * 1.2, px * 1.56, px * 0.4); ctx.fill();
+    }
+    paintText(ctx, line.text, cx, cy, L.color, px, line.rtl);
+    if (progress > 0) {
+      const fw = clamp(progress, 0, 1) * tw, left = cx - tw / 2;
+      ctx.save(); ctx.beginPath();
+      if (line.rtl) ctx.rect(left + tw - fw, cy - px, fw, px * 2); else ctx.rect(left, cy - px, fw, px * 2);
+      ctx.clip();
+      paintText(ctx, line.text, cx, cy, L.hi, px, line.rtl);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  return {
+    draw(ctx, t, feat) {
+      // إشارة الإيقاع (الجهير)
+      const b01 = feat.bass / 255;
+      if (slow === null) slow = b01;
+      slow += (b01 - slow) * slowK;
+      const target = clamp((b01 - slow) * 4.5, 0, 1);
+      beat = Math.max(target, beat * bDecay);
+      let bt = (cfg.forceBeat != null ? cfg.forceBeat : beat) * B.sens;
+      bt = clamp(bt, 0, 1.6);
+
+      drawBackground(ctx, t, bt);
+      if (V.on) drawViz(ctx, feat);
+      if (L.on) drawLyrics(ctx, t);
+    }
+  };
+}
+
+/* ======================================================
+   قراءة الإعدادات من الواجهة
+   ====================================================== */
+const num = id => parseFloat($(id).value);
+const chk = id => $(id).checked;
+
+function readCfg() {
+  const [w, h] = $("a2vQuality").value.split(",").map(Number);
+  return {
+    w, h, fps: num("a2vFps"),
+    bg: { color: $("a2vBg").value, fit: $("a2vFit").value, dim: num("a2vDim") / 100 },
+    lyr: {
+      on: chk("lyrOn"), mode: $("lyrMode").value, font: $("lyrFont").value, size: num("lyrSize"),
+      color: $("lyrColor").value, hi: $("lyrHi").value, edge: $("lyrEdge").value, pos: $("lyrPos").value,
+      text: $("lyrText").value, offset: num("lyrOffset")
+    },
+    viz: {
+      on: chk("vizOn"), shape: $("vizShape").value, pos: $("vizPos").value,
+      c1: $("vizC1").value, c2: $("vizC2").value, rainbow: chk("vizRainbow"), glow: chk("vizGlow"),
+      count: num("vizCount"), thick: num("vizThick"), sens: num("vizSens") / 100, size: num("vizSize") / 100
+    },
+    beat: {
+      on: chk("beatOn"), zoom: chk("beatZoom"), shake: chk("beatShake"), flash: chk("beatFlash"),
+      sway: chk("beatSway"), sens: num("beatSens") / 100
+    }
+  };
+}
+
+// عرض قيم الأشرطة
+[["a2vDim", "a2vDimV"], ["lyrSize", "lyrSizeV"], ["lyrOffset", "lyrOffV"], ["vizThick", "vizThickV"], ["vizSens", "vizSensV"], ["vizSize", "vizSizeV"], ["beatSens", "beatSensV"]]
+  .forEach(([a, b]) => { const f = () => { $(b).textContent = $(a).value; }; $(a).addEventListener("input", f); f(); });
+
+/* ---------- الصورة + الكلمات (ملفات) ---------- */
+let imgFile = null, prevBitmap = null;
+$("a2vImg").addEventListener("change", async () => {
+  imgFile = $("a2vImg").files[0] || null;
+  if (prevBitmap && prevBitmap.close) prevBitmap.close();
+  prevBitmap = null;
+  if (imgFile) { try { prevBitmap = await createImageBitmap(imgFile); } catch (e) { console.warn(e); } }
+  schedulePreview();
+});
+
+$("lyrFile").addEventListener("change", async () => {
+  const f = $("lyrFile").files[0];
+  if (!f) return;
+  let txt = await f.text();
+  $("lyrText").value = txt;
+  $("lyrOn").checked = true;
+  schedulePreview();
+});
+
+/* ---------- المعاينة الحيّة ---------- */
+let pvTimer = null;
+function schedulePreview() {
+  clearTimeout(pvTimer);
+  pvTimer = setTimeout(drawPreview, 120);
+}
+async function drawPreview() {
+  const cv = $("pv");
+  if (!cv.offsetParent) return;
+  const cfg = readCfg();
+  const dims = { w: 640, h: 360 };
+  cv.width = dims.w; cv.height = dims.h;
+  await ensureFont(cfg.lyr.font);
+
+  // بيانات إيقاع تجريبية
+  const bands = new Uint8Array(NB), wave = new Int8Array(WN);
+  for (let i = 0; i < NB; i++) {
+    const base = 0.75 - i / NB * 0.45;
+    bands[i] = Math.round(clamp(base * (0.55 + 0.45 * Math.sin(i * 0.55 + 1.2) * Math.cos(i * 0.21)), 0.05, 1) * 255);
+  }
+  for (let j = 0; j < WN; j++) wave[j] = Math.round(100 * Math.sin(j * 0.33) * (0.6 + 0.4 * Math.sin(j * 0.07)));
+  const feat = { bands, wave, bass: 200 };
+
+  // سطر تجريبي من الكلمات
+  let lines = null, t = 1;
+  if (cfg.lyr.on) {
+    const parsed = parseLyrics(cfg.lyr.text);
+    lines = prepareLyrics(parsed.entries.length ? parsed : { entries: [{ t: 0, end: 5, text: "كلمات الأغنية تظهر هنا — Lyrics preview", words: null }, { t: 5, end: 10, text: "السطر التالي يظهر بعد ذلك", words: null }], timed: true }, 60, cfg.lyr.offset);
+    if (lines.length) {
+      const k = Math.min(1, lines.length - 1);
+      const L = lines[Math.min(k, lines.length - 1)];
+      t = L.t + (L.fillEnd - L.t) * 0.55;
+      if (cfg.lyr.mode === "scroll" && lines.length > 1) t = lines[1].t + 0.5; // ظهور وسطي
+    }
+  }
+  const r = createRenderer({ ...cfg, fps: 15, forceBeat: 0.6 }, dims.w, dims.h, prevBitmap, lines);
+  r.draw(cv.getContext("2d"), t, feat);
+}
+$("a2v").addEventListener("input", schedulePreview);
+$("a2v").addEventListener("change", e => { if (e.target.id === "lyrFont") schedulePreview(); else schedulePreview(); });
+schedulePreview();
+
+/* ======================================================
+   الإخراج: على القرص (OPFS) للملفات الكبيرة، وإلا في الذاكرة
+   ====================================================== */
+async function cleanupOutputs() {
+  try {
+    if (!navigator.storage || !navigator.storage.getDirectory) return;
+    const root = await navigator.storage.getDirectory();
+    for await (const [name] of root.entries()) { if (name.startsWith("out-")) { try { await root.removeEntry(name); } catch (e) {} } }
+  } catch (e) {}
+}
+cleanupOutputs();
+
+async function createOutput(preferDisk) {
+  if (preferDisk && navigator.storage && navigator.storage.getDirectory && window.FileSystemFileHandle && "createWritable" in FileSystemFileHandle.prototype) {
+    try {
+      const root = await navigator.storage.getDirectory();
+      const name = "out-" + Date.now() + ".mp4";
+      const fh = await root.getFileHandle(name, { create: true });
+      const ws = await fh.createWritable();
+      return {
+        disk: true, fastStart: false,
+        target: new FileSystemWritableFileStreamTarget(ws),
+        async finish() { await ws.close(); const f = await fh.getFile(); return new Blob([f], { type: "video/mp4" }); },
+        async abort() { try { await ws.abort(); } catch (e) {} try { await root.removeEntry(name); } catch (e) {} }
+      };
+    } catch (e) { console.warn("OPFS غير متاح:", e); }
+  }
+  const target = new ArrayBufferTarget();
+  return {
+    disk: false, fastStart: "in-memory", target,
+    async finish() { return new Blob([target.buffer], { type: "video/mp4" }); },
+    async abort() {}
+  };
+}
+
+/* ======================================================
+   الفيديو
+   ====================================================== */
+async function pickVideoCodec(w, h, bitrate, fps) {
+  const list = (h > 720 || (h >= 720 && fps > 30))
     ? ["avc1.420028", "avc1.4d0028", "avc1.640028", "avc1.42001f"]
     : ["avc1.42001f", "avc1.42E01E", "avc1.4d001f", "avc1.640028"];
   for (const codec of list) {
-    const cfg = { codec, width: w, height: h, bitrate, framerate: 1 };
+    const cfg = { codec, width: w, height: h, bitrate, framerate: fps };
     try { if ((await VideoEncoder.isConfigSupported(cfg)).supported) return cfg; } catch (e) {}
   }
   throw new Error("ترميز H.264 غير مدعوم في هذا المتصفح بهذه الدقة");
 }
 
-async function writeVideo(muxer, cfg, durationSec, bitmap, fit, onProgress, errRef) {
+// فيديو ثابت (أسود/صورة) بإطار واحد في الثانية: الأسرع والأصغر
+async function writeStaticVideo(muxer, cfg, durationSec, bitmap, bg, onProgress, errRef) {
   const { width: w, height: h } = cfg;
   const enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => errRef.err = e });
   enc.configure(cfg);
-
   const cv = new OffscreenCanvas(w, h);
   const g = cv.getContext("2d");
-  g.fillStyle = "#000"; g.fillRect(0, 0, w, h);
+  g.fillStyle = bg.color; g.fillRect(0, 0, w, h);
   if (bitmap) {
     const sw = bitmap.width, sh = bitmap.height;
-    const k = fit === "cover" ? Math.max(w / sw, h / sh) : Math.min(w / sw, h / sh);
+    const k = bg.fit === "cover" ? Math.max(w / sw, h / sh) : Math.min(w / sw, h / sh);
     const dw = sw * k, dh = sh * k;
     g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
     g.drawImage(bitmap, (w - dw) / 2, (h - dh) / 2, dw, dh);
+    if (bg.dim > 0) { g.fillStyle = "rgba(0,0,0," + bg.dim + ")"; g.fillRect(0, 0, w, h); }
   }
-
   const frames = Math.max(1, Math.ceil(durationSec));
   for (let i = 0; i < frames; i++) {
     if (errRef.err) throw errRef.err;
@@ -602,19 +1494,51 @@ async function writeVideo(muxer, cfg, durationSec, bitmap, fit, onProgress, errR
   if (errRef.err) throw errRef.err;
 }
 
-/* ---------- صوت ← فيديو ---------- */
-let imgFile = null;
-$("a2vImg").addEventListener("change", () => {
-  imgFile = $("a2vImg").files[0] || null;
-  const prev = $("a2vPrev");
-  if (prev._url) { URL.revokeObjectURL(prev._url); prev._url = null; }
-  if (imgFile) { prev._url = URL.createObjectURL(imgFile); prev.src = prev._url; prev.style.display = "block"; }
-  else { prev.removeAttribute("src"); prev.style.display = "none"; }
-});
+// فيديو ديناميكي: يرسم كل إطار حسب الإيقاع والكلمات
+async function writeDynamicVideo(muxer, vcfg, totalFrames, renderer, an, fps, onProgress, errRef, st) {
+  const { width: w, height: h } = vcfg;
+  const enc = new VideoEncoder({ output: (c, m) => muxer.addVideoChunk(c, m), error: e => errRef.err = e });
+  enc.configure(vcfg);
+  const cv = document.createElement("canvas");
+  cv.width = w; cv.height = h;
+  const ctx = cv.getContext("2d", { alpha: false });
+  const zero = { bands: new Uint8Array(NB), wave: new Int8Array(WN), bass: 0 };
+  const durUs = Math.round(1e6 / fps);
+  const t0 = performance.now();
+  const kf = Math.max(1, Math.round(fps * 2));
+  for (let i = 0; i < totalFrames; i++) {
+    if (errRef.err) throw errRef.err;
+    renderer.draw(ctx, i / fps, an ? an.get(i) : zero);
+    const vf = new VideoFrame(cv, { timestamp: Math.round(i * 1e6 / fps), duration: durUs });
+    enc.encode(vf, { keyFrame: i % kf === 0 });
+    vf.close();
+    if (enc.encodeQueueSize > 6) await waitQ(enc, "encodeQueueSize", 3);
+    if (i % 20 === 0) {
+      await tick();
+      if (i % 60 === 0) {
+        onProgress(i / totalFrames);
+        const el = (performance.now() - t0) / 1000, rate = i / Math.max(0.1, el);
+        const rem = (totalFrames - i) / Math.max(0.1, rate);
+        st.textContent = "جاري رسم الإطارات " + i + " / " + totalFrames + " — المتبقي ≈ " + (rem > 90 ? Math.ceil(rem / 60) + " دقيقة" : Math.ceil(rem) + " ثانية");
+      }
+    }
+  }
+  await enc.flush(); enc.close();
+  if (errRef.err) throw errRef.err;
+}
 
-wire("a2v", async (file, { st, bar, dl }) => {
-  const [w, h, imgBitrate] = $("a2vQuality").value.split(",").map(Number);
-  const fit = $("a2vFit").value;
+/* ---------- صوت ← فيديو ---------- */
+wire("a2v", async (file, { st, bar, dl, errRef }) => {
+  const cfg = readCfg();
+  const { w, h, fps } = cfg;
+  const dyn = cfg.lyr.on || cfg.viz.on || cfg.beat.on;
+  const needAnalysis = cfg.viz.on || cfg.beat.on;
+
+  let parsed = null;
+  if (cfg.lyr.on) {
+    parsed = parseLyrics(cfg.lyr.text);
+    if (!parsed.entries.length) throw new Error("فعّلت الكلمات لكن لا يوجد نص. الصق الكلمات أو اختر ملفاً.");
+  }
 
   st.textContent = "جاري فتح الملف الصوتي...";
   const src = await openSource(file, null, null);
@@ -624,27 +1548,53 @@ wire("a2v", async (file, { st, bar, dl }) => {
     try { bitmap = await createImageBitmap(imgFile); }
     catch (e) { throw new Error("تعذر قراءة الصورة. جرّب صورة JPG أو PNG."); }
   }
+  if (cfg.lyr.on) { st.textContent = "جاري تحميل الخط..."; await ensureFont(cfg.lyr.font); }
 
-  const vcfg = await pickVideoCodec(w, h, bitmap ? imgBitrate : 30000);
-  const muxer = new Muxer({
-    target: new ArrayBufferTarget(),
-    video: { codec: "avc", width: w, height: h },
-    audio: { codec: "aac", sampleRate: src.sampleRate, numberOfChannels: src.channels },
-    fastStart: "in-memory"
-  });
+  const bitrate = dyn ? Math.max(400000, Math.round(w * h * fps * 0.05)) : (bitmap ? Math.round(w * h * 0.5) : 30000);
+  const vcfg = await pickVideoCodec(w, h, bitrate, dyn ? fps : 1);
+  const out = await createOutput(dyn);
 
-  const errRef = { err: null };
-  st.textContent = "جاري معالجة الصوت...";
-  const dur = await src.run(muxer, { copy: true, bitrate: 128000 }, p => bar.value = p * 85, errRef);
+  try {
+    const muxer = new Muxer({
+      target: out.target,
+      video: { codec: "avc", width: w, height: h },
+      audio: { codec: "aac", sampleRate: src.sampleRate, numberOfChannels: src.channels },
+      fastStart: out.fastStart
+    });
 
-  st.textContent = "جاري إنشاء الفيديو...";
-  await writeVideo(muxer, vcfg, dur, bitmap, fit, p => bar.value = 85 + p * 12, errRef);
-  if (bitmap && bitmap.close) bitmap.close();
+    let an = null;
+    const tap = needAnalysis ? (m, sr) => { if (!an) an = new Analyzer(sr, fps); an.feed(m); } : null;
 
-  st.textContent = "جاري إنهاء الملف...";
-  muxer.finalize();
-  const blob = new Blob([muxer.target.buffer], { type: "video/mp4" });
-  showResult(dl, blob, "audio-video.mp4", "تحميل الفيديو MP4");
+    st.textContent = needAnalysis ? "جاري معالجة الصوت وتحليل الإيقاع..." : "جاري معالجة الصوت...";
+    const audioShare = dyn ? 30 : 85;
+    const dur = await src.run(muxer, { copy: true, bitrate: 128000, tap }, p => bar.value = p * audioShare, errRef);
+
+    if (!out.disk && dyn) {
+      const est = bitrate * dur / 8;
+      if (est > 400 * MB) throw new Error("الفيديو المتوقع كبير (≈ " + Math.round(est / MB) + " MB) والمتصفح لا يدعم الحفظ على القرص. خفّض الدقة أو الإطارات أو قصّ الملف الصوتي.");
+    }
+
+    if (dyn) {
+      const totalFrames = Math.max(1, Math.ceil(dur * fps));
+      if (an) an.finish(totalFrames);
+      const lines = parsed ? prepareLyrics(parsed, dur, cfg.lyr.offset) : null;
+      const renderer = createRenderer(cfg, w, h, bitmap, lines);
+      st.textContent = "جاري رسم الإطارات...";
+      await writeDynamicVideo(muxer, vcfg, totalFrames, renderer, an, fps, p => bar.value = audioShare + p * (97 - audioShare), errRef, st);
+    } else {
+      st.textContent = "جاري إنشاء الفيديو...";
+      await writeStaticVideo(muxer, vcfg, dur, bitmap, cfg.bg, p => bar.value = 85 + p * 12, errRef);
+    }
+    if (bitmap && bitmap.close) bitmap.close();
+
+    st.textContent = "جاري إنهاء الملف...";
+    muxer.finalize();
+    const blob = await out.finish();
+    showResult(dl, blob, "audio-video.mp4", "تحميل الفيديو MP4");
+  } catch (e) {
+    await out.abort();
+    throw e;
+  }
 });
 
 /* ---------- فيديو ← صوت (مع اختيار المسار) ---------- */
@@ -687,10 +1637,10 @@ async function onPickV2A(file, st) {
     : "وُجد مسار صوتي واحد.";
 }
 
-wire("v2a", async (file, { st, bar, dl }) => {
+wire("v2a", async (file, { st, bar, dl, errRef }) => {
   const base = file.name.replace(/\.[^.]+$/, "") || "audio";
   const rateVal = $("v2aRate").value;
-  const opts = { copy: rateVal === "copy", bitrate: rateVal === "copy" ? 192000 : parseInt(rateVal, 10) };
+  const opts = { copy: rateVal === "copy", bitrate: rateVal === "copy" ? 192000 : parseInt(rateVal, 10), tap: null };
 
   let tid = null, suffix = "";
   if (probe) {
@@ -703,15 +1653,16 @@ wire("v2a", async (file, { st, bar, dl }) => {
   }
 
   const src = await openSource(file, tid, probe);
+  const target = new ArrayBufferTarget();
   const muxer = new Muxer({
-    target: new ArrayBufferTarget(),
+    target,
     audio: { codec: "aac", sampleRate: src.sampleRate, numberOfChannels: src.channels },
     fastStart: "in-memory"
   });
-  await src.run(muxer, opts, p => bar.value = p * 95, { err: null });
+  await src.run(muxer, opts, p => bar.value = p * 95, errRef);
   muxer.finalize();
 
-  const blob = new Blob([muxer.target.buffer], { type: "audio/mp4" });
+  const blob = new Blob([target.buffer], { type: "audio/mp4" });
   showResult(dl, blob, base + suffix + ".m4a", "تحميل الصوت M4A");
 }, onPickV2A);
 </script>

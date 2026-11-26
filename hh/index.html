@@ -3,241 +3,231 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0b1220">
+<meta name="theme-color" content="#0a0f1c">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="icon" href="icon-192.png">
 <link rel="apple-touch-icon" href="icon-192.png">
 <title>محوّل الصوت والفيديو</title>
 <style>
-* { box-sizing: border-box; }
-body { margin:0; padding:20px; background:#0b1220; color:#fff; font-family:Arial,sans-serif; }
-.box { max-width:600px; margin:20px auto; padding:22px; background:#142035; border:1px solid #263751; border-radius:18px; }
-h2 { text-align:center; color:#00d9ff; margin:0 0 14px; }
-.tabs { display:flex; gap:8px; margin-bottom:14px; }
-.tab { flex:1; padding:12px; background:#0b1424; color:#c4d0e2; border:1px solid #263751; border-radius:10px; font-size:15px; font-weight:bold; cursor:pointer; }
-.tab.on { background:#00c8d9; color:#00131b; border-color:#00c8d9; }
-p { color:#c4d0e2; line-height:1.8; font-size:15px; margin:8px 0; }
-label.lbl { display:block; color:#8fa3bf; font-size:13px; margin-top:10px; }
-input[type=file], input[type=number], select, textarea { width:100%; padding:12px; background:#0b1424; color:#fff; border:1px solid #263751; border-radius:10px; margin:6px 0; font-size:15px; font-family:inherit; }
-textarea { min-height:110px; resize:vertical; line-height:1.7; }
-input[type=color] { width:100%; height:42px; padding:2px; background:#0b1424; border:1px solid #263751; border-radius:10px; margin:6px 0; }
-input[type=range] { width:100%; margin:8px 0; accent-color:#00c8d9; }
-button.main { width:100%; padding:15px; margin-top:8px; background:#00c8d9; color:#00131b; border:0; border-radius:10px; font-size:17px; font-weight:bold; cursor:pointer; }
-button.cancel { background:#7a2b36; color:#fff; display:none; }
-button:disabled { opacity:.5; cursor:not-allowed; }
-progress { width:100%; height:14px; margin-top:16px; }
-.status { font-size:14px; overflow-wrap:anywhere; }
-.dl { display:none; margin-top:12px; padding:15px; background:#164c3a; color:#fff; text-align:center; text-decoration:none; border-radius:10px; font-weight:bold; }
-.panel { display:none; }
-.panel.on { display:block; }
-#install { display:none; margin:0 auto 10px; max-width:600px; width:100%; padding:12px; background:#263751; color:#fff; border:0; border-radius:10px; cursor:pointer; font-size:15px; }
-small { color:#8fa3bf; display:block; line-height:1.7; margin-top:10px; }
-details { background:#0f1a2d; border:1px solid #263751; border-radius:12px; margin:10px 0; padding:0 12px; }
-summary { padding:13px 0; cursor:pointer; font-weight:bold; color:#00d9ff; font-size:15px; }
-details[open] { padding-bottom:12px; }
-.row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.chk { display:flex; align-items:center; gap:8px; color:#e6eefb; margin:9px 0; font-size:15px; }
-.chk input { width:20px; height:20px; accent-color:#00c8d9; }
-.chk.main { background:#16283f; padding:10px 12px; border-radius:10px; font-weight:bold; }
-.hint { color:#8fa3bf; font-size:12.5px; line-height:1.7; margin:4px 0; }
-#pv { width:100%; aspect-ratio:16/9; background:#000; border:1px solid #263751; border-radius:10px; display:block; margin:8px 0; }
+:root {
+  --bg:#0a0f1c; --bg2:#0e1527; --card:#121b2f; --card2:#17233b; --line:#243556; --line2:#2f4469;
+  --text:#e9effc; --muted:#8fa3c4; --accent:#22d3ee; --accent2:#6366f1; --ok:#34d399; --danger:#f43f5e;
+  --r:14px; --r2:10px;
+  --grad:linear-gradient(135deg,#22d3ee,#6366f1);
+}
+* { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+html { scroll-behavior:smooth; }
+body { margin:0; background:radial-gradient(1200px 600px at 80% -10%,#16264a 0%,transparent 60%),var(--bg); color:var(--text);
+  font-family:"Segoe UI",Tahoma,"Noto Sans Arabic",Arial,sans-serif; line-height:1.6; min-height:100vh; }
+.shell { max-width:760px; margin:0 auto; padding:18px 16px 40px; }
+.top { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:6px 0 16px; }
+.brand { display:flex; align-items:center; gap:12px; }
+.logo { width:44px; height:44px; border-radius:13px; background:var(--grad); display:grid; place-items:center; color:#04121c; flex:none; box-shadow:0 6px 20px rgba(34,211,238,.25); }
+.brand h1 { margin:0; font-size:19px; letter-spacing:.2px; }
+.brand p { margin:0; color:var(--muted); font-size:12.5px; }
+#install { display:none; padding:9px 14px; border-radius:999px; border:1px solid var(--line2); background:var(--card); color:var(--text); cursor:pointer; font-size:13px; }
+
+.seg { display:grid; grid-template-columns:1fr 1fr; gap:4px; background:var(--bg2); border:1px solid var(--line); border-radius:12px; padding:4px; margin-bottom:14px; }
+.tab { border:0; background:transparent; color:var(--muted); padding:11px 8px; border-radius:9px; font-size:14.5px; font-weight:700; cursor:pointer; transition:.15s; font-family:inherit; }
+.tab.on { background:var(--card2); color:#fff; box-shadow:inset 0 0 0 1px var(--line2); }
+.panel { display:none; } .panel.on { display:block; }
+
+.card { background:var(--card); border:1px solid var(--line); border-radius:var(--r); padding:14px; margin:12px 0; }
+.cardhead { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+.cardhead h3 { margin:0; font-size:14.5px; }
+.hint, .note { color:var(--muted); font-size:12.5px; line-height:1.75; margin:6px 0; }
+
+.drop { position:relative; display:flex; align-items:center; gap:14px; padding:18px; border:1.5px dashed var(--line2); border-radius:var(--r); background:var(--card); cursor:pointer; transition:.15s; margin:0; }
+.drop:hover, .drop.over { border-color:var(--accent); background:#112038; }
+.drop.has { border-style:solid; border-color:var(--accent); }
+.drop .di { width:46px; height:46px; border-radius:12px; background:var(--card2); display:grid; place-items:center; color:var(--accent); flex:none; }
+.drop b { display:block; font-size:14.5px; overflow-wrap:anywhere; }
+.drop span.s { color:var(--muted); font-size:12.5px; }
+.drop input[type=file] { position:absolute; inset:0; opacity:0; width:100%; height:100%; cursor:pointer; }
+
+.pvcard { padding:12px; }
+#pv { width:100%; aspect-ratio:16/9; background:#000; border:1px solid var(--line); border-radius:12px; display:block; }
+.btn { display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:9px 14px; border:1px solid var(--line2); background:var(--card2); color:var(--text); border-radius:var(--r2); font-size:13.5px; font-weight:600; cursor:pointer; font-family:inherit; transition:.15s; }
+.btn:hover { border-color:var(--accent); }
+.btn.sm { padding:6px 12px; font-size:12.5px; }
+.btn.wide { width:100%; margin-top:6px; }
+.btnrow { display:flex; flex-wrap:wrap; gap:8px; }
+.primary { flex:1; padding:14px; border:0; border-radius:12px; background:var(--grad); color:#04121c; font-size:16.5px; font-weight:800; cursor:pointer; font-family:inherit; box-shadow:0 8px 24px rgba(34,211,238,.22); }
+.danger { padding:14px 18px; border:0; border-radius:12px; background:var(--danger); color:#fff; font-size:15px; font-weight:700; cursor:pointer; display:none; font-family:inherit; }
+button:disabled { opacity:.45; cursor:not-allowed; box-shadow:none; }
+
+.chips { display:flex; flex-wrap:wrap; gap:8px; }
+.theme { display:flex; align-items:center; gap:8px; padding:6px 12px 6px 8px; background:var(--card2); border:1px solid var(--line2); border-radius:999px; color:var(--text); cursor:pointer; font-size:13px; font-family:inherit; }
+.theme i { width:34px; height:16px; border-radius:99px; display:block; }
+.theme:hover { border-color:var(--accent); }
+
+details.sec { background:var(--card); border:1px solid var(--line); border-radius:var(--r); margin:12px 0; overflow:hidden; }
+details.sec > summary { list-style:none; display:flex; align-items:center; gap:10px; padding:14px; cursor:pointer; user-select:none; }
+details.sec > summary::-webkit-details-marker { display:none; }
+details.sec > summary::after { content:"⌄"; margin-inline-start:auto; color:var(--muted); font-size:18px; line-height:1; transition:.2s; }
+details.sec[open] > summary::after { transform:rotate(180deg); }
+details.sec[open] > summary { border-bottom:1px solid var(--line); }
+.si { color:var(--accent); display:grid; place-items:center; }
+.st { font-weight:800; font-size:14.5px; }
+.badge { font-size:11px; padding:2px 9px; border-radius:99px; background:var(--card2); color:var(--muted); border:1px solid var(--line2); }
+.badge.on { background:rgba(52,211,153,.14); color:var(--ok); border-color:rgba(52,211,153,.4); }
+details.sec.dim .grid { opacity:.62; }
+.grid { display:grid; grid-template-columns:1fr 1fr; gap:4px 12px; padding:12px 14px 14px; }
+.wide { grid-column:1 / -1; }
+.fld { min-width:0; margin:5px 0; }
+.fl { display:block; font-size:12.5px; color:var(--muted); margin-bottom:5px; }
+.fh { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:2px; }
+.fh .fl { margin:0; }
+.nw { display:flex; align-items:center; gap:5px; }
+.unit { font-size:12px; color:var(--muted); min-width:14px; }
+input[type=number] { width:78px; padding:6px 8px; text-align:center; background:var(--bg2); border:1px solid var(--line2); border-radius:8px; color:var(--text); font-size:13.5px; font-family:inherit; }
+input[type=file], select, textarea { width:100%; padding:10px 12px; background:var(--bg2); color:var(--text); border:1px solid var(--line2); border-radius:var(--r2); font-size:14px; font-family:inherit; }
+input[type=file] { color:var(--muted); font-size:13px; }
+input[type=file]::file-selector-button { margin-inline-end:10px; padding:7px 13px; border:1px solid var(--line2); border-radius:8px; background:var(--card2); color:var(--text); font-family:inherit; font-size:13px; cursor:pointer; }
+textarea { min-height:100px; resize:vertical; line-height:1.8; }
+input[type=color] { width:100%; height:40px; padding:3px; background:var(--bg2); border:1px solid var(--line2); border-radius:var(--r2); cursor:pointer; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible, summary:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+input[type=range] { width:100%; direction:ltr; height:26px; background:transparent; accent-color:var(--accent); margin:2px 0; }
+.pre { display:flex; gap:6px; flex-wrap:wrap; margin-top:2px; }
+.chip { padding:3px 11px; font-size:12px; border-radius:99px; border:1px solid var(--line2); background:var(--bg2); color:var(--muted); cursor:pointer; font-family:inherit; }
+.chip:hover { color:var(--text); border-color:var(--accent); }
+.chk { display:flex; align-items:center; gap:9px; margin:9px 0; font-size:14px; cursor:pointer; }
+.chk input { width:19px; height:19px; accent-color:var(--accent); }
+.switch { display:flex; align-items:center; gap:12px; padding:11px 12px; background:var(--card2); border-radius:var(--r2); cursor:pointer; margin-bottom:6px; }
+.switch input { position:absolute; opacity:0; pointer-events:none; }
+.switch .track { width:42px; height:24px; border-radius:99px; background:#2a3b5e; position:relative; transition:.2s; flex:none; }
+.switch .track::after { content:""; position:absolute; top:3px; inset-inline-start:3px; width:18px; height:18px; border-radius:50%; background:#fff; transition:.2s; }
+.switch input:checked + .track { background:var(--accent); }
+.switch input:checked + .track::after { inset-inline-start:21px; }
+.switch input:focus-visible + .track { outline:2px solid var(--accent); outline-offset:2px; }
+
+.actionbar { position:sticky; bottom:0; z-index:20; margin:16px -16px 0; padding:12px 16px calc(12px + env(safe-area-inset-bottom)); background:linear-gradient(180deg,transparent,rgba(10,15,28,.92) 28%); backdrop-filter:blur(6px); }
+.abtns { display:flex; gap:10px; }
+progress { width:100%; height:8px; margin:12px 0 4px; border:0; border-radius:99px; overflow:hidden; background:var(--card2); }
+progress::-webkit-progress-bar { background:var(--card2); }
+progress::-webkit-progress-value { background:var(--grad); border-radius:99px; }
+.status { font-size:13px; color:var(--muted); overflow-wrap:anywhere; margin:4px 0 0; min-height:20px; }
+.dl { display:none; margin-top:10px; padding:14px; background:rgba(52,211,153,.14); border:1px solid rgba(52,211,153,.5); color:var(--ok); text-align:center; text-decoration:none; border-radius:12px; font-weight:800; }
+
+.v2a-box select { margin:10px 0; }
+.foot { color:var(--muted); font-size:12.5px; line-height:1.9; margin-top:18px; padding:14px; border:1px solid var(--line); border-radius:var(--r); background:var(--bg2); }
+
+/* النافذة المنبثقة */
+.pvfloat { position:fixed; top:12px; inset-inline-end:12px; z-index:60; width:280px; background:var(--card); border:1px solid var(--line2); border-radius:14px; overflow:hidden; box-shadow:0 14px 40px rgba(0,0,0,.55); touch-action:none; }
+.pvfloat[hidden] { display:none; }
+.pvfhead { display:flex; align-items:center; justify-content:space-between; gap:6px; padding:5px 8px; background:var(--card2); cursor:grab; font-size:12px; color:var(--muted); user-select:none; }
+.pvfhead:active { cursor:grabbing; }
+.pvfhead div { display:flex; gap:4px; }
+.pvfhead button { width:26px; height:24px; border:1px solid var(--line2); background:var(--bg2); color:var(--text); border-radius:7px; cursor:pointer; font-size:13px; line-height:1; font-family:inherit; }
+.pvfloat canvas { width:100%; display:block; aspect-ratio:16/9; background:#000; }
+
+@media (max-width:520px) {
+  .grid { grid-template-columns:1fr; }
+  .shell { padding:14px 12px 30px; }
+  .actionbar { margin:16px -12px 0; padding-inline:12px; }
+}
 </style>
 </head>
 <body>
+<div class="shell">
+  <header class="top">
+    <div class="brand">
+      <div class="logo"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/></svg></div>
+      <div><h1>محوّل الصوت والفيديو</h1><p>سريع · بلا رفع ملفات · كل شيء داخل جهازك</p></div>
+    </div>
+    <button id="install">📲 تثبيت</button>
+  </header>
 
-<button id="install">📲 تثبيت التطبيق على جهازك</button>
-
-<div class="box">
-  <h2>⚡ محوّل الصوت والفيديو</h2>
-
-  <div class="tabs">
-    <button class="tab on" data-t="a2v">صوت ← فيديو</button>
-    <button class="tab" data-t="v2a">فيديو ← صوت</button>
-  </div>
+  <nav class="seg" role="tablist">
+    <button class="tab on" data-t="a2v" role="tab">صوت ← فيديو</button>
+    <button class="tab" data-t="v2a" role="tab">فيديو ← صوت</button>
+  </nav>
 
   <!-- ===================== صوت إلى فيديو ===================== -->
   <div class="panel on" id="a2v">
-    <label class="lbl">الملف الصوتي</label>
-    <input type="file" id="a2vFile" accept="audio/*,.m4a,.mp3,.wav,.aac,.ogg,.flac,.opus">
+    <label class="drop" id="dropA" for="a2vFile">
+      <span class="di"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg></span>
+      <span><b id="dropTitle">اختر ملفاً صوتياً أو اسحبه هنا</b><span class="s" id="dropSub">MP3 · M4A · WAV · OGG · FLAC …</span></span>
+      <input type="file" id="a2vFile" accept="audio/*,.m4a,.mp3,.wav,.aac,.ogg,.flac,.opus">
+    </label>
 
-    <canvas id="pv" width="640" height="360"></canvas>
-    <div class="hint">↑ معاينة حيّة بإعداداتك الحالية (بيانات إيقاع تجريبية). تتحدث تلقائياً عند أي تغيير.</div>
+    <section class="card pvcard" id="pvCard">
+      <div class="cardhead"><h3>معاينة حيّة</h3><button class="btn sm" id="pvPlay" type="button">▶ تشغيل المعاينة</button></div>
+      <canvas id="pv" width="640" height="360"></canvas>
+      <div class="hint">بيانات إيقاع تجريبية بإعداداتك الحالية. اضغط «تشغيل المعاينة» لترى الحركات والإيقاع. عند التمرير لأسفل تنبثق نافذة معاينة صغيرة.</div>
+    </section>
 
-    <details open>
-      <summary>🎬 الفيديو والخلفية</summary>
-      <label class="lbl">صورة الخلفية (اختياري)</label>
-      <input type="file" id="a2vImg" accept="image/*">
-      <div class="row">
-        <div><label class="lbl">لون الخلفية</label><input type="color" id="a2vBg" value="#000000"></div>
-        <div><label class="lbl">ملاءمة الصورة</label>
-          <select id="a2vFit">
-            <option value="contain">كاملة (مع حواف)</option>
-            <option value="cover" selected>ملء الإطار</option>
-          </select></div>
-      </div>
-      <label class="lbl">تعتيم الصورة: <span id="a2vDimV">25</span>%</label>
-      <input type="range" id="a2vDim" min="0" max="85" value="25">
-      <div class="row">
-        <div><label class="lbl">جودة الفيديو</label>
-          <select id="a2vQuality">
-            <option value="640,360">360p (أخف)</option>
-            <option value="854,480">480p</option>
-            <option value="1280,720" selected>720p</option>
-            <option value="1920,1080">1080p (أثقل)</option>
-          </select></div>
-        <div><label class="lbl">عدد الإطارات/ثانية</label>
-          <select id="a2vFps">
-            <option value="10">10</option>
-            <option value="15" selected>15</option>
-            <option value="24">24</option>
-            <option value="30">30 (أنعم)</option>
-          </select></div>
-      </div>
-      <div class="hint">عند عدم تفعيل أي مؤثر أو كلمات يُنشأ فيديو ثابت بإطار واحد في الثانية، وهو الأسرع والأصغر حجماً.</div>
-    </details>
+    <section class="card">
+      <div class="cardhead"><h3>🎨 ثيمات ألوان منسجمة</h3></div>
+      <div class="chips" id="themeChips"></div>
+      <div class="hint">نقرة واحدة تضبط ألوان المؤثر وشريط التقدم وتلوين الكلمات معاً لتصميم متناسق.</div>
+    </section>
 
-    <details>
-      <summary>📝 الكلمات / الترجمة (للأغاني)</summary>
-      <label class="chk main"><input type="checkbox" id="lyrOn"> تفعيل عرض الكلمات</label>
-      <label class="lbl">ملف كلمات (LRC أو SRT أو VTT أو TXT)</label>
-      <input type="file" id="lyrFile" accept=".lrc,.srt,.vtt,.txt,text/plain">
-      <label class="lbl">أو الصق/عدّل الكلمات هنا</label>
-      <textarea id="lyrText" placeholder="[00:12.50]كلمات السطر الأول&#10;[00:17.00]كلمات السطر الثاني&#10;&#10;أو نص عادي بدون أوقات (يُوزَّع تلقائياً على مدة الأغنية)"></textarea>
-      <div class="hint">للتزامن الدقيق استخدم LRC أو SRT. النص العادي يُوزَّع تقريباً حسب طول الأسطر.</div>
-      <div class="row">
-        <div><label class="lbl">أسلوب العرض</label>
-          <select id="lyrMode">
-            <option value="fill" selected>كاريوكي (تلوين تدريجي)</option>
-            <option value="single">سطر واحد بحركة ظهور</option>
-            <option value="scroll">ثلاثة أسطر متحركة</option>
-          </select></div>
-        <div><label class="lbl">الخط</label>
-          <select id="lyrFont">
-            <option value="Cairo" selected>Cairo (عربي)</option>
-            <option value="Tajawal">Tajawal (عربي)</option>
-            <option value="Amiri">Amiri (نسخ)</option>
-            <option value="Lalezar">Lalezar (عريض)</option>
-            <option value="Changa">Changa</option>
-            <option value="Aref Ruqaa">Aref Ruqaa (رقعة)</option>
-            <option value="Reem Kufi">Reem Kufi (كوفي)</option>
-            <option value="Arial">Arial</option>
-            <option value="Tahoma">Tahoma</option>
-            <option value="Georgia">Georgia</option>
-            <option value="Impact">Impact</option>
-            <option value="Courier New">Courier New</option>
-          </select></div>
-      </div>
-      <div class="hint">خطوط Google (Cairo وغيرها) تُحمَّل من الإنترنت؛ دون اتصال يُستبدل بخط النظام.</div>
-      <label class="lbl">حجم الخط: <span id="lyrSizeV">7</span>% من ارتفاع الفيديو</label>
-      <input type="range" id="lyrSize" min="3" max="14" step="0.5" value="7">
-      <div class="row">
-        <div><label class="lbl">لون النص</label><input type="color" id="lyrColor" value="#ffffff"></div>
-        <div><label class="lbl">لون التلوين (المُغنّى)</label><input type="color" id="lyrHi" value="#ffd23f"></div>
-      </div>
-      <div class="row">
-        <div><label class="lbl">حواف النص</label>
-          <select id="lyrEdge">
-            <option value="outline" selected>إطار أسود</option>
-            <option value="shadow">ظل</option>
-            <option value="box">مربع خلفية</option>
-            <option value="none">بدون</option>
-          </select></div>
-        <div><label class="lbl">موضع النص</label>
-          <select id="lyrPos">
-            <option value="bottom" selected>أسفل</option>
-            <option value="center">وسط</option>
-            <option value="top">أعلى</option>
-          </select></div>
-      </div>
-      <label class="lbl">تقديم/تأخير الكلمات (ثانية): <span id="lyrOffV">0</span></label>
-      <input type="range" id="lyrOffset" min="-10" max="10" step="0.1" value="0">
-    </details>
+    <div id="settings"></div>
 
-    <details>
-      <summary>📊 مؤثر الإيقاع (موجات الصوت)</summary>
-      <label class="chk main"><input type="checkbox" id="vizOn"> تفعيل مؤثر الإيقاع</label>
-      <div class="row">
-        <div><label class="lbl">الشكل</label>
-          <select id="vizShape">
-            <option value="bars" selected>أعمدة</option>
-            <option value="mirror">أعمدة متماثلة</option>
-            <option value="wave">موجة خطية</option>
-            <option value="circle">أعمدة دائرية</option>
-            <option value="ring">حلقة موجية</option>
-            <option value="dots">نقاط</option>
-          </select></div>
-        <div><label class="lbl">الموضع</label>
-          <select id="vizPos">
-            <option value="bottom">أسفل</option>
-            <option value="center" selected>وسط</option>
-            <option value="top">أعلى</option>
-          </select></div>
+    <section class="card">
+      <div class="cardhead"><h3>إدارة الإعدادات</h3></div>
+      <div class="btnrow">
+        <button class="btn" id="setReset" type="button">إعادة الضبط</button>
+        <button class="btn" id="setExport" type="button">تصدير كملف</button>
+        <label class="btn" for="setImportFile" style="margin:0">استيراد</label>
+        <input type="file" id="setImportFile" accept="application/json,.json" hidden>
       </div>
-      <div class="row">
-        <div><label class="lbl">اللون الأول</label><input type="color" id="vizC1" value="#00e5ff"></div>
-        <div><label class="lbl">اللون الثاني</label><input type="color" id="vizC2" value="#ff2d95"></div>
-      </div>
-      <label class="chk"><input type="checkbox" id="vizRainbow"> ألوان قوس قزح</label>
-      <label class="chk"><input type="checkbox" id="vizGlow"> توهج</label>
-      <div class="row">
-        <div><label class="lbl">عدد الأعمدة</label>
-          <select id="vizCount">
-            <option value="24">24</option>
-            <option value="32">32</option>
-            <option value="48" selected>48</option>
-            <option value="64">64</option>
-          </select></div>
-        <div><label class="lbl">السُّمك: <span id="vizThickV">5</span></label>
-          <input type="range" id="vizThick" min="1" max="10" step="1" value="5"></div>
-      </div>
-      <label class="lbl">الحساسية: <span id="vizSensV">100</span>%</label>
-      <input type="range" id="vizSens" min="30" max="250" step="5" value="100">
-      <label class="lbl">الحجم: <span id="vizSizeV">100</span>%</label>
-      <input type="range" id="vizSize" min="40" max="160" step="5" value="100">
-    </details>
+      <div class="hint">تُحفظ إعداداتك تلقائياً في هذا المتصفح، ويمكنك تصديرها واستيرادها بين الأجهزة.</div>
+    </section>
 
-    <details>
-      <summary>🖼 تفاعل الصورة مع الإيقاع</summary>
-      <label class="chk main"><input type="checkbox" id="beatOn"> تفعيل تفاعل الصورة</label>
-      <label class="chk"><input type="checkbox" id="beatZoom" checked> نبض (تكبير مع الإيقاع)</label>
-      <label class="chk"><input type="checkbox" id="beatShake"> اهتزاز</label>
-      <label class="chk"><input type="checkbox" id="beatFlash"> وميض</label>
-      <label class="chk"><input type="checkbox" id="beatSway"> ميلان/دوران خفيف</label>
-      <label class="lbl">قوة التفاعل: <span id="beatSensV">100</span>%</label>
-      <input type="range" id="beatSens" min="20" max="250" step="5" value="100">
-      <div class="hint">يعتمد على قوة الجهير (الطبل). بدون صورة يؤثر الوميض على لون الخلفية فقط.</div>
-    </details>
-
-    <button class="main" id="a2vGo" disabled>إنشاء الفيديو</button>
-    <button class="main cancel" id="a2vCancel">إلغاء</button>
-    <progress id="a2vBar" value="0" max="100"></progress>
-    <p class="status" id="a2vStatus">اختر ملفاً صوتياً للبدء.</p>
-    <a class="dl" id="a2vDl">تحميل</a>
+    <div class="actionbar">
+      <div class="abtns">
+        <button class="primary" id="a2vGo" disabled>إنشاء الفيديو</button>
+        <button class="danger" id="a2vCancel">إلغاء</button>
+      </div>
+      <progress id="a2vBar" value="0" max="100"></progress>
+      <p class="status" id="a2vStatus">اختر ملفاً صوتياً للبدء.</p>
+      <a class="dl" id="a2vDl">تحميل</a>
+    </div>
   </div>
 
   <!-- ===================== فيديو إلى صوت ===================== -->
   <div class="panel" id="v2a">
-    <p>يسحب الصوت من أي فيديو ويحفظه بصيغة M4A (AAC) بسرعة كبيرة.</p>
-    <input type="file" id="v2aFile" accept="video/*,audio/*">
-    <select id="v2aTrack" style="display:none"></select>
-    <select id="v2aRate">
-      <option value="copy" selected>نسخ مباشر بدون فقدان جودة (إن كان AAC)</option>
-      <option value="128000">جودة عادية (128 kbps)</option>
-      <option value="192000">جودة جيدة (192 kbps)</option>
-      <option value="256000">جودة عالية (256 kbps)</option>
-    </select>
-    <button class="main" id="v2aGo" disabled>سحب الصوت</button>
-    <button class="main cancel" id="v2aCancel">إلغاء</button>
-    <progress id="v2aBar" value="0" max="100"></progress>
-    <p class="status" id="v2aStatus">اختر فيديو للبدء.</p>
-    <a class="dl" id="v2aDl">تحميل</a>
+    <section class="card v2a-box">
+      <div class="cardhead"><h3>سحب الصوت من فيديو</h3></div>
+      <p class="hint">يسحب الصوت من أي فيديو ويحفظه M4A (AAC) بسرعة كبيرة، مع اختيار المسار الصوتي في الملفات متعددة المسارات.</p>
+      <input type="file" id="v2aFile" accept="video/*,audio/*">
+      <select id="v2aTrack" style="display:none"></select>
+      <select id="v2aRate">
+        <option value="copy" selected>نسخ مباشر بدون فقدان جودة (إن كان AAC)</option>
+        <option value="128000">جودة عادية (128 kbps)</option>
+        <option value="192000">جودة جيدة (192 kbps)</option>
+        <option value="256000">جودة عالية (256 kbps)</option>
+      </select>
+      <div class="abtns">
+        <button class="primary" id="v2aGo" disabled>سحب الصوت</button>
+        <button class="danger" id="v2aCancel">إلغاء</button>
+      </div>
+      <progress id="v2aBar" value="0" max="100"></progress>
+      <p class="status" id="v2aStatus">اختر فيديو للبدء.</p>
+      <a class="dl" id="v2aDl">تحميل</a>
+    </section>
   </div>
 
-  <small>
-    ✅ كل المعالجة تتم داخل جهازك، ولا يُرفع أي ملف.<br>
-    🧠 الملف يُقرأ على دفعات صغيرة (MP4 / M4A / MP3 / WAV)، والفيديو الطويل يُكتب على القرص لا في الذاكرة.<br>
-    ⚠ صيغ أخرى (OGG / FLAC / WebM...) تُفكّ كاملة في الذاكرة، ويُرفض الملف الطويل جداً منها حمايةً من الإغلاق المفاجئ.
-  </small>
+  <div class="foot">
+    ✅ كل المعالجة تتم داخل جهازك ولا يُرفع أي ملف.<br>
+    🧠 الملف يُقرأ على دفعات (MP4 / M4A / MP3 / WAV)، والفيديو الطويل يُكتب على القرص لا في الذاكرة.<br>
+    ⚠ صيغ أخرى (OGG / FLAC / WebM…) تُفكّ كاملة في الذاكرة، ويُرفض الملف الطويل جداً منها حمايةً من الإغلاق المفاجئ.
+  </div>
+</div>
+
+<!-- نافذة المعاينة المنبثقة -->
+<div class="pvfloat" id="pvFloat" hidden>
+  <div class="pvfhead" id="pvFHead"><span>معاينة</span>
+    <div>
+      <button id="pvFPlay" type="button" title="تشغيل / إيقاف">▶</button>
+      <button id="pvFMinus" type="button" title="تصغير">−</button>
+      <button id="pvFPlus" type="button" title="تكبير">+</button>
+      <button id="pvFClose" type="button" title="إغلاق">×</button>
+    </div>
+  </div>
+  <canvas id="pvF" width="640" height="360"></canvas>
 </div>
 
 <script type="module">
@@ -1014,7 +1004,7 @@ async function ensureFont(family) {
 }
 
 /* ======================================================
-   المُصيِّر: يرسم إطار الفيديو (خلفية + تفاعل + مؤثر + كلمات)
+   المُصيِّر: يرسم إطار الفيديو (خلفية + تفاعل + مؤثر + شريط تقدم + كلمات)
    يُستخدم للمعاينة وللتصدير بنفس الكود
    ====================================================== */
 function lerpColor(a, b, t) {
@@ -1025,23 +1015,55 @@ function lerpColor(a, b, t) {
   return "rgb(" + r + "," + g + "," + bl + ")";
 }
 
-function createRenderer(cfg, w, h, bitmap, lines) {
-  const fps = cfg.fps, dt = 1 / fps, sc = h / 360;
-  const prev = new Float32Array(NB);
-  const vals = new Float32Array(NB);
-  let beat = 0, slow = null;
-  const decay = Math.exp(-dt / 0.18), bDecay = Math.exp(-dt / 0.14), slowK = 1 - Math.exp(-dt / 0.8);
-  const wrapCache = new Map();
-  const L = cfg.lyr, V = cfg.viz, B = cfg.beat, BG = cfg.bg;
+const easeOutCubic = x => 1 - Math.pow(1 - x, 3);
+const easeOutBack = x => { const c1 = 1.70158, c3 = c1 + 1; return 1 + c3 * Math.pow(x - 1, 3) + c1 * Math.pow(x - 1, 2); };
+const easeOutBounce = x => {
+  const n1 = 7.5625, d1 = 2.75;
+  if (x < 1 / d1) return n1 * x * x;
+  if (x < 2 / d1) { x -= 1.5 / d1; return n1 * x * x + 0.75; }
+  if (x < 2.5 / d1) { x -= 2.25 / d1; return n1 * x * x + 0.9375; }
+  x -= 2.625 / d1; return n1 * x * x + 0.984375;
+};
+const pad2 = n => (n < 10 ? "0" : "") + n;
+function fmtClock(sec) {
+  sec = Math.max(0, Math.floor(sec));
+  const hh = Math.floor(sec / 3600), mm = Math.floor(sec % 3600 / 60), ss = sec % 60;
+  return hh ? hh + ":" + pad2(mm) + ":" + pad2(ss) : mm + ":" + pad2(ss);
+}
+const hash01 = i => Math.abs((Math.sin(i * 127.1 + 311.7) * 43758.5453) % 1);
 
+// غلاف الصوت الكلي (للشريط الموجي) من بيانات المحلّل
+function computeEnv(an, totalFrames, M) {
+  const env = new Float32Array(M), cnt = new Float32Array(M);
+  for (let f = 0; f < totalFrames; f++) {
+    const b = an.get(f).bands; let s = 0;
+    for (let i = 0; i < NB; i++) s += b[i];
+    const m = Math.min(M - 1, Math.floor(f * M / totalFrames));
+    env[m] += s / NB / 255; cnt[m]++;
+  }
+  let mx = 0.0001;
+  for (let m = 0; m < M; m++) { env[m] = cnt[m] ? env[m] / cnt[m] : 0; if (env[m] > mx) mx = env[m]; }
+  let mn = 1; for (let m = 0; m < M; m++) if (env[m] < mn) mn = env[m];
+  for (let m = 0; m < M; m++) env[m] = clamp(0.12 + 0.88 * (env[m] - mn) / Math.max(0.0001, mx - mn), 0, 1);
+  return env;
+}
+
+function createRenderer(cfg, w, h, bitmap, lines, env) {
+  const fps = cfg.fps, dt = 1 / fps, sc = h / 360;
+  const prev = new Float32Array(NB), vals = new Float32Array(NB);
+  const L = cfg.lyr, V = cfg.viz, B = cfg.beat, BG = cfg.bg, P = cfg.prog;
+  let beat = 0, slow = null;
+  const decay = Math.exp(-dt / (0.02 + V.smooth / 100 * 0.5));
+  const bDecay = Math.exp(-dt / Math.max(0.03, B.decay / 1000)), slowK = 1 - Math.exp(-dt / 0.8);
+  const wrapCache = new Map();
   const fontStr = px => fontWeight(L.font) + " " + px + 'px "' + L.font + '", Tahoma, Arial, sans-serif';
 
   function rr(ctx, x, y, wd, ht, r) {
     ctx.beginPath();
-    if (ctx.roundRect) ctx.roundRect(x, y, wd, ht, r); else ctx.rect(x, y, wd, ht);
+    if (ctx.roundRect) ctx.roundRect(x, y, wd, ht, Math.max(0, Math.min(r, wd / 2, ht / 2))); else ctx.rect(x, y, wd, ht);
   }
 
-  /* ----- الخلفية ----- */
+  /* ----- الخلفية + تفاعل الصورة ----- */
   function drawBackground(ctx, t, bt) {
     ctx.globalCompositeOperation = "source-over";
     ctx.fillStyle = BG.color; ctx.fillRect(0, 0, w, h);
@@ -1050,12 +1072,13 @@ function createRenderer(cfg, w, h, bitmap, lines) {
       const k0 = BG.fit === "cover" ? Math.max(w / sw, h / sh) : Math.min(w / sw, h / sh);
       let zoom = 1, rot = 0, dx = 0, dy = 0;
       if (B.on) {
-        if (B.zoom) zoom += 0.08 * bt;
-        if (B.sway) rot = Math.sin(t * 3.1) * 0.035 * bt;
-        if (B.shake) { dx = Math.sin(t * 91.7) * Math.cos(t * 47.3) * w * 0.012 * bt; dy = Math.cos(t * 83.1) * Math.sin(t * 59.9) * h * 0.012 * bt; }
+        zoom += (B.zoom / 100) * bt;
+        rot = Math.sin(t * 3.1) * (B.sway * Math.PI / 180) * bt;
+        const sa = (B.shake / 100) * bt;
+        dx = Math.sin(t * 91.7) * Math.cos(t * 47.3) * w * sa;
+        dy = Math.cos(t * 83.1) * Math.sin(t * 59.9) * h * sa;
+        if ((B.sway > 0 || B.shake > 0) && BG.fit === "cover") zoom *= 1.04;
       }
-      // إن كان الدوران/الاهتزاز يكشف حوافاً مع contain نكبّر قليلاً
-      if (B.on && (B.sway || B.shake) && BG.fit === "cover") zoom *= 1.04;
       ctx.save();
       ctx.translate(w / 2 + dx, h / 2 + dy);
       ctx.rotate(rot);
@@ -1063,31 +1086,30 @@ function createRenderer(cfg, w, h, bitmap, lines) {
       ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = "high";
       ctx.drawImage(bitmap, -sw / 2, -sh / 2);
       ctx.restore();
+      if (BG.dim > 0) { ctx.fillStyle = "rgba(0,0,0," + BG.dim + ")"; ctx.fillRect(0, 0, w, h); }
     }
-    if (BG.dim > 0 && bitmap) { ctx.fillStyle = "rgba(0,0,0," + BG.dim + ")"; ctx.fillRect(0, 0, w, h); }
-    if (B.on && B.flash && bt > 0.01) {
+    if (B.on && B.flash > 0 && bt > 0.01) {
       ctx.globalCompositeOperation = "lighter";
-      ctx.fillStyle = "rgba(255,255,255," + (0.22 * bt).toFixed(3) + ")";
+      ctx.fillStyle = "rgba(255,255,255," + clamp(B.flash / 100 * bt, 0, 1).toFixed(3) + ")";
       ctx.fillRect(0, 0, w, h);
       ctx.globalCompositeOperation = "source-over";
     }
   }
 
   /* ----- مؤثر الإيقاع ----- */
-  function colorAt(i, n) {
+  function vcol(i, n) {
     if (V.rainbow) return "hsl(" + Math.round(i / Math.max(1, n - 1) * 300) + ",90%,60%)";
     return lerpColor(V.c1, V.c2, i / Math.max(1, n - 1));
   }
-  function gradientX(ctx, x0, x1) {
+  function gradX(ctx, c1, c2, rainbow, x0, x1) {
     const g = ctx.createLinearGradient(x0, 0, x1, 0);
-    if (V.rainbow) { for (let s = 0; s <= 6; s++) g.addColorStop(s / 6, "hsl(" + Math.round(s / 6 * 300) + ",90%,60%)"); }
-    else { g.addColorStop(0, V.c1); g.addColorStop(1, V.c2); }
+    if (rainbow) { for (let s = 0; s <= 6; s++) g.addColorStop(s / 6, "hsl(" + Math.round(s / 6 * 300) + ",90%,60%)"); }
+    else { g.addColorStop(0, c1); g.addColorStop(1, c2); }
     return g;
   }
 
   function drawViz(ctx, feat) {
     const n = V.count;
-    // إعادة تشكيل 64 نطاقاً إلى n مع تنعيم السقوط
     for (let i = 0; i < NB; i++) {
       const v = feat.bands[i] / 255;
       prev[i] = v > prev[i] ? v : prev[i] * decay;
@@ -1097,75 +1119,174 @@ function createRenderer(cfg, w, h, bitmap, lines) {
       let s = 0; for (let j = a; j < b; j++) s += prev[j];
       vals[i] = clamp(Math.pow(s / (b - a), 1.25) * V.sens, 0, 1.4);
     }
-    const Hh = h * 0.36 * V.size;
-    const sym = V.shape === "mirror" || V.shape === "wave";   // أشكال متماثلة حول خط وسطي
-    const base = sym
-      ? (V.pos === "bottom" ? h * 0.8 : V.pos === "top" ? h * 0.2 : h * 0.5)
-      : (V.pos === "bottom" ? h * 0.93 : V.pos === "top" ? h * 0.07 : h * 0.5);
-    const dir = V.pos === "top" ? 1 : -1;               // اتجاه نمو الأعمدة
-    const totalW = w * 0.86, x0 = (w - totalW) / 2, step = totalW / n;
-    const bw = Math.max(1.5, step * (0.25 + V.thick * 0.07));
-    const lw = V.thick * sc * 0.9 + 1;
+    const m = Math.min(w, h), W = V.w / 100 * w, Hh = V.h / 100 * h;
+    const step = W / n, bw = Math.max(1.5, step * (0.25 + V.thick * 0.07));
+    const lw = V.thick * sc * 0.9 + 1, dir = V.dir === "down" ? 1 : -1;
+    const x0 = -W / 2;
 
     ctx.save();
-    ctx.globalAlpha = 0.96;
+    ctx.translate(V.x / 100 * w, V.y / 100 * h);
+    ctx.rotate(V.rot * Math.PI / 180);
+    ctx.globalAlpha = clamp(V.opacity / 100, 0, 1);
     if (V.glow) { ctx.shadowColor = V.rainbow ? "#ffffff" : V.c1; ctx.shadowBlur = 14 * sc; }
 
     if (V.shape === "bars" || V.shape === "mirror") {
       for (let i = 0; i < n; i++) {
-        const bh = Math.max(2 * sc, vals[i] * Hh * (V.shape === "mirror" ? 0.5 : 1));
+        const half = V.shape === "mirror";
+        const bh = Math.max(2 * sc, vals[i] * Hh * (half ? 0.5 : 1));
         const x = x0 + i * step + (step - bw) / 2;
-        ctx.fillStyle = colorAt(i, n);
-        if (V.shape === "mirror") { rr(ctx, x, base - bh, bw, bh * 2, bw / 2); ctx.fill(); }
-        else if (dir < 0) { rr(ctx, x, base - bh, bw, bh, bw / 2); ctx.fill(); }
-        else { rr(ctx, x, base, bw, bh, bw / 2); ctx.fill(); }
+        ctx.fillStyle = vcol(i, n);
+        if (half) rr(ctx, x, -bh, bw, bh * 2, bw / 2);
+        else if (dir < 0) rr(ctx, x, -bh, bw, bh, bw / 2);
+        else rr(ctx, x, 0, bw, bh, bw / 2);
+        ctx.fill();
       }
     } else if (V.shape === "dots") {
       const r = Math.max(1.5, bw / 2), gap = r * 2.7;
       for (let i = 0; i < n; i++) {
         const cx = x0 + i * step + step / 2, cnt = Math.max(1, Math.round(vals[i] * Hh / gap));
-        ctx.fillStyle = colorAt(i, n);
-        for (let q = 0; q < cnt; q++) { ctx.beginPath(); ctx.arc(cx, base + dir * (q * gap + r), r, 0, Math.PI * 2); ctx.fill(); }
+        ctx.fillStyle = vcol(i, n);
+        for (let q = 0; q < cnt; q++) { ctx.beginPath(); ctx.arc(cx, dir * (q * gap + r), r, 0, Math.PI * 2); ctx.fill(); }
       }
     } else if (V.shape === "wave") {
-      ctx.strokeStyle = gradientX(ctx, x0, x0 + totalW);
+      ctx.strokeStyle = gradX(ctx, V.c1, V.c2, V.rainbow, x0, x0 + W);
       ctx.lineWidth = lw; ctx.lineJoin = "round"; ctx.lineCap = "round";
       ctx.beginPath();
       for (let j = 0; j < WN; j++) {
-        const x = x0 + j / (WN - 1) * totalW;
-        const y = base + (feat.wave[j] / 127) * Hh * 0.45 * V.sens;
+        const x = x0 + j / (WN - 1) * W, y = (feat.wave[j] / 127) * Hh * 0.5 * V.sens;
         if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
       }
       ctx.stroke();
     } else {
-      // circle / ring: في وسط الإطار
-      const cx = w / 2, cy = h / 2, m = Math.min(w, h);
-      const r0 = m * 0.2 * V.size;
+      const r0 = V.w / 100 * m / 2;
       if (V.shape === "circle") {
         const tot = n * 2;
         ctx.lineWidth = Math.max(1.5, lw * 0.9); ctx.lineCap = "round";
         for (let i = 0; i < tot; i++) {
-          const idx = i < n ? i : tot - 1 - i;
-          const ang = (i / tot) * Math.PI * 2 - Math.PI / 2;
-          const len = Math.max(2 * sc, vals[idx] * m * 0.22 * V.size);
-          ctx.strokeStyle = colorAt(idx, n);
+          const idx = i < n ? i : tot - 1 - i, ang = (i / tot) * Math.PI * 2 - Math.PI / 2;
+          const len = Math.max(2 * sc, vals[idx] * Hh);
+          ctx.strokeStyle = vcol(idx, n);
           ctx.beginPath();
-          ctx.moveTo(cx + Math.cos(ang) * r0, cy + Math.sin(ang) * r0);
-          ctx.lineTo(cx + Math.cos(ang) * (r0 + len), cy + Math.sin(ang) * (r0 + len));
+          ctx.moveTo(Math.cos(ang) * r0, Math.sin(ang) * r0);
+          ctx.lineTo(Math.cos(ang) * (r0 + len), Math.sin(ang) * (r0 + len));
           ctx.stroke();
         }
       } else {
-        ctx.strokeStyle = gradientX(ctx, cx - r0 * 1.4, cx + r0 * 1.4);
+        ctx.strokeStyle = gradX(ctx, V.c1, V.c2, V.rainbow, -r0 * 1.4, r0 * 1.4);
         ctx.lineWidth = lw; ctx.lineJoin = "round";
         ctx.beginPath();
         for (let j = 0; j <= WN; j++) {
           const jj = j % WN, ang = (j / WN) * Math.PI * 2 - Math.PI / 2;
-          const r = r0 + (feat.wave[jj] / 127) * m * 0.14 * V.size * V.sens;
-          const x = cx + Math.cos(ang) * r, y = cy + Math.sin(ang) * r;
+          const r = r0 + (feat.wave[jj] / 127) * Hh * 0.5 * V.sens;
+          const x = Math.cos(ang) * r, y = Math.sin(ang) * r;
           if (j === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
         }
         ctx.closePath(); ctx.stroke();
       }
+    }
+    ctx.restore();
+  }
+
+  /* ----- شريط التقدم ----- */
+  const pcols = () => P.follow ? { c1: V.c1, c2: V.c2, rb: V.rainbow } : { c1: P.c1, c2: P.c2, rb: false };
+  const pcol = (pc, i, n) => pc.rb ? "hsl(" + Math.round(i / Math.max(1, n - 1) * 300) + ",90%,60%)" : lerpColor(pc.c1, pc.c2, i / Math.max(1, n - 1));
+
+  function timeText(pos, dur) {
+    switch (P.time) {
+      case "clock": return fmtClock(pos) + " / " + fmtClock(dur);
+      case "seconds": return Math.floor(pos) + " / " + Math.floor(dur) + " ث";
+      case "remaining": return "-" + fmtClock(dur - pos);
+      case "percent": return Math.floor(clamp(pos / Math.max(0.001, dur), 0, 1) * 100) + "%";
+      default: return "";
+    }
+  }
+
+  function drawProgress(ctx, pos, dur, bt) {
+    const p = clamp(pos / Math.max(0.001, dur), 0, 1), pc = pcols();
+    const X = P.x / 100 * w, Y = P.y / 100 * h;
+    const th = Math.max(1.5, P.h * sc) * (P.beat ? 1 + 0.5 * bt : 1);
+    const TRACK = "rgba(255,255,255,0.22)";
+    const ring = P.style === "ring";
+    const W = ring ? P.w / 100 * Math.min(w, h) : P.w / 100 * w;
+    const x0 = -W / 2;
+    let halfH = th;
+
+    ctx.save();
+    ctx.translate(X, Y);
+    if (P.beat && bt > 0.05) { ctx.shadowColor = pc.rb ? "#ffffff" : pc.c1; ctx.shadowBlur = th * 1.6 * bt; }
+    if (P.rev && !ring) ctx.scale(-1, 1);
+
+    if (P.style === "line") {
+      const lt = Math.max(1.5, th * 0.4); halfH = th;
+      ctx.fillStyle = TRACK; ctx.fillRect(x0, -lt / 2, W, lt);
+      if (p > 0) {
+        ctx.fillStyle = gradX(ctx, pc.c1, pc.c2, pc.rb, x0, x0 + W); ctx.fillRect(x0, -lt / 2, W * p, lt);
+        ctx.beginPath(); ctx.arc(x0 + W * p, 0, th * 0.9, 0, Math.PI * 2); ctx.fillStyle = "#ffffff"; ctx.fill();
+      }
+    } else if (P.style === "bar") {
+      const bh = th * 2; halfH = th;
+      ctx.fillStyle = TRACK; rr(ctx, x0, -bh / 2, W, bh, bh / 2); ctx.fill();
+      if (p > 0) { ctx.fillStyle = gradX(ctx, pc.c1, pc.c2, pc.rb, x0, x0 + W); rr(ctx, x0, -bh / 2, Math.max(bh, W * p), bh, bh / 2); ctx.fill(); }
+    } else if (P.style === "segments") {
+      const N = 32, sw = W / N, bh = th * 2; halfH = th;
+      for (let i = 0; i < N; i++) {
+        const f = p * N - i;
+        ctx.globalAlpha = f >= 1 ? 1 : f > 0 ? 0.35 + 0.65 * f : 1;
+        ctx.fillStyle = f > 0 ? pcol(pc, i, N) : TRACK;
+        rr(ctx, x0 + i * sw + sw * 0.12, -bh / 2, sw * 0.76, bh, 2 * sc); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    } else if (P.style === "dots") {
+      const N = 28, st = W / (N - 1), r = th * 0.85; halfH = th * 1.4;
+      for (let i = 0; i < N; i++) {
+        const f = p * (N - 1) - i, on = f >= 0, cur = on && f < 1;
+        ctx.beginPath(); ctx.arc(x0 + i * st, 0, r * (cur ? 1.5 + 0.4 * bt : 1), 0, Math.PI * 2);
+        ctx.fillStyle = on ? pcol(pc, i, N) : TRACK; ctx.fill();
+      }
+    } else if (P.style === "wave") {
+      const M = Math.min(110, Math.max(30, Math.round(W / (th * 1.7)))), st = W / M, bwid = st * 0.62, maxH = th * 5;
+      halfH = maxH / 2;
+      for (let i = 0; i < M; i++) {
+        const e = env && env.length ? env[Math.min(env.length - 1, Math.floor(i / M * env.length))] : 0.3 + 0.7 * hash01(i);
+        const hh = Math.max(th * 0.6, e * maxH), on = (i + 0.5) / M <= p;
+        ctx.fillStyle = on ? pcol(pc, i, M) : TRACK;
+        rr(ctx, x0 + i * st + (st - bwid) / 2, -hh / 2, bwid, hh, bwid / 2); ctx.fill();
+      }
+    } else {
+      const R = Math.max(4, W / 2 - th / 2); halfH = R;
+      ctx.lineWidth = th; ctx.lineCap = "round";
+      ctx.strokeStyle = TRACK; ctx.beginPath(); ctx.arc(0, 0, R, 0, Math.PI * 2); ctx.stroke();
+      if (p > 0) {
+        ctx.strokeStyle = gradX(ctx, pc.c1, pc.c2, pc.rb, -R, R); ctx.beginPath();
+        if (P.rev) ctx.arc(0, 0, R, -Math.PI / 2, -Math.PI / 2 - Math.PI * 2 * p, true);
+        else ctx.arc(0, 0, R, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * p);
+        ctx.stroke();
+      }
+    }
+    ctx.restore();
+
+    const txt = timeText(pos, dur);
+    if (!txt) return;
+    const ts = P.timeSize / 100 * h;
+    ctx.save();
+    ctx.font = "700 " + (ring ? ts * 1.2 : ts) + 'px "' + L.font + '", Tahoma, Arial, sans-serif';
+    ctx.direction = "ltr"; ctx.textBaseline = "middle"; ctx.fillStyle = "#ffffff";
+    ctx.shadowColor = "rgba(0,0,0,0.75)"; ctx.shadowBlur = ts * 0.25; ctx.shadowOffsetY = ts * 0.05;
+    if (ring) {
+      ctx.textAlign = "center";
+      const inner = Math.max(10, W - th * 2) * 0.86, tw = ctx.measureText(txt).width;
+      if (tw > inner) ctx.font = "700 " + (ts * 1.2 * inner / tw) + 'px "' + L.font + '", Tahoma, Arial, sans-serif';
+      ctx.fillText(txt, X, Y);
+    }
+    else {
+      const ends = P.timePos === "ends" && (P.time === "clock" || P.time === "seconds");
+      const yb = P.timePos === "above" ? Y - halfH - ts * 0.9 : Y + halfH + ts * 0.9;
+      if (ends) {
+        const a = P.time === "clock" ? fmtClock(pos) : Math.floor(pos) + " ث";
+        const b = P.time === "clock" ? fmtClock(dur) : Math.floor(dur) + " ث";
+        ctx.textAlign = "left"; ctx.fillText(P.rev ? b : a, X - W / 2, yb);
+        ctx.textAlign = "right"; ctx.fillText(P.rev ? a : b, X + W / 2, yb);
+      } else { ctx.textAlign = "center"; ctx.fillText(txt, X, yb); }
     }
     ctx.restore();
   }
@@ -1188,84 +1309,168 @@ function createRenderer(cfg, w, h, bitmap, lines) {
     return r;
   }
 
-  function paintText(ctx, s, x, y, color, px, rtl, withBox) {
+  function paintText(ctx, s, x, y, color, px, rtl, glow, gcol) {
     ctx.direction = rtl ? "rtl" : "ltr";
     ctx.textAlign = "center"; ctx.textBaseline = "middle";
-    ctx.font = fontStr(px);
-    ctx.lineJoin = "round";
+    ctx.font = fontStr(px); ctx.lineJoin = "round";
     if (L.edge === "outline") {
       ctx.lineWidth = Math.max(2, px * 0.16); ctx.strokeStyle = "rgba(0,0,0,0.92)";
       ctx.strokeText(s, x, y);
-    } else if (L.edge === "shadow") {
+    } else if (L.edge === "shadow" && !(glow > 0.5)) {
       ctx.shadowColor = "rgba(0,0,0,0.85)"; ctx.shadowBlur = px * 0.28; ctx.shadowOffsetX = px * 0.05; ctx.shadowOffsetY = px * 0.07;
     }
+    if (glow > 0.5) { ctx.shadowColor = gcol; ctx.shadowBlur = glow; }
     ctx.fillStyle = color;
     ctx.fillText(s, x, y);
     ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetX = 0; ctx.shadowOffsetY = 0;
   }
 
-  // يرسم كتلة أسطر مع تلوين تدريجي اختياري
-  function drawBlock(ctx, line, cy, px, progress, alpha, scale) {
-    const maxW = w * 0.88;
+  // تأثير الإيقاع على حركة التلوين
+  const NOFX = { color: null, glow: 0, pulse: 0, sweepOn: false, sweep: 0 };
+  function hiFx(bt) {
+    const m = L.beatFx, all = m === "all", k = clamp(bt * L.beatAmt, 0, 1.5);
+    return {
+      color: (m === "flash" || all) ? lerpColor(L.hi, "#ffffff", clamp(0.7 * k, 0, 1)) : L.hi,
+      glow: (m === "glow" || all) ? k : 0,
+      pulse: (m === "scale" || all) ? 0.09 * k : 0,
+      sweepOn: m === "sweep" || all,
+      sweep: k
+    };
+  }
+
+  function entryAnim(kind, e, px, rtl) {
+    const o = { a: 1, dx: 0, dy: 0, s: 1, rot: 0, rv: null };
+    const q = easeOutCubic(e);
+    switch (kind) {
+      case "fade": o.a = e; break;
+      case "slideUp": o.a = e; o.dy = (1 - q) * px * 0.9; break;
+      case "slideDown": o.a = e; o.dy = -(1 - q) * px * 0.9; break;
+      case "slideX": o.a = e; o.dx = (rtl ? 1 : -1) * (1 - q) * w * 0.12; break;
+      case "zoom": o.a = e; o.s = 0.55 + 0.45 * q; break;
+      case "pop": o.a = Math.min(1, e * 3); o.s = Math.max(0.01, easeOutBack(e)); break;
+      case "drop": o.a = Math.min(1, e * 4); o.dy = -(1 - easeOutBounce(e)) * h * 0.18; break;
+      case "spin": o.a = e; o.rot = (1 - q) * 0.4 * (rtl ? -1 : 1); o.s = 0.7 + 0.3 * q; break;
+      case "typewriter": o.rv = { m: "c", f: e }; break;
+      case "words": o.rv = { m: "w", f: e }; break;
+    }
+    return o;
+  }
+
+  function drawBlock(ctx, line, cx, cy, px, progress, o, fx) {
+    const maxW = Math.max(w * 0.3, Math.min(w * 0.9, 2 * Math.min(cx, w - cx)));
     const rows = wrap(ctx, line.text, px, maxW);
-    const lh = px * 1.4, tot = rows.length * lh, cx = w / 2;
+    const lh = px * 1.4, tot = rows.length * lh;
     ctx.save();
-    ctx.globalAlpha = alpha;
-    if (scale !== 1) { ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.translate(-cx, -cy); }
+    ctx.globalAlpha = clamp(o.a, 0, 1);
+    ctx.translate(cx + o.dx, cy + o.dy);
+    if (o.rot) ctx.rotate(o.rot);
+    const s2 = Math.max(0.01, o.s * (1 + fx.pulse));
+    ctx.scale(s2, s2);
+    ctx.translate(-cx, -cy);
+
     if (L.edge === "box") {
       const mw = Math.max(...rows.map(r => r.w)) + px * 1.2;
       ctx.fillStyle = "rgba(0,0,0,0.55)";
       rr(ctx, cx - mw / 2, cy - tot / 2 - px * 0.15, mw, tot + px * 0.3, px * 0.4); ctx.fill();
     }
     const y0 = cy - tot / 2 + lh / 2;
-    rows.forEach((r, i) => paintText(ctx, r.s, cx, y0 + i * lh, L.color, px, line.rtl));
+
+    // الكشف التدريجي (آلة كاتبة / كلمة كلمة)
+    let shown = rows.map(r => r.s);
+    if (o.rv) {
+      if (o.rv.m === "c") {
+        let left = Math.ceil(o.rv.f * rows.reduce((a, r) => a + r.s.length, 0));
+        shown = rows.map(r => { const k = Math.min(r.s.length, Math.max(0, left)); left -= k; return r.s.slice(0, k); });
+      } else {
+        let left = Math.ceil(o.rv.f * rows.reduce((a, r) => a + r.s.split(" ").length, 0));
+        shown = rows.map(r => { const ws = r.s.split(" "), k = Math.min(ws.length, Math.max(0, left)); left -= k; return ws.slice(0, k).join(" "); });
+      }
+    }
+    const pos = rows.map((r, i) => {
+      let xc = cx;
+      if (o.rv && shown[i]) {
+        ctx.font = fontStr(px);
+        const sw = ctx.measureText(shown[i]).width, left = cx - r.w / 2;
+        xc = line.rtl ? left + r.w - sw / 2 : left + sw / 2;
+      }
+      return xc;
+    });
+    rows.forEach((r, i) => { if (shown[i]) paintText(ctx, shown[i], pos[i], y0 + i * lh, L.color, px, line.rtl, 0); });
+
     if (progress != null && progress > 0) {
       const totalW = rows.reduce((a, r) => a + r.w, 0);
       let filled = progress * totalW;
+      const hc = fx.color || L.hi;
       rows.forEach((r, i) => {
         const fw = clamp(filled, 0, r.w); filled -= r.w;
-        if (fw <= 0) return;
-        const left = cx - r.w / 2;
+        if (fw <= 0 || !shown[i]) return;
+        const left = cx - r.w / 2, yy = y0 + i * lh - lh / 2 - 2;
         ctx.save();
         ctx.beginPath();
-        if (line.rtl) ctx.rect(left + r.w - fw, y0 + i * lh - lh / 2 - 2, fw, lh + 4);
-        else ctx.rect(left, y0 + i * lh - lh / 2 - 2, fw, lh + 4);
+        if (line.rtl) ctx.rect(left + r.w - fw, yy, fw, lh + 4); else ctx.rect(left, yy, fw, lh + 4);
         ctx.clip();
-        paintText(ctx, r.s, cx, y0 + i * lh, L.hi, px, line.rtl);
+        paintText(ctx, shown[i], pos[i], y0 + i * lh, hc, px, line.rtl, fx.glow * px * 0.9, L.hi);
         ctx.restore();
+        if (fx.sweepOn && fw < r.w - 1) {
+          const ex = line.rtl ? left + r.w - fw : left + fw;
+          ctx.save();
+          ctx.fillStyle = "rgba(255,255,255," + (0.35 + 0.5 * clamp(fx.sweep, 0, 1)).toFixed(2) + ")";
+          ctx.shadowColor = L.hi; ctx.shadowBlur = px * 0.5;
+          rr(ctx, ex - Math.max(1.5, px * 0.035) * (1 + fx.sweep), y0 + i * lh - lh * 0.45, Math.max(3, px * 0.07) * (1 + fx.sweep), lh * 0.9, 3);
+          ctx.fill();
+          ctx.restore();
+        }
       });
     }
     ctx.restore();
   }
 
-  function drawLyrics(ctx, t) {
+  // سطر واحد غير ملفوف (لوضع الثلاثة أسطر)
+  function drawBlockOne(ctx, line, cx, cy, px, progress, alpha, scale, fx) {
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    const s2 = scale * (1 + fx.pulse);
+    if (s2 !== 1) { ctx.translate(cx, cy); ctx.scale(s2, s2); ctx.translate(-cx, -cy); }
+    ctx.font = fontStr(px);
+    const tw = ctx.measureText(line.text).width;
+    if (L.edge === "box") {
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      rr(ctx, cx - tw / 2 - px * 0.6, cy - px * 0.78, tw + px * 1.2, px * 1.56, px * 0.4); ctx.fill();
+    }
+    paintText(ctx, line.text, cx, cy, L.color, px, line.rtl, 0);
+    if (progress > 0) {
+      const fw = clamp(progress, 0, 1) * tw, left = cx - tw / 2;
+      ctx.save(); ctx.beginPath();
+      if (line.rtl) ctx.rect(left + tw - fw, cy - px, fw, px * 2); else ctx.rect(left, cy - px, fw, px * 2);
+      ctx.clip();
+      paintText(ctx, line.text, cx, cy, fx.color || L.hi, px, line.rtl, fx.glow * px * 0.9, L.hi);
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+
+  function drawLyrics(ctx, t, bt) {
     if (!lines || !lines.length) return;
-    const px = L.size / 100 * h;
-    const cy = L.pos === "bottom" ? h * 0.82 : L.pos === "top" ? h * 0.17 : h * 0.5;
+    const px = L.size / 100 * h, cx = L.x / 100 * w, cy = L.y / 100 * h;
     const idx = findLine(lines, t);
+    const fx = hiFx(bt);
 
     if (L.mode === "scroll") {
       if (idx < 0 && lines[0].t - t > 4) return;
-      const cur = Math.max(0, idx);
-      const since = idx >= 0 ? t - lines[idx].t : 0;
+      const cur = Math.max(0, idx), since = idx >= 0 ? t - lines[idx].t : 0;
       const e = clamp(since / 0.3, 0, 1), ease = e * e * (3 - 2 * e);
-      const s = idx < 0 ? -1 : (cur - 1) + ease;   // الموضع المركزي العائم
+      const s = idx < 0 ? -1 : (cur - 1) + ease;
       const lh = px * 1.75;
       for (let j = Math.floor(s) - 2; j <= Math.ceil(s) + 2; j++) {
         if (j < 0 || j >= lines.length) continue;
-        const d = Math.abs(j - s), near = clamp(1 - d, 0, 1);
-        const alpha = clamp(1 - d * 0.6, 0.12, 1);
-        const ln = lines[j];
-        const y = cy + (j - s) * lh;
+        const d = Math.abs(j - s), near = clamp(1 - d, 0, 1), alpha = clamp(1 - d * 0.6, 0.12, 1);
+        const ln = lines[j], y = cy + (j - s) * lh;
         if (y < -px || y > h + px) continue;
-        // تصغير السطر الطويل ليتسع في سطر واحد
         ctx.font = fontStr(px);
-        const mw = ctx.measureText(ln.text).width;
-        const fit = Math.min(1, (w * 0.9) / Math.max(1, mw));
+        const fit = Math.min(1, (w * 0.9) / Math.max(1, ctx.measureText(ln.text).width));
         const isCur = j === idx && t < ln.end;
         const prog = isCur ? lineProgress(ln, t) : (j < idx ? 1 : 0);
-        const one = { ...ln };
-        drawBlockOne(ctx, one, y, px * fit, prog, alpha, 0.86 + near * 0.14);
+        drawBlockOne(ctx, ln, cx, y, px * fit, prog, alpha, 0.86 + near * 0.14, isCur ? fx : { ...NOFX, color: L.hi });
       }
       return;
     }
@@ -1273,88 +1478,355 @@ function createRenderer(cfg, w, h, bitmap, lines) {
     if (idx < 0) return;
     const ln = lines[idx];
     if (t >= ln.end) return;
-    if (L.mode === "single") {
-      const e = clamp((t - ln.t) / 0.28, 0, 1), ease = 1 - Math.pow(1 - e, 3);
-      drawBlock(ctx, ln, cy + (1 - ease) * px * 0.6, px, null, ease, 0.9 + 0.1 * ease);
-    } else {
-      const fadeOut = clamp((ln.end - t) / 0.2, 0, 1);
-      drawBlock(ctx, ln, cy, px, lineProgress(ln, t), fadeOut, 1);
+    const e = clamp((t - ln.t) / Math.max(0.05, L.animDur), 0, 1);
+    const o = entryAnim(L.anim, e, px, ln.rtl);
+    const xo = clamp((ln.end - t) / 0.25, 0, 1);
+    if (xo < 1) {
+      if (L.exit === "fade") o.a *= xo;
+      else if (L.exit === "up") { o.a *= xo; o.dy -= (1 - xo) * px * 0.8; }
+      else if (L.exit === "zoom") { o.a *= xo; o.s *= 0.8 + 0.2 * xo; }
     }
-  }
-
-  // سطر واحد غير ملفوف (لوضع الثلاثة أسطر)
-  function drawBlockOne(ctx, line, cy, px, progress, alpha, scale) {
-    const cx = w / 2;
-    ctx.save();
-    ctx.globalAlpha = alpha;
-    if (scale !== 1) { ctx.translate(cx, cy); ctx.scale(scale, scale); ctx.translate(-cx, -cy); }
-    ctx.font = fontStr(px);
-    const tw = ctx.measureText(line.text).width;
-    if (L.edge === "box") {
-      ctx.fillStyle = "rgba(0,0,0,0.55)";
-      rr(ctx, cx - tw / 2 - px * 0.6, cy - px * 0.78, tw + px * 1.2, px * 1.56, px * 0.4); ctx.fill();
-    }
-    paintText(ctx, line.text, cx, cy, L.color, px, line.rtl);
-    if (progress > 0) {
-      const fw = clamp(progress, 0, 1) * tw, left = cx - tw / 2;
-      ctx.save(); ctx.beginPath();
-      if (line.rtl) ctx.rect(left + tw - fw, cy - px, fw, px * 2); else ctx.rect(left, cy - px, fw, px * 2);
-      ctx.clip();
-      paintText(ctx, line.text, cx, cy, L.hi, px, line.rtl);
-      ctx.restore();
-    }
-    ctx.restore();
+    drawBlock(ctx, ln, cx, cy, px, L.mode === "fill" ? lineProgress(ln, t) : null, o, fx);
   }
 
   return {
-    draw(ctx, t, feat) {
-      // إشارة الإيقاع (الجهير)
+    // clock اختياري: { pos, dur } لتجاوز الزمن المعروض في شريط التقدم (للمعاينة)
+    draw(ctx, t, feat, clock) {
       const b01 = feat.bass / 255;
       if (slow === null) slow = b01;
       slow += (b01 - slow) * slowK;
-      const target = clamp((b01 - slow) * 4.5, 0, 1);
-      beat = Math.max(target, beat * bDecay);
-      let bt = (cfg.forceBeat != null ? cfg.forceBeat : beat) * B.sens;
-      bt = clamp(bt, 0, 1.6);
+      beat = Math.max(clamp((b01 - slow) * 4.5, 0, 1), beat * bDecay);
+      const bt = clamp((cfg.forceBeat != null ? cfg.forceBeat : beat) * B.sens, 0, 1.6);
 
       drawBackground(ctx, t, bt);
       if (V.on) drawViz(ctx, feat);
-      if (L.on) drawLyrics(ctx, t);
+      if (P.on) drawProgress(ctx, clock ? clock.pos : t, clock ? clock.dur : cfg.dur, bt);
+      if (L.on) drawLyrics(ctx, t, bt);
     }
   };
 }
 
 /* ======================================================
-   قراءة الإعدادات من الواجهة
+   واجهة الإعدادات: تُبنى من مخطط واحد (قيم دقيقة، حفظ تلقائي، استيراد/تصدير)
    ====================================================== */
-const num = id => parseFloat($(id).value);
-const chk = id => $(id).checked;
+const SVG = {
+  film: '<rect x="3" y="4" width="18" height="16" rx="2"/><path d="M7 4v16M17 4v16M3 9h4M3 15h4M17 9h4M17 15h4"/>',
+  text: '<path d="M4 7V5h16v2M12 5v14M9 19h6"/>',
+  wave: '<path d="M4 10v4M8 6v12M12 3v18M16 7v10M20 10v4"/>',
+  image: '<rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/>',
+  timer: '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l2 2M9 2h6"/>',
+  eye: '<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+  link: '<path d="M10 14a4 4 0 005.6 0l3-3a4 4 0 00-5.6-5.6l-1 1M14 10a4 4 0 00-5.6 0l-3 3a4 4 0 005.6 5.6l1-1"/>'
+};
+const icon = n => '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + SVG[n] + "</svg>";
 
+function mk(tag, props, ...kids) {
+  const e = document.createElement(tag);
+  for (const k in (props || {})) {
+    const v = props[k];
+    if (v == null || v === false) continue;
+    if (k === "class") e.className = v;
+    else if (k === "html") e.innerHTML = v;
+    else if (k.startsWith("on")) e.addEventListener(k.slice(2), v);
+    else e.setAttribute(k, v === true ? "" : v);
+  }
+  kids.flat().forEach(c => { if (c != null && c !== false) e.append(c.nodeType ? c : document.createTextNode(c)); });
+  return e;
+}
+
+const Y3 = [["أعلى", 12], ["وسط", 50], ["أسفل", 88]];
+const X3 = [["يسار", 15], ["وسط", 50], ["يمين", 85]];
+
+const SCHEMA = [
+  { id: "sec-video", title: "الفيديو والخلفية", icon: "film", open: true, items: [
+    { t: "file", id: "a2vImg", label: "صورة الخلفية (اختياري)", accept: "image/*" },
+    { t: "color", id: "a2vBg", label: "لون الخلفية", def: "#000000" },
+    { t: "select", id: "a2vFit", label: "ملاءمة الصورة", def: "cover", opts: [["cover", "ملء الإطار"], ["contain", "كاملة مع حواف"]] },
+    { t: "range", id: "a2vDim", label: "تعتيم الصورة", def: 25, min: 0, max: 85, step: 1, unit: "%" },
+    { t: "select", id: "a2vQuality", label: "دقة الفيديو", def: "1280,720", opts: [["640,360", "360p — الأخف"], ["854,480", "480p"], ["1280,720", "720p"], ["1920,1080", "1080p — الأثقل"]] },
+    { t: "select", id: "a2vFps", label: "إطارات في الثانية", def: "15", opts: [["10", "10"], ["15", "15"], ["24", "24"], ["30", "30 — الأنعم"]] },
+    { t: "note", text: "عند عدم تفعيل أي مؤثر أو كلمات أو شريط يُنشأ فيديو ثابت بإطار واحد في الثانية: الأسرع والأصغر حجماً." }
+  ] },
+  { id: "sec-lyr", title: "الكلمات / الترجمة", icon: "text", master: "lyrOn", items: [
+    { t: "switch", id: "lyrOn", label: "تفعيل عرض الكلمات", def: false },
+    { t: "file", id: "lyrFile", label: "ملف كلمات (LRC · SRT · VTT · TXT)", accept: ".lrc,.srt,.vtt,.txt,text/plain" },
+    { t: "text", id: "lyrText", label: "أو الصق / عدّل الكلمات", def: "", rows: 5, placeholder: "[00:12.50]كلمات السطر الأول\n[00:17.00]كلمات السطر الثاني\n\nأو نص عادي بلا أوقات (يُوزَّع تقريباً على مدة الصوت)" },
+    { t: "select", id: "lyrMode", label: "أسلوب العرض", def: "fill", opts: [["fill", "كاريوكي (تلوين تدريجي)"], ["single", "سطر واحد بدون تلوين"], ["scroll", "ثلاثة أسطر متحركة"]] },
+    { t: "select", id: "lyrAnim", label: "حركة الظهور", def: "slideUp", opts: [["none", "بدون"], ["fade", "تلاشي"], ["slideUp", "انزلاق للأعلى"], ["slideDown", "انزلاق للأسفل"], ["slideX", "انزلاق جانبي"], ["zoom", "تكبير تدريجي"], ["pop", "قفزة (Pop)"], ["drop", "سقوط مرتد"], ["spin", "دوران"], ["typewriter", "آلة كاتبة (حرف حرف)"], ["words", "كلمة كلمة"]] },
+    { t: "select", id: "lyrExit", label: "حركة الاختفاء", def: "fade", opts: [["none", "بدون"], ["fade", "تلاشي"], ["up", "صعود وتلاشي"], ["zoom", "تصغير وتلاشي"]] },
+    { t: "range", id: "lyrAnimDur", label: "مدة حركة الظهور", def: 0.35, min: 0.05, max: 1.5, step: 0.05, unit: "ث" },
+    { t: "select", id: "lyrBeatFx", label: "الإيقاع على حركة التلوين", def: "none", opts: [["none", "بدون"], ["scale", "نبض حجم النص"], ["flash", "وميض لون التلوين"], ["glow", "توهج التلوين"], ["sweep", "حافة تلوين متوهجة"], ["all", "الكل معاً"]] },
+    { t: "range", id: "lyrBeatAmt", label: "قوة تفاعل الإيقاع مع الكلمات", def: 100, min: 0, max: 200, step: 5, unit: "%" },
+    { t: "select", id: "lyrFont", label: "الخط", def: "Cairo", opts: [["Cairo", "Cairo (عربي)"], ["Tajawal", "Tajawal (عربي)"], ["Amiri", "Amiri (نسخ)"], ["Lalezar", "Lalezar (عريض)"], ["Changa", "Changa"], ["Aref Ruqaa", "Aref Ruqaa (رقعة)"], ["Reem Kufi", "Reem Kufi (كوفي)"], ["Arial", "Arial"], ["Tahoma", "Tahoma"], ["Georgia", "Georgia"], ["Impact", "Impact"], ["Courier New", "Courier New"]] },
+    { t: "select", id: "lyrEdge", label: "حواف النص", def: "outline", opts: [["outline", "إطار أسود"], ["shadow", "ظل"], ["box", "مربع خلفية"], ["none", "بدون"]] },
+    { t: "color", id: "lyrColor", label: "لون النص", def: "#ffffff" },
+    { t: "color", id: "lyrHi", label: "لون التلوين (المُغنّى)", def: "#ffd23f" },
+    { t: "range", id: "lyrSize", label: "حجم الخط (نسبة من ارتفاع الفيديو)", def: 7, min: 2, max: 16, step: 0.5, unit: "%" },
+    { t: "range", id: "lyrX", label: "الموضع الأفقي", def: 50, min: 0, max: 100, step: 1, unit: "%", presets: X3 },
+    { t: "range", id: "lyrY", label: "الموضع الرأسي", def: 82, min: 0, max: 100, step: 1, unit: "%", presets: Y3 },
+    { t: "range", id: "lyrOffset", label: "تقديم / تأخير الكلمات", def: 0, min: -15, max: 15, step: 0.1, unit: "ث" }
+  ] },
+  { id: "sec-viz", title: "مؤثر الإيقاع (موجات الصوت)", icon: "wave", master: "vizOn", items: [
+    { t: "switch", id: "vizOn", label: "تفعيل مؤثر الإيقاع", def: false },
+    { t: "select", id: "vizShape", label: "الشكل", def: "bars", opts: [["bars", "أعمدة"], ["mirror", "أعمدة متماثلة"], ["wave", "موجة خطية"], ["circle", "أعمدة دائرية"], ["ring", "حلقة موجية"], ["dots", "نقاط"]] },
+    { t: "select", id: "vizCount", label: "عدد الأعمدة", def: "48", opts: [["24", "24"], ["32", "32"], ["48", "48"], ["64", "64"]] },
+    { t: "select", id: "vizDir", label: "اتجاه النمو (أعمدة / نقاط)", def: "up", opts: [["up", "للأعلى"], ["down", "للأسفل"]] },
+    { t: "color", id: "vizC1", label: "اللون الأول", def: "#00e5ff" },
+    { t: "color", id: "vizC2", label: "اللون الثاني", def: "#ff2d95" },
+    { t: "check", id: "vizRainbow", label: "ألوان قوس قزح", def: false },
+    { t: "check", id: "vizGlow", label: "توهج", def: false },
+    { t: "range", id: "vizX", label: "الموضع الأفقي (المركز)", def: 50, min: 0, max: 100, step: 1, unit: "%", presets: X3 },
+    { t: "range", id: "vizY", label: "الموضع الرأسي (خط الأساس)", def: 60, min: 0, max: 100, step: 1, unit: "%", presets: Y3 },
+    { t: "range", id: "vizW", label: "العرض (للدائري: القطر الداخلي)", def: 86, min: 5, max: 100, step: 1, unit: "%" },
+    { t: "range", id: "vizH", label: "أقصى ارتفاع", def: 36, min: 2, max: 90, step: 1, unit: "%" },
+    { t: "range", id: "vizRot", label: "الدوران", def: 0, min: -180, max: 180, step: 1, unit: "°", presets: [["0°", 0], ["90°", 90], ["180°", 180], ["−90°", -90]] },
+    { t: "range", id: "vizThick", label: "السُّمك", def: 5, min: 1, max: 10, step: 1 },
+    { t: "range", id: "vizSens", label: "الحساسية", def: 100, min: 30, max: 250, step: 5, unit: "%" },
+    { t: "range", id: "vizSmooth", label: "نعومة الهبوط", def: 35, min: 0, max: 100, step: 5, unit: "%" },
+    { t: "range", id: "vizOpacity", label: "الشفافية (الكثافة)", def: 95, min: 10, max: 100, step: 5, unit: "%" },
+    { t: "note", text: "عند تغيير الشكل يُضبط له موضع وحجم مقترحان، ثم تعدّلهما بالأرقام كما تشاء." }
+  ] },
+  { id: "sec-beat", title: "تفاعل الصورة مع الإيقاع", icon: "image", master: "beatOn", items: [
+    { t: "switch", id: "beatOn", label: "تفعيل تفاعل الصورة", def: false },
+    { t: "range", id: "beatZoom", label: "نبض التكبير (أقصى زيادة)", def: 8, min: 0, max: 25, step: 0.5, unit: "%" },
+    { t: "range", id: "beatShake", label: "الاهتزاز", def: 0, min: 0, max: 5, step: 0.1, unit: "%" },
+    { t: "range", id: "beatFlash", label: "الوميض", def: 0, min: 0, max: 80, step: 1, unit: "%" },
+    { t: "range", id: "beatSway", label: "الميلان / الدوران", def: 0, min: 0, max: 12, step: 0.5, unit: "°" },
+    { t: "range", id: "beatSens", label: "قوة التفاعل العامة", def: 100, min: 20, max: 250, step: 5, unit: "%" },
+    { t: "range", id: "beatDecay", label: "سرعة رجوع النبضة", def: 140, min: 40, max: 500, step: 10, unit: "ms" },
+    { t: "note", text: "يعتمد على قوة الجهير (الطبل). اضبط كل تأثير بالرقم، والقيمة 0 تُلغيه. بدون صورة يؤثر الوميض على الخلفية فقط." }
+  ] },
+  { id: "sec-prog", title: "شريط التقدم والوقت", icon: "timer", master: "progOn", items: [
+    { t: "switch", id: "progOn", label: "تفعيل شريط التقدم", def: false },
+    { t: "select", id: "progStyle", label: "النوع", def: "bar", opts: [["bar", "شريط مدوّر"], ["line", "خط رفيع بمقبض"], ["segments", "شرائح"], ["dots", "نقاط"], ["wave", "موجة صوتية"], ["ring", "حلقة دائرية"]] },
+    { t: "select", id: "progTime", label: "عرض الوقت", def: "clock", opts: [["none", "بدون"], ["clock", "0:42 / 3:35"], ["seconds", "ثواني: 42 / 215 ث"], ["remaining", "المتبقي  −2:53"], ["percent", "نسبة مئوية"]] },
+    { t: "select", id: "progTimePos", label: "مكان الوقت", def: "ends", opts: [["ends", "طرفا الشريط"], ["below", "تحت الشريط"], ["above", "فوق الشريط"]] },
+    { t: "check", id: "progFollow", label: "اتباع ألوان مؤثر الإيقاع (انسجام)", def: true },
+    { t: "color", id: "progC1", label: "اللون الأول", def: "#00e5ff" },
+    { t: "color", id: "progC2", label: "اللون الثاني", def: "#ff2d95" },
+    { t: "check", id: "progBeat", label: "ينبض مع الإيقاع", def: false },
+    { t: "check", id: "progRev", label: "التعبئة من اليمين لليسار", def: false },
+    { t: "range", id: "progX", label: "الموضع الأفقي", def: 50, min: 0, max: 100, step: 1, unit: "%", presets: X3 },
+    { t: "range", id: "progY", label: "الموضع الرأسي", def: 92, min: 0, max: 100, step: 1, unit: "%", presets: Y3 },
+    { t: "range", id: "progW", label: "العرض (للحلقة: القطر)", def: 70, min: 5, max: 100, step: 1, unit: "%" },
+    { t: "range", id: "progH", label: "السُّمك", def: 6, min: 1, max: 30, step: 0.5 },
+    { t: "range", id: "progTimeSize", label: "حجم نص الوقت", def: 3.6, min: 1.5, max: 10, step: 0.1, unit: "%" },
+    { t: "action", id: "alignViz", label: "محاذاة المؤثر فوق شريط التقدم", ico: "link" },
+    { t: "note", text: "زر المحاذاة يضبط عرض المؤثر وموضعه ليجلس فوق الشريط بنفس الألوان، وهي طريقة سريعة لتصميم متناسق." }
+  ] },
+  { id: "sec-ui", title: "المعاينة المنبثقة", icon: "eye", items: [
+    { t: "check", id: "pvFloatOn", label: "إظهار نافذة معاينة منبثقة عند التمرير", def: true },
+    { t: "range", id: "pvFloatW", label: "عرض النافذة المنبثقة", def: 280, min: 140, max: 560, step: 10, unit: "px" },
+    { t: "note", text: "تظهر النافذة عندما تغيب المعاينة الأصلية عن الشاشة. اسحبها من شريطها العلوي لتحريكها." }
+  ] }
+];
+
+const THEMES = [
+  { n: "نيون", c1: "#00e5ff", c2: "#ff2d95", hi: "#ffd23f" },
+  { n: "غروب", c1: "#ff9a3c", c2: "#c026d3", hi: "#ffd166" },
+  { n: "محيط", c1: "#22d3ee", c2: "#3b82f6", hi: "#a7f3d0" },
+  { n: "ذهبي", c1: "#fde047", c2: "#f59e0b", hi: "#fcd34d" },
+  { n: "نعناع", c1: "#34d399", c2: "#06b6d4", hi: "#fef08a" },
+  { n: "وردي", c1: "#fb7185", c2: "#a78bfa", hi: "#fde68a" },
+  { n: "أحادي", c1: "#ffffff", c2: "#94a3b8", hi: "#fde68a" },
+  { n: "قوس قزح", c1: "#ff3b3b", c2: "#8b5cf6", hi: "#ffffff", rainbow: true }
+];
+
+const SHAPE_DEFAULTS = {
+  bars: { vizX: 50, vizY: 60, vizW: 86, vizH: 36 }, mirror: { vizX: 50, vizY: 50, vizW: 86, vizH: 36 },
+  wave: { vizX: 50, vizY: 50, vizW: 86, vizH: 30 }, circle: { vizX: 50, vizY: 50, vizW: 40, vizH: 30 },
+  ring: { vizX: 50, vizY: 50, vizW: 40, vizH: 30 }, dots: { vizX: 50, vizY: 60, vizW: 86, vizH: 36 }
+};
+const PROG_DEFAULTS = {
+  bar: { progX: 50, progY: 92, progW: 70 }, line: { progX: 50, progY: 92, progW: 70 }, segments: { progX: 50, progY: 92, progW: 70 },
+  dots: { progX: 50, progY: 92, progW: 70 }, wave: { progX: 50, progY: 90, progW: 70 }, ring: { progX: 88, progY: 20, progW: 16 }
+};
+
+const CONTROLS = {};        // id → { t, def, el }
+const fmtNum = (v, step) => { const d = (String(step).split(".")[1] || "").length; return (+v).toFixed(d); };
+
+function getVal(id) {
+  const c = CONTROLS[id]; if (!c) return undefined;
+  if (c.t === "range") return parseFloat(c.el.value);
+  if (c.t === "check" || c.t === "switch") return c.el.checked;
+  return c.el.value;
+}
+function setVal(id, v) {
+  const c = CONTROLS[id]; if (!c || v === undefined || v === null) return;
+  if (c.t === "range") { c.el.value = v; c.num.value = fmtNum(c.el.value, c.step); }
+  else if (c.t === "check" || c.t === "switch") c.el.checked = !!v;
+  else c.el.value = v;
+}
+function fire(id) { const c = CONTROLS[id]; if (c) c.el.dispatchEvent(new Event(c.t === "select" ? "change" : "input", { bubbles: true })); }
+
+function buildField(f) {
+  if (f.t === "note") return mk("p", { class: "note" }, f.text);
+  if (f.t === "action") {
+    return mk("button", { class: "btn wide", type: "button", id: f.id, html: icon(f.ico) + "<span>" + f.label + "</span>" });
+  }
+  if (f.t === "file") {
+    const el = mk("input", { type: "file", id: f.id, accept: f.accept });
+    return mk("div", { class: "fld wide" }, mk("label", { class: "fl", for: f.id }, f.label), el);
+  }
+  if (f.t === "switch") {
+    const el = mk("input", { type: "checkbox", id: f.id });
+    CONTROLS[f.id] = { t: "switch", def: f.def, el };
+    return mk("label", { class: "switch wide", for: f.id }, el, mk("span", { class: "track" }), mk("b", {}, f.label));
+  }
+  if (f.t === "check") {
+    const el = mk("input", { type: "checkbox", id: f.id });
+    CONTROLS[f.id] = { t: "check", def: f.def, el };
+    return mk("label", { class: "chk", for: f.id }, el, mk("span", {}, f.label));
+  }
+  if (f.t === "color") {
+    const el = mk("input", { type: "color", id: f.id });
+    CONTROLS[f.id] = { t: "color", def: f.def, el };
+    return mk("div", { class: "fld" }, mk("label", { class: "fl", for: f.id }, f.label), el);
+  }
+  if (f.t === "select") {
+    const el = mk("select", { id: f.id }, f.opts.map(([v, l]) => mk("option", { value: v }, l)));
+    CONTROLS[f.id] = { t: "select", def: f.def, el };
+    return mk("div", { class: "fld" }, mk("label", { class: "fl", for: f.id }, f.label), el);
+  }
+  if (f.t === "text") {
+    const el = mk("textarea", { id: f.id, rows: f.rows || 4, placeholder: f.placeholder || "" });
+    CONTROLS[f.id] = { t: "text", def: f.def, el };
+    return mk("div", { class: "fld wide" }, mk("label", { class: "fl", for: f.id }, f.label), el);
+  }
+  // range + رقم دقيق
+  const range = mk("input", { type: "range", id: f.id, min: f.min, max: f.max, step: f.step || 1 });
+  const num = mk("input", { type: "number", id: f.id + "_n", min: f.min, max: f.max, step: f.step || 1, inputmode: "decimal", dir: "ltr", "aria-label": f.label });
+  const ctl = CONTROLS[f.id] = { t: "range", def: f.def, el: range, num, step: f.step || 1, min: f.min, max: f.max };
+  range.addEventListener("input", () => { num.value = fmtNum(range.value, ctl.step); });
+  num.addEventListener("input", () => {
+    const v = parseFloat(num.value);
+    if (isNaN(v)) return;
+    range.value = clamp(v, ctl.min, ctl.max);
+  });
+  num.addEventListener("change", () => { num.value = fmtNum(range.value, ctl.step); });
+  const head = mk("div", { class: "fh" },
+    mk("label", { class: "fl", for: f.id }, f.label),
+    mk("div", { class: "nw" }, num, f.unit ? mk("span", { class: "unit" }, f.unit) : null));
+  const kids = [head, range];
+  if (f.presets) {
+    kids.push(mk("div", { class: "pre" }, f.presets.map(([l, v]) => mk("button", {
+      type: "button", class: "chip", onclick: () => { setVal(f.id, v); fire(f.id); }
+    }, l))));
+  }
+  return mk("div", { class: "fld wide" }, kids);
+}
+
+function buildSettings() {
+  const root = $("settings");
+  SCHEMA.forEach(sec => {
+    const body = mk("div", { class: "grid" }, sec.items.map(buildField));
+    const det = mk("details", { class: "sec", id: sec.id, open: sec.open }, mk("summary", {},
+      mk("span", { class: "si", html: icon(sec.icon) }), mk("span", { class: "st" }, sec.title),
+      sec.master ? mk("span", { class: "badge", id: sec.id + "-b" }, "متوقف") : null), body);
+    root.append(det);
+  });
+}
+buildSettings();
+const DEFAULTS = {};
+Object.keys(CONTROLS).forEach(id => { DEFAULTS[id] = CONTROLS[id].def; setVal(id, CONTROLS[id].def); });
+
+function updateBadges() {
+  SCHEMA.forEach(sec => {
+    if (!sec.master) return;
+    const on = getVal(sec.master), b = $(sec.id + "-b"), d = $(sec.id);
+    b.textContent = on ? "مفعّل" : "متوقف"; b.classList.toggle("on", !!on); d.classList.toggle("dim", !on);
+  });
+}
+
+/* ---------- حفظ / استعادة / تصدير / استيراد ---------- */
+const STORE_KEY = "avc-settings-v2";
+function collectValues() { const o = {}; Object.keys(CONTROLS).forEach(id => { o[id] = getVal(id); }); return o; }
+function applyValues(o) { Object.keys(o || {}).forEach(id => { if (CONTROLS[id]) setVal(id, o[id]); }); updateBadges(); applyFloatSize(); }
+let saveTimer = null;
+function scheduleSave() {
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => { try { localStorage.setItem(STORE_KEY, JSON.stringify(collectValues())); } catch (e) {} }, 400);
+}
+try { const raw = localStorage.getItem(STORE_KEY); if (raw) applyValues(JSON.parse(raw)); } catch (e) {}
+updateBadges();
+
+$("setReset").addEventListener("click", () => {
+  applyValues(DEFAULTS);
+  try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+  schedulePreview();
+});
+$("setExport").addEventListener("click", () => {
+  const blob = new Blob([JSON.stringify({ app: "audio-video-converter", v: 2, settings: collectValues() }, null, 2)], { type: "application/json" });
+  const a = mk("a", { href: URL.createObjectURL(blob), download: "audio-video-settings.json" });
+  document.body.append(a); a.click(); a.remove();
+});
+$("setImportFile").addEventListener("change", async e => {
+  const f = e.target.files[0]; if (!f) return;
+  try { const j = JSON.parse(await f.text()); applyValues(j.settings || j); scheduleSave(); schedulePreview(); } catch (err) { alert("ملف الإعدادات غير صالح"); }
+  e.target.value = "";
+});
+
+/* ---------- ثيمات الألوان ---------- */
+THEMES.forEach(t => {
+  const grad = t.rainbow ? "linear-gradient(90deg,#ff3b3b,#ffd23f,#34d399,#22d3ee,#8b5cf6)" : "linear-gradient(90deg," + t.c1 + "," + t.c2 + ")";
+  $("themeChips").append(mk("button", {
+    type: "button", class: "theme", title: t.n, onclick: () => {
+      setVal("vizC1", t.c1); setVal("vizC2", t.c2); setVal("vizRainbow", !!t.rainbow);
+      setVal("progC1", t.c1); setVal("progC2", t.c2); setVal("lyrHi", t.hi);
+      ["vizC1", "vizRainbow", "progC1", "lyrHi"].forEach(fire);
+    }
+  }, mk("i", { style: "background:" + grad }), mk("span", {}, t.n)));
+});
+
+/* ---------- سلوكيات ربط الإعدادات ---------- */
+CONTROLS.vizShape.el.addEventListener("change", () => {
+  const d = SHAPE_DEFAULTS[getVal("vizShape")];
+  if (d) { Object.keys(d).forEach(k => setVal(k, d[k])); }
+});
+CONTROLS.progStyle.el.addEventListener("change", () => {
+  const d = PROG_DEFAULTS[getVal("progStyle")];
+  if (d) { Object.keys(d).forEach(k => setVal(k, d[k])); }
+});
+$("alignViz").addEventListener("click", () => {
+  if (getVal("progStyle") === "ring") { alert("المحاذاة تعمل مع أنواع الشريط الأفقية فقط."); return; }
+  setVal("vizOn", true);
+  if (!["bars", "dots"].includes(getVal("vizShape"))) { setVal("vizShape", "bars"); }
+  setVal("vizX", getVal("progX")); setVal("vizW", getVal("progW"));
+  setVal("vizY", Math.max(0, getVal("progY") - 4)); setVal("vizDir", "up"); setVal("vizRot", 0);
+  setVal("progFollow", true);
+  updateBadges(); fire("vizY");
+});
+$("settings").addEventListener("change", e => { if (e.target.id === "lyrOn" || e.target.id === "vizOn" || e.target.id === "beatOn" || e.target.id === "progOn") updateBadges(); });
+
+/* ---------- قراءة الإعدادات ---------- */
 function readCfg() {
-  const [w, h] = $("a2vQuality").value.split(",").map(Number);
+  const [w, h] = getVal("a2vQuality").split(",").map(Number);
+  const g = getVal;
   return {
-    w, h, fps: num("a2vFps"),
-    bg: { color: $("a2vBg").value, fit: $("a2vFit").value, dim: num("a2vDim") / 100 },
+    w, h, fps: parseFloat(g("a2vFps")), dur: 0,
+    bg: { color: g("a2vBg"), fit: g("a2vFit"), dim: g("a2vDim") / 100 },
     lyr: {
-      on: chk("lyrOn"), mode: $("lyrMode").value, font: $("lyrFont").value, size: num("lyrSize"),
-      color: $("lyrColor").value, hi: $("lyrHi").value, edge: $("lyrEdge").value, pos: $("lyrPos").value,
-      text: $("lyrText").value, offset: num("lyrOffset")
+      on: g("lyrOn"), mode: g("lyrMode"), anim: g("lyrAnim"), animDur: g("lyrAnimDur"), exit: g("lyrExit"),
+      beatFx: g("lyrBeatFx"), beatAmt: g("lyrBeatAmt") / 100, font: g("lyrFont"), size: g("lyrSize"),
+      color: g("lyrColor"), hi: g("lyrHi"), edge: g("lyrEdge"), x: g("lyrX"), y: g("lyrY"), text: g("lyrText"), offset: g("lyrOffset")
     },
     viz: {
-      on: chk("vizOn"), shape: $("vizShape").value, pos: $("vizPos").value,
-      c1: $("vizC1").value, c2: $("vizC2").value, rainbow: chk("vizRainbow"), glow: chk("vizGlow"),
-      count: num("vizCount"), thick: num("vizThick"), sens: num("vizSens") / 100, size: num("vizSize") / 100
+      on: g("vizOn"), shape: g("vizShape"), count: parseInt(g("vizCount"), 10), dir: g("vizDir"),
+      c1: g("vizC1"), c2: g("vizC2"), rainbow: g("vizRainbow"), glow: g("vizGlow"),
+      x: g("vizX"), y: g("vizY"), w: g("vizW"), h: g("vizH"), rot: g("vizRot"),
+      thick: g("vizThick"), sens: g("vizSens") / 100, smooth: g("vizSmooth"), opacity: g("vizOpacity")
     },
     beat: {
-      on: chk("beatOn"), zoom: chk("beatZoom"), shake: chk("beatShake"), flash: chk("beatFlash"),
-      sway: chk("beatSway"), sens: num("beatSens") / 100
+      on: g("beatOn"), zoom: g("beatZoom"), shake: g("beatShake"), flash: g("beatFlash"), sway: g("beatSway"),
+      sens: g("beatSens") / 100, decay: g("beatDecay")
+    },
+    prog: {
+      on: g("progOn"), style: g("progStyle"), time: g("progTime"), timePos: g("progTimePos"), follow: g("progFollow"),
+      c1: g("progC1"), c2: g("progC2"), beat: g("progBeat"), rev: g("progRev"),
+      x: g("progX"), y: g("progY"), w: g("progW"), h: g("progH"), timeSize: g("progTimeSize")
     }
   };
 }
-
-// عرض قيم الأشرطة
-[["a2vDim", "a2vDimV"], ["lyrSize", "lyrSizeV"], ["lyrOffset", "lyrOffV"], ["vizThick", "vizThickV"], ["vizSens", "vizSensV"], ["vizSize", "vizSizeV"], ["beatSens", "beatSensV"]]
-  .forEach(([a, b]) => { const f = () => { $(b).textContent = $(a).value; }; $(a).addEventListener("input", f); f(); });
 
 /* ---------- الصورة + الكلمات (ملفات) ---------- */
 let imgFile = null, prevBitmap = null;
@@ -1365,57 +1837,193 @@ $("a2vImg").addEventListener("change", async () => {
   if (imgFile) { try { prevBitmap = await createImageBitmap(imgFile); } catch (e) { console.warn(e); } }
   schedulePreview();
 });
-
 $("lyrFile").addEventListener("change", async () => {
   const f = $("lyrFile").files[0];
   if (!f) return;
-  let txt = await f.text();
-  $("lyrText").value = txt;
-  $("lyrOn").checked = true;
+  setVal("lyrText", await f.text());
+  setVal("lyrOn", true); updateBadges(); scheduleSave();
   schedulePreview();
 });
 
-/* ---------- المعاينة الحيّة ---------- */
-let pvTimer = null;
-function schedulePreview() {
-  clearTimeout(pvTimer);
-  pvTimer = setTimeout(drawPreview, 120);
-}
-async function drawPreview() {
-  const cv = $("pv");
-  if (!cv.offsetParent) return;
-  const cfg = readCfg();
-  const dims = { w: 640, h: 360 };
-  cv.width = dims.w; cv.height = dims.h;
-  await ensureFont(cfg.lyr.font);
+/* ---------- منطقة إسقاط الملف الصوتي ---------- */
+(function () {
+  const drop = $("dropA"), inp = $("a2vFile");
+  const fmtSize = b => b > MB ? (b / MB).toFixed(1) + " MB" : Math.max(1, Math.round(b / 1024)) + " KB";
+  inp.addEventListener("change", () => {
+    const f = inp.files[0];
+    $("dropTitle").textContent = f ? f.name : "اختر ملفاً صوتياً أو اسحبه هنا";
+    $("dropSub").textContent = f ? fmtSize(f.size) : "MP3 · M4A · WAV · OGG · FLAC …";
+    drop.classList.toggle("has", !!f);
+  });
+  ["dragenter", "dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+  ["dragleave", "drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+  drop.addEventListener("drop", e => {
+    if (!e.dataTransfer.files.length) return;
+    inp.files = e.dataTransfer.files;
+    inp.dispatchEvent(new Event("change", { bubbles: true }));
+  });
+})();
 
-  // بيانات إيقاع تجريبية
-  const bands = new Uint8Array(NB), wave = new Int8Array(WN);
+/* ======================================================
+   المعاينة الحيّة + النافذة المنبثقة
+   ====================================================== */
+const PV = { cv: $("pv"), fcv: $("pvF"), state: null, playing: false, raf: 0, t0: 0, lastT: -1, lastDraw: 0, token: 0, visible: true, closed: false };
+PV.ctx = PV.cv.getContext("2d");
+PV.fctx = PV.fcv.getContext("2d");
+const DEMO_TOTAL = 215;
+const synthBands = new Uint8Array(NB), synthWave = new Int8Array(WN), synthFeat = { bands: synthBands, wave: synthWave, bass: 0 };
+function synth(tt) {
+  const ph = (tt * 2) % 1, kick = Math.exp(-ph * 5);
   for (let i = 0; i < NB; i++) {
-    const base = 0.75 - i / NB * 0.45;
-    bands[i] = Math.round(clamp(base * (0.55 + 0.45 * Math.sin(i * 0.55 + 1.2) * Math.cos(i * 0.21)), 0.05, 1) * 255);
+    let v = (0.78 - i / NB * 0.5) * (0.5 + 0.35 * Math.sin(tt * 3 + i * 0.42) + 0.15 * Math.sin(tt * 7.3 + i * 0.9)) * (0.7 + 0.3 * kick);
+    if (i < 12) v *= 0.75 + 0.45 * kick;
+    synthBands[i] = Math.round(clamp(v, 0.04, 1) * 255);
   }
-  for (let j = 0; j < WN; j++) wave[j] = Math.round(100 * Math.sin(j * 0.33) * (0.6 + 0.4 * Math.sin(j * 0.07)));
-  const feat = { bands, wave, bass: 200 };
+  for (let j = 0; j < WN; j++) synthWave[j] = Math.round(100 * Math.sin(j * 0.33 + tt * 12) * (0.6 + 0.4 * Math.sin(j * 0.07 + tt)));
+  synthFeat.bass = Math.round(110 + 130 * kick);
+  return synthFeat;
+}
 
-  // سطر تجريبي من الكلمات
-  let lines = null, t = 1;
+let pvTimer = null;
+function schedulePreview() { clearTimeout(pvTimer); pvTimer = setTimeout(buildPreview, 100); scheduleSave(); }
+
+async function buildPreview() {
+  const token = ++PV.token;
+  const cfg = readCfg();
+  cfg.fps = 30; cfg.dur = DEMO_TOTAL;
+  await ensureFont(cfg.lyr.font);
+  if (token !== PV.token) return;
+  let lines = null, demoStart = 0, demoDur = 10;
   if (cfg.lyr.on) {
     const parsed = parseLyrics(cfg.lyr.text);
-    lines = prepareLyrics(parsed.entries.length ? parsed : { entries: [{ t: 0, end: 5, text: "كلمات الأغنية تظهر هنا — Lyrics preview", words: null }, { t: 5, end: 10, text: "السطر التالي يظهر بعد ذلك", words: null }], timed: true }, 60, cfg.lyr.offset);
+    const useP = parsed.entries.length ? parsed : { timed: true, entries: [
+      { t: 0.5, end: 4.5, text: "كلمات الأغنية تظهر هنا — Lyrics preview", words: null },
+      { t: 4.5, end: 8.5, text: "السطر التالي يظهر بعد ذلك", words: null },
+      { t: 8.5, end: 12.5, text: "ثالث الأسطر في المعاينة", words: null }] };
+    lines = prepareLyrics(useP, 40, cfg.lyr.offset);
     if (lines.length) {
-      const k = Math.min(1, lines.length - 1);
-      const L = lines[Math.min(k, lines.length - 1)];
-      t = L.t + (L.fillEnd - L.t) * 0.55;
-      if (cfg.lyr.mode === "scroll" && lines.length > 1) t = lines[1].t + 0.5; // ظهور وسطي
+      demoStart = Math.max(0, lines[0].t - 0.6);
+      demoDur = clamp(lines[Math.min(lines.length - 1, 3)].end - demoStart + 1.2, 6, 20);
     }
   }
-  const r = createRenderer({ ...cfg, fps: 15, forceBeat: 0.6 }, dims.w, dims.h, prevBitmap, lines);
-  r.draw(cv.getContext("2d"), t, feat);
+  PV.state = { cfg, lines, demoStart, demoDur, renderer: createRenderer(cfg, 640, 360, prevBitmap, lines, null) };
+  cfg.forceBeat = PV.playing ? null : 0.6;
+  if (!PV.playing) paintStatic();
 }
+
+function staticTime() {
+  const S = PV.state;
+  let t = S.demoStart + S.demoDur * 0.4;
+  if (S.lines && S.lines.length) {
+    const L = S.lines[0];
+    t = L.t + (L.fillEnd - L.t) * 0.55;
+    if (S.cfg.lyr.mode === "scroll" && S.lines.length > 1) t = S.lines[1].t + 0.5;
+  }
+  return t;
+}
+
+function drawAt(t, animated) {
+  const S = PV.state; if (!S) return;
+  const p = clamp((t - S.demoStart) / S.demoDur, 0, 1);
+  S.renderer.draw(PV.ctx, t, synth(t), { pos: p * DEMO_TOTAL, dur: DEMO_TOTAL });
+  const c = S.cfg;
+  if (!c.lyr.on && !c.viz.on && !c.prog.on && !c.beat.on && !prevBitmap) {
+    const x = PV.ctx;
+    x.save(); x.fillStyle = "rgba(255,255,255,0.55)"; x.font = '600 22px "Segoe UI", Tahoma, Arial, sans-serif';
+    x.textAlign = "center"; x.textBaseline = "middle"; x.direction = "rtl";
+    x.fillText("فعّل كلمات أو مؤثراً أو شريط تقدم لتظهر المعاينة", 320, 170);
+    x.font = '14px "Segoe UI", Tahoma, Arial, sans-serif'; x.fillStyle = "rgba(255,255,255,0.35)";
+    x.fillText("بدونها يُنشأ فيديو ثابت سريع جداً", 320, 205);
+    x.restore();
+  }
+  syncFloat();
+}
+function paintStatic() { if (PV.state) drawAt(staticTime(), false); }
+
+function syncFloat() {
+  const f = $("pvFloat");
+  if (!f.hidden) PV.fctx.drawImage(PV.cv, 0, 0, 640, 360);
+}
+
+function loop(ts) {
+  if (!PV.playing) return;
+  PV.raf = requestAnimationFrame(loop);
+  if (ts - PV.lastDraw < 30) return;
+  PV.lastDraw = ts;
+  const S = PV.state; if (!S) return;
+  const tt = S.demoStart + (((ts - PV.t0) / 1000) % S.demoDur);
+  if (tt < PV.lastT) S.renderer = createRenderer(S.cfg, 640, 360, prevBitmap, S.lines, null);
+  PV.lastT = tt;
+  drawAt(tt, true);
+}
+function setPlaying(on) {
+  PV.playing = on;
+  cancelAnimationFrame(PV.raf);
+  if (PV.state) PV.state.cfg.forceBeat = on ? null : 0.6;
+  ["pvPlay", "pvFPlay"].forEach(id => { $(id).textContent = on ? "❚❚" + (id === "pvPlay" ? " إيقاف" : "") : "▶" + (id === "pvPlay" ? " تشغيل المعاينة" : ""); });
+  if (on) { PV.t0 = performance.now(); PV.lastT = -1; PV.raf = requestAnimationFrame(loop); }
+  else paintStatic();
+}
+$("pvPlay").addEventListener("click", () => setPlaying(!PV.playing));
+$("pvFPlay").addEventListener("click", () => setPlaying(!PV.playing));
+document.addEventListener("visibilitychange", () => { if (document.hidden && PV.playing) setPlaying(false); });
+
 $("a2v").addEventListener("input", schedulePreview);
-$("a2v").addEventListener("change", e => { if (e.target.id === "lyrFont") schedulePreview(); else schedulePreview(); });
+$("a2v").addEventListener("change", schedulePreview);
+
+/* ----- النافذة المنبثقة ----- */
+const FLOAT_POS_KEY = "avc-float-pos";
+function applyFloatSize() {
+  const wv = getVal("pvFloatW");
+  if (wv) $("pvFloat").style.width = wv + "px";
+}
+function updateFloat() {
+  const a2vOn = $("a2v").classList.contains("on");
+  const show = a2vOn && !PV.visible && !PV.closed && getVal("pvFloatOn");
+  const f = $("pvFloat");
+  if (f.hidden === !show) return;
+  f.hidden = !show;
+  if (show) { applyFloatSize(); syncFloat(); }
+}
+new IntersectionObserver(([e]) => {
+  PV.visible = e.isIntersecting;
+  if (PV.visible) PV.closed = false;
+  updateFloat();
+}, { threshold: 0.12 }).observe($("pvCard"));
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => setTimeout(updateFloat, 0)));
+$("settings").addEventListener("input", e => { if (e.target.id === "pvFloatW" || e.target.id === "pvFloatW_n") applyFloatSize(); if (e.target.id === "pvFloatOn") updateFloat(); });
+$("settings").addEventListener("change", e => { if (e.target.id === "pvFloatOn") updateFloat(); });
+const bumpFloat = d => { setVal("pvFloatW", clamp(getVal("pvFloatW") + d, 140, 560)); applyFloatSize(); scheduleSave(); };
+$("pvFPlus").addEventListener("click", () => bumpFloat(40));
+$("pvFMinus").addEventListener("click", () => bumpFloat(-40));
+$("pvFClose").addEventListener("click", () => { PV.closed = true; updateFloat(); });
+
+(function dragFloat() {
+  const box = $("pvFloat"), head = $("pvFHead");
+  try { const p = JSON.parse(localStorage.getItem(FLOAT_POS_KEY) || "null"); if (p) { box.style.left = p.x + "px"; box.style.top = p.y + "px"; box.style.right = "auto"; } } catch (e) {}
+  let sx = 0, sy = 0, ox = 0, oy = 0, drag = false;
+  head.addEventListener("pointerdown", e => {
+    if (e.target.closest("button")) return;
+    const r = box.getBoundingClientRect();
+    drag = true; sx = e.clientX; sy = e.clientY; ox = r.left; oy = r.top;
+    head.setPointerCapture(e.pointerId);
+  });
+  head.addEventListener("pointermove", e => {
+    if (!drag) return;
+    const r = box.getBoundingClientRect();
+    const x = clamp(ox + e.clientX - sx, 4, innerWidth - r.width - 4), y = clamp(oy + e.clientY - sy, 4, innerHeight - 40);
+    box.style.left = x + "px"; box.style.top = y + "px"; box.style.right = "auto";
+  });
+  const end = () => {
+    if (!drag) return; drag = false;
+    try { localStorage.setItem(FLOAT_POS_KEY, JSON.stringify({ x: parseFloat(box.style.left), y: parseFloat(box.style.top) })); } catch (e) {}
+  };
+  head.addEventListener("pointerup", end); head.addEventListener("pointercancel", end);
+})();
+
+applyFloatSize();
 schedulePreview();
+if (location.hash === "#debug") window.__avc = { drawAt, PV, setVal, fire, getVal, readCfg };
 
 /* ======================================================
    الإخراج: على القرص (OPFS) للملفات الكبيرة، وإلا في الذاكرة
@@ -1531,8 +2139,8 @@ async function writeDynamicVideo(muxer, vcfg, totalFrames, renderer, an, fps, on
 wire("a2v", async (file, { st, bar, dl, errRef }) => {
   const cfg = readCfg();
   const { w, h, fps } = cfg;
-  const dyn = cfg.lyr.on || cfg.viz.on || cfg.beat.on;
-  const needAnalysis = cfg.viz.on || cfg.beat.on;
+  const dyn = cfg.lyr.on || cfg.viz.on || cfg.beat.on || cfg.prog.on;
+  const needAnalysis = cfg.viz.on || cfg.beat.on || (cfg.prog.on && cfg.prog.style === "wave");
 
   let parsed = null;
   if (cfg.lyr.on) {
@@ -1548,7 +2156,7 @@ wire("a2v", async (file, { st, bar, dl, errRef }) => {
     try { bitmap = await createImageBitmap(imgFile); }
     catch (e) { throw new Error("تعذر قراءة الصورة. جرّب صورة JPG أو PNG."); }
   }
-  if (cfg.lyr.on) { st.textContent = "جاري تحميل الخط..."; await ensureFont(cfg.lyr.font); }
+  if (cfg.lyr.on || cfg.prog.on) { st.textContent = "جاري تحميل الخط..."; await ensureFont(cfg.lyr.font); }
 
   const bitrate = dyn ? Math.max(400000, Math.round(w * h * fps * 0.05)) : (bitmap ? Math.round(w * h * 0.5) : 30000);
   const vcfg = await pickVideoCodec(w, h, bitrate, dyn ? fps : 1);
@@ -1578,7 +2186,9 @@ wire("a2v", async (file, { st, bar, dl, errRef }) => {
       const totalFrames = Math.max(1, Math.ceil(dur * fps));
       if (an) an.finish(totalFrames);
       const lines = parsed ? prepareLyrics(parsed, dur, cfg.lyr.offset) : null;
-      const renderer = createRenderer(cfg, w, h, bitmap, lines);
+      cfg.dur = dur;
+      const env = (an && cfg.prog.on && cfg.prog.style === "wave") ? computeEnv(an, totalFrames, 160) : null;
+      const renderer = createRenderer(cfg, w, h, bitmap, lines, env);
       st.textContent = "جاري رسم الإطارات...";
       await writeDynamicVideo(muxer, vcfg, totalFrames, renderer, an, fps, p => bar.value = audioShare + p * (97 - audioShare), errRef, st);
     } else {
